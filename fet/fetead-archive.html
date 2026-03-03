@@ -142,7 +142,7 @@ footer{position:relative;z-index:1;border-top:1px solid var(--bg-border);padding
 .help-btn{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border:1px solid var(--bg-border);border-radius:50%;background:transparent;color:var(--text-dim);font-family:'DM Mono';font-size:.75rem;font-weight:500;cursor:pointer;transition:border-color .2s,color .2s,background .2s;flex-shrink:0;}
 .help-btn:hover{border-color:var(--red);color:var(--red);background:var(--red-glow);}
 .help-popup-wrap{position:relative;display:inline-flex;align-items:center;}
-.help-popup{display:none;position:absolute;top:calc(100% + 10px);right:0;width:320px;background:var(--bg-card);border:1px solid var(--bg-border);border-top:2px solid var(--red);box-shadow:0 12px 36px rgba(0,0,0,.35);z-index:400;animation:fadeUp .18s ease both;}
+.help-popup{display:none;position:fixed;width:320px;background:var(--bg-card);border:1px solid var(--bg-border);border-top:2px solid var(--red);box-shadow:0 12px 36px rgba(0,0,0,.55);z-index:9999;animation:fadeUp .18s ease both;}
 .help-popup.open{display:block;}
 .help-popup-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--bg-border);}
 .help-popup-title{font-family:'Bebas Neue';font-size:.95rem;letter-spacing:.1em;color:var(--text);}
@@ -299,7 +299,11 @@ renderTable(cmds);
 // Help popup
 document.getElementById('btnHelp').addEventListener('click', function(e) {
   e.stopPropagation();
-  document.getElementById('helpPopup').classList.toggle('open');
+  var popup = document.getElementById('helpPopup');
+  var rect = this.getBoundingClientRect();
+  popup.style.top  = (rect.bottom + 10) + 'px';
+  popup.style.right = (window.innerWidth - rect.right) + 'px';
+  popup.classList.toggle('open');
 });
 document.getElementById('closeHelp').addEventListener('click', function(e) {
   e.stopPropagation();
