@@ -39,7 +39,7 @@ img.logo-img{width:36px;height:36px;object-fit:contain;flex-shrink:0;transition:
 
 /* MAIN */
 main{flex:1;padding:108px 40px 60px;max-width:1280px;margin:0 auto;width:100%;position:relative;z-index:1;}
-.page-header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:32px;animation:fadeUp .5s ease both;}
+.page-header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:32px;}
 .mod-label{font-family:'DM Mono',monospace;font-size:.63rem;letter-spacing:.24em;color:var(--red);text-transform:uppercase;margin-bottom:8px;}
 .mod-title{font-family:'Bebas Neue',sans-serif;font-size:2.7rem;letter-spacing:.06em;line-height:1;color:var(--text);transition:color .28s;}
 .mod-desc{font-size:.78rem;color:var(--text-dim);margin-top:5px;transition:color .28s;}
@@ -192,20 +192,7 @@ footer{position:relative;z-index:1;border-top:1px solid var(--bg-border);padding
     <div style="display:flex;align-items:center;gap:10px;">
       <div class="help-popup-wrap">
         <button class="help-btn" id="btnHelp">?</button>
-        <div class="help-popup" id="helpPopup">
-          <div class="help-popup-header">
-            <span class="help-popup-title">Comment utiliser ce module</span>
-            <button class="help-popup-close" id="closeHelp">&times;</button>
-          </div>
-          <div class="help-popup-body">
-            <p>Ce module génère des <strong>scripts robocopy</strong> pour automatiser l'archivage de fichiers vers le cold storage réseau.</p>
-            <div class="help-step"><span class="help-step-num">1</span><span>Téléchargez le <strong>modèle CSV</strong> et remplissez-le avec vos chemins source et destination.</span></div>
-            <div class="help-step"><span class="help-step-num">2</span><span><strong>Importez le CSV</strong> via drag &amp; drop ou en cliquant sur la zone de dépôt.</span></div>
-            <div class="help-step"><span class="help-step-num">3</span><span>Configurez les <strong>options robocopy</strong> : flags, log, exclusions.</span></div>
-            <div class="help-step"><span class="help-step-num">4</span><span>Prévisualisez les commandes dans le tableau, puis <strong>exportez</strong> en .cmd ou .xml.</span></div>
-            <p style="margin-top:12px;padding-top:10px;border-top:1px solid var(--bg-border);font-size:.72rem;color:var(--text-faint);">Les chemins UNC générés sont compatibles avec les serveurs <strong>srvrbxassufp01</strong> et <strong>srvrbxassufp01cold</strong>.</p>
-          </div>
-        </div>
+        
       </div>
       <a class="dl-tpl" href="#">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -295,26 +282,44 @@ function renderTable(data){
   </td></tr>`).join('');
 }
 renderTable(cmds);
+</script>
 
-// Help popup
-document.getElementById('btnHelp').addEventListener('click', function(e) {
+<div class="help-popup" id="helpPopup">
+          <div class="help-popup-header">
+            <span class="help-popup-title">Comment utiliser ce module</span>
+            <button class="help-popup-close" id="closeHelp">&times;</button>
+          </div>
+          <div class="help-popup-body">
+            <p>Ce module génère des <strong>scripts robocopy</strong> pour automatiser l'archivage de fichiers vers le cold storage réseau.</p>
+            <div class="help-step"><span class="help-step-num">1</span><span>Téléchargez le <strong>modèle CSV</strong> et remplissez-le avec vos chemins source et destination.</span></div>
+            <div class="help-step"><span class="help-step-num">2</span><span><strong>Importez le CSV</strong> via drag &amp; drop ou en cliquant sur la zone de dépôt.</span></div>
+            <div class="help-step"><span class="help-step-num">3</span><span>Configurez les <strong>options robocopy</strong> : flags, log, exclusions.</span></div>
+            <div class="help-step"><span class="help-step-num">4</span><span>Prévisualisez les commandes dans le tableau, puis <strong>exportez</strong> en .cmd ou .xml.</span></div>
+            <p style="margin-top:12px;padding-top:10px;border-top:1px solid var(--bg-border);font-size:.72rem;color:var(--text-faint);">Les chemins UNC générés sont compatibles avec les serveurs <strong>srvrbxassufp01</strong> et <strong>srvrbxassufp01cold</strong>.</p>
+          </div>
+        </div>
+
+<script>
+var btnHelp   = document.getElementById('btnHelp');
+var helpPopup = document.getElementById('helpPopup');
+var closeHelp = document.getElementById('closeHelp');
+btnHelp.addEventListener('click', function(e) {
   e.stopPropagation();
-  var popup = document.getElementById('helpPopup');
-  var rect = this.getBoundingClientRect();
-  popup.style.top  = (rect.bottom + 10) + 'px';
-  popup.style.right = (window.innerWidth - rect.right) + 'px';
-  popup.classList.toggle('open');
+  if (helpPopup.classList.contains('open')) { helpPopup.classList.remove('open'); return; }
+  var rect = btnHelp.getBoundingClientRect();
+  var left = rect.right - 320;
+  if (left < 8) left = 8;
+  helpPopup.style.top   = (rect.bottom + 8) + 'px';
+  helpPopup.style.left  = left + 'px';
+  helpPopup.style.right = 'auto';
+  helpPopup.classList.add('open');
 });
-document.getElementById('closeHelp').addEventListener('click', function(e) {
+closeHelp.addEventListener('click', function(e) {
   e.stopPropagation();
-  document.getElementById('helpPopup').classList.remove('open');
+  helpPopup.classList.remove('open');
 });
-document.addEventListener('click', function() {
-  document.getElementById('helpPopup').classList.remove('open');
-});
-document.getElementById('helpPopup').addEventListener('click', function(e) {
-  e.stopPropagation();
-});
+document.addEventListener('click', function() { helpPopup.classList.remove('open'); });
+helpPopup.addEventListener('click', function(e) { e.stopPropagation(); });
 </script>
 </body>
 </html>
