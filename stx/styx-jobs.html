@@ -1,0 +1,1323 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Styx — Cashflow Job Configuration</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --red:       #E2001A;
+      --red-dark:  #a80013;
+      --red-glow:  rgba(226,0,26,0.11);
+      --cyan:      #0EB8C8;
+      --green:     #00C875;
+    }
+
+    [data-theme="dark"] {
+      --bg:               #0a0a0a;
+      --bg-card:          #1a1a1a;
+      --bg-input:         #111;
+      --bg-border:        #272727;
+      --bg-border-hover:  #3a3a3a;
+      --text:             #f5f5f5;
+      --text-dim:         rgba(245,245,245,0.48);
+      --text-faint:       rgba(245,245,245,0.18);
+      --header-bg:        rgba(10,10,10,0.94);
+      --noise:            0.026;
+      --row-hover:        rgba(255,255,255,0.022);
+      --pill-bg:          #2a2a2a;
+    }
+
+    [data-theme="light"] {
+      --bg:               #f3f3f3;
+      --bg-card:          #ffffff;
+      --bg-input:         #f8f8f8;
+      --bg-border:        #e0e0e0;
+      --bg-border-hover:  #bbb;
+      --text:             #080808;
+      --text-dim:         rgba(8,8,8,0.48);
+      --text-faint:       rgba(8,8,8,0.2);
+      --header-bg:        rgba(243,243,243,0.96);
+      --noise:            0.015;
+      --row-hover:        rgba(0,0,0,0.022);
+      --pill-bg:          #ebebeb;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Noise texture */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      opacity: var(--noise);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ===== HEADER ===== */
+    .header-top-bar {
+      position: fixed; top: 0; left: 0; right: 0;
+      height: 3px; background: var(--red); z-index: 300;
+    }
+
+    header {
+      position: fixed; top: 3px; left: 0; right: 0; height: 58px;
+      background: var(--header-bg);
+      backdrop-filter: blur(18px);
+      border-bottom: 1px solid var(--bg-border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 24px;
+      z-index: 200;
+    }
+
+    .header-left { display: flex; align-items: center; gap: 12px; }
+
+    .logo-img {
+      width: 36px; height: 36px; object-fit: contain;
+      cursor: pointer; transition: transform .2s;
+    }
+    .logo-img:hover { transform: scale(1.06); }
+
+    .logo-text { display: flex; flex-direction: column; }
+    .logo-title { font-family: 'Bebas Neue'; font-size: 1.35rem; letter-spacing: .14em; color: var(--text); line-height: 1; }
+    .logo-sub   { font-family: 'DM Mono'; font-size: .58rem; color: var(--text-faint); letter-spacing: .1em; text-transform: uppercase; margin-top: 2px; }
+
+    .header-right { display: flex; align-items: center; gap: 18px; }
+
+    /* Theme toggle */
+    .theme-toggle { display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
+    .theme-lbl { font-family: 'DM Mono'; font-size: .63rem; color: var(--text-dim); letter-spacing: .08em; transition: opacity .2s; }
+    .theme-track {
+      width: 34px; height: 18px; background: var(--bg-border); border-radius: 9px;
+      position: relative; cursor: pointer; border: 1px solid var(--bg-border-hover); transition: background .2s;
+    }
+    .theme-thumb {
+      position: absolute; top: 2px; left: 2px;
+      width: 12px; height: 12px; border-radius: 50%;
+      background: var(--red); transition: left .2s;
+    }
+    [data-theme="light"] .theme-thumb { left: 18px; }
+
+    .h-divider { width: 1px; height: 26px; background: var(--bg-border); }
+
+    /* User badge */
+    .user-badge { display: flex; align-items: center; gap: 10px; }
+    .user-avatar {
+      width: 30px; height: 30px; border-radius: 50%;
+      background: var(--red); display: flex; align-items: center; justify-content: center;
+      font-family: 'Bebas Neue'; font-size: .8rem; color: #fff; flex-shrink: 0;
+    }
+    .user-info { display: flex; flex-direction: column; }
+    .user-name { font-family: 'DM Sans'; font-size: .78rem; font-weight: 600; color: var(--text); line-height: 1.2; }
+    .user-role { font-family: 'DM Mono'; font-size: .58rem; color: var(--text-faint); text-transform: uppercase; letter-spacing: .08em; }
+    .user-signout {
+      font-family: 'DM Mono'; font-size: .58rem; color: var(--text-faint);
+      cursor: pointer; text-transform: uppercase; letter-spacing: .06em;
+      background: none; border: none; transition: color .2s; padding: 0;
+    }
+    .user-signout:hover { color: var(--red); }
+
+    /* ===== ICON NAV ===== */
+    .icon-nav {
+      position: fixed; top: 61px; left: 0; right: 0; height: 48px;
+      background: var(--header-bg);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--bg-border);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 190;
+    }
+
+    .icon-btn-group { display: flex; align-items: center; gap: 3px; }
+
+    .nav-icon {
+      position: relative;
+      width: 40px; height: 36px;
+      background: var(--bg-card); border: 1px solid var(--bg-border);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all .15s; color: var(--text-dim);
+      border-radius: 2px; flex-shrink: 0;
+    }
+    .nav-icon:hover  { border-color: var(--red); color: var(--text); background: var(--red-glow); }
+    .nav-icon.active { border-color: var(--red); color: var(--red); background: var(--red-glow); }
+    .nav-icon svg { width: 15px; height: 15px; }
+
+    /* Tooltip */
+    .nav-icon::after {
+      content: attr(data-tip);
+      position: absolute; top: calc(100% + 5px); left: 50%;
+      transform: translateX(-50%);
+      background: var(--bg-card); border: 1px solid var(--bg-border);
+      padding: 3px 8px; font-family: 'DM Mono'; font-size: .58rem;
+      color: var(--text-dim); white-space: nowrap; pointer-events: none;
+      opacity: 0; transition: opacity .15s; z-index: 500; letter-spacing: .06em;
+    }
+    .nav-icon:hover::after { opacity: 1; }
+
+    /* Dropdown */
+    .nav-dropdown-wrap { position: relative; }
+    .nav-icon.has-drop { width: 52px; gap: 4px; }
+    .drop-arrow { font-size: .5rem; opacity: .5; line-height: 1; }
+
+    .nav-dropdown {
+      display: none; position: absolute; top: calc(100% + 4px); left: 0;
+      background: var(--bg-card); border: 1px solid var(--bg-border);
+      min-width: 170px; z-index: 400;
+      box-shadow: 0 8px 32px rgba(0,0,0,.5);
+    }
+    .nav-dropdown.open { display: block; }
+
+    .job-type-opt {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 14px; cursor: pointer;
+      font-family: 'DM Sans'; font-size: .78rem; color: var(--text-dim);
+      border-bottom: 1px solid var(--bg-border); transition: all .12s;
+    }
+    .job-type-opt:last-child { border-bottom: none; }
+    .job-type-opt:hover { background: var(--row-hover); color: var(--text); }
+
+    .type-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 34px; height: 26px;
+      background: linear-gradient(135deg, var(--red) 50%, #0a0a0a 50%);
+      color: #fff; font-family: 'Bebas Neue'; font-size: .78rem;
+      border-radius: 2px; flex-shrink: 0; letter-spacing: .03em;
+    }
+
+    /* ===== APP LAYOUT ===== */
+    .app-layout {
+      display: grid;
+      grid-template-columns: var(--sw, 140px) 1fr;
+      grid-template-rows: 1fr var(--ch, 0px);
+      height: calc(100vh - 109px - 22px);
+      margin-top: 109px;
+      transition: grid-template-columns .25s ease, grid-template-rows .25s ease;
+      position: relative; z-index: 1;
+      overflow: hidden;
+    }
+    .app-layout.sidebar-collapsed  { --sw: 24px; }
+    .app-layout.console-open       { --ch: 200px; }
+
+    /* ===== SIDEBAR ===== */
+    .sidebar {
+      grid-column: 1; grid-row: 1 / 3;
+      border-right: 1px solid var(--bg-border);
+      background: var(--bg-card);
+      display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+
+    .sidebar-collapse-btn {
+      padding: 7px; cursor: pointer;
+      border-bottom: 1px solid var(--bg-border);
+      display: flex; justify-content: center; align-items: center;
+      color: var(--text-dim); transition: color .2s; flex-shrink: 0;
+      min-height: 30px;
+    }
+    .sidebar-collapse-btn:hover { color: var(--red); }
+    .sidebar-collapse-btn svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+    .sidebar-tabs { flex: 1; overflow-y: auto; overflow-x: hidden; }
+
+    .sidebar-tab {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 10px 10px 12px; border-bottom: 1px solid var(--bg-border);
+      cursor: pointer; font-family: 'DM Mono'; font-size: .6rem;
+      color: var(--text-dim); border-left: 2px solid transparent;
+      transition: all .15s; white-space: nowrap; min-width: 0;
+      letter-spacing: .04em; text-transform: uppercase;
+    }
+    .sidebar-tab:hover  { background: var(--row-hover); color: var(--text); }
+    .sidebar-tab.active { border-left-color: var(--red); color: var(--text); background: var(--row-hover); }
+
+    .tab-label { overflow: hidden; text-overflow: ellipsis; flex: 1; }
+    .tab-close {
+      background: none; border: none; color: inherit; cursor: pointer;
+      font-size: .9rem; opacity: .4; padding: 0 0 0 6px; flex-shrink: 0;
+      transition: opacity .15s, color .15s; line-height: 1;
+    }
+    .tab-close:hover { opacity: 1; color: var(--red); }
+
+    /* ===== JOB AREA ===== */
+    .job-area {
+      grid-column: 2; grid-row: 1;
+      overflow-y: auto; overflow-x: hidden;
+      background: var(--bg);
+    }
+
+    .empty-state {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      height: 100%; gap: 14px; color: var(--text-faint);
+    }
+    .empty-state svg { width: 42px; height: 42px; fill: currentColor; opacity: .2; }
+    .empty-state p { font-family: 'DM Mono'; font-size: .65rem; letter-spacing: .12em; text-transform: uppercase; }
+
+    /* ===== JOB VIEW ===== */
+    .job-view { display: none; padding: 22px 26px 40px; }
+    .job-view.active { display: block; animation: fadeUp .18s ease; }
+
+    /* Form header */
+    .form-header {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      margin-bottom: 22px; gap: 16px;
+    }
+    .form-title { font-family: 'Bebas Neue'; font-size: 1.55rem; letter-spacing: .1em; color: var(--text); line-height: 1; }
+    .form-title-sub { font-family: 'DM Mono'; font-size: .58rem; color: var(--text-faint); letter-spacing: .1em; text-transform: uppercase; margin-top: 4px; }
+
+    .form-actions-col { display: flex; flex-direction: column; align-items: flex-end; gap: 7px; flex-shrink: 0; }
+    .form-actions-row { display: flex; gap: 6px; align-items: center; }
+
+    /* Form grid */
+    .form-grid { display: grid; grid-template-columns: 185px 1fr; }
+
+    .fg-lbl {
+      padding: 11px 0 10px; font-family: 'DM Mono'; font-size: .65rem;
+      color: var(--text-faint); letter-spacing: .06em;
+      border-bottom: 1px solid var(--bg-border);
+      display: flex; align-items: flex-start; padding-top: 13px;
+    }
+    .fg-ctrl {
+      padding: 8px 0; border-bottom: 1px solid var(--bg-border);
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .fg-lbl.nb, .fg-ctrl.nb { border-bottom: none; }
+
+    /* Inputs */
+    input[type="text"],
+    input[type="number"],
+    input[type="date"],
+    select {
+      background: var(--bg-input); border: 1px solid var(--bg-border);
+      color: var(--text); font-family: 'DM Mono'; font-size: .72rem;
+      padding: 7px 10px; outline: none; width: 100%;
+      transition: border-color .2s, box-shadow .2s;
+      appearance: none; border-radius: 1px;
+    }
+    input:focus, select:focus { border-color: var(--red); box-shadow: 0 0 0 3px var(--red-glow); }
+    input::placeholder { color: var(--text-faint); font-style: italic; }
+    input[type="checkbox"] { width: 14px; height: 14px; cursor: pointer; accent-color: var(--red); flex-shrink: 0; }
+
+    /* ===== BUTTONS ===== */
+    .btn-submit {
+      background: var(--red); color: #fff;
+      font-family: 'Bebas Neue'; font-size: .95rem; letter-spacing: .14em;
+      padding: 9px 22px; border: none; cursor: pointer;
+      transition: background .2s; border-radius: 1px; white-space: nowrap;
+    }
+    .btn-submit:hover { background: var(--red-dark); }
+
+    .btn-secondary {
+      background: transparent; color: var(--text-dim);
+      font-family: 'DM Mono'; font-size: .6rem; letter-spacing: .1em; text-transform: uppercase;
+      padding: 7px 13px; border: 1px solid var(--bg-border);
+      cursor: pointer; transition: border-color .2s, color .2s; border-radius: 1px; white-space: nowrap;
+    }
+    .btn-secondary:hover { border-color: var(--red); color: var(--text); }
+
+    .btn-toggle {
+      background: transparent; color: var(--text-dim);
+      font-family: 'DM Mono'; font-size: .6rem; letter-spacing: .08em;
+      padding: 6px 12px; border: 1px solid var(--bg-border);
+      cursor: pointer; transition: all .15s; border-radius: 1px; white-space: nowrap;
+    }
+    .btn-toggle:hover  { border-color: var(--bg-border-hover); color: var(--text); }
+    .btn-toggle.active { border-color: var(--red); color: var(--red); background: var(--red-glow); }
+
+    /* Joined toggles */
+    .toggle-group { display: flex; }
+    .toggle-group .btn-toggle { border-radius: 0; }
+    .toggle-group .btn-toggle:first-child { border-radius: 1px 0 0 1px; }
+    .toggle-group .btn-toggle:last-child  { border-radius: 0 1px 1px 0; border-left: none; }
+
+    /* Inline row */
+    .f-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+    /* Period group */
+    .period-line {
+      display: flex; align-items: center; gap: 5px; flex-wrap: wrap;
+      padding: 4px 0;
+    }
+    .period-line label {
+      display: flex; align-items: center; gap: 6px; cursor: pointer;
+      font-family: 'DM Mono'; font-size: .65rem; color: var(--text-dim);
+      width: 96px; flex-shrink: 0;
+    }
+    .range-inp  { width: 68px !important; }
+    .months-inp { width: 48px !important; }
+    .months-lbl { font-family: 'DM Mono'; font-size: .6rem; color: var(--text-faint); }
+
+    /* ===== SCENARIOS TABLE ===== */
+    .scenarios-wrap { overflow-x: auto; margin-top: 6px; max-height: 200px; overflow-y: auto; }
+    .scen-table { width: 100%; border-collapse: collapse; font-size: .68rem; }
+    .scen-table thead { background: var(--red); position: sticky; top: 0; }
+    .scen-table th { font-family: 'Bebas Neue'; color: #fff; padding: 7px 10px; letter-spacing: .08em; text-align: left; white-space: nowrap; }
+    .scen-table td { padding: 6px 10px; color: var(--text-dim); border-bottom: 1px solid var(--bg-border); font-family: 'DM Mono'; font-size: .58rem; }
+    .scen-table tr:hover td { background: var(--row-hover); }
+    .scen-table td:first-child { text-align: center; }
+
+    /* ===== UFX DELETE BTN ===== */
+    .btn-icon {
+      width: 32px; height: 32px; background: transparent;
+      border: 1px solid var(--bg-border); color: var(--text-dim);
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      border-radius: 1px; transition: all .15s;
+    }
+    .btn-icon:hover { border-color: var(--red); color: var(--red); }
+    .btn-icon svg { width: 13px; height: 13px; }
+
+    /* ===== MONITORING ===== */
+    .monitor-filters {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      padding: 14px 22px; border-bottom: 1px solid var(--bg-border);
+      background: var(--bg-card);
+    }
+    .monitor-filters input { width: auto; }
+    .monitor-filters .f-input-sm { width: 120px !important; }
+    .monitor-filters label {
+      display: flex; align-items: center; gap: 6px;
+      font-family: 'DM Mono'; font-size: .62rem; color: var(--text-dim); cursor: pointer;
+    }
+
+    .monitor-wrap { overflow-x: auto; }
+    .monitor-table { width: 100%; border-collapse: collapse; font-size: .74rem; }
+    .monitor-table thead { background: var(--red); }
+    .monitor-table th { font-family: 'Bebas Neue'; color: #fff; padding: 9px 12px; letter-spacing: .08em; text-align: left; white-space: nowrap; }
+    .monitor-table td { padding: 9px 12px; color: var(--text-dim); border-bottom: 1px solid var(--bg-border); }
+    .monitor-table tr:hover td { background: var(--row-hover); }
+
+    .state-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+    .state-dot.done    { background: var(--green); }
+    .state-dot.running { background: #f59e0b; }
+    .state-dot.error   { background: var(--red); }
+
+    .prog-wrap { width: 110px; height: 9px; background: var(--bg-border); border-radius: 2px; overflow: hidden; }
+    .prog-bar  { height: 100%; background: var(--green); border-radius: 2px; transition: width .3s; }
+    .prog-cell { display: flex; align-items: center; gap: 7px; }
+    .prog-pct  { font-family: 'DM Mono'; font-size: .58rem; color: var(--text-faint); }
+
+    .mono { font-family: 'DM Mono'; font-size: .68rem; }
+
+    /* ===== CONSOLE PANEL ===== */
+    .console-panel {
+      grid-column: 2; grid-row: 2;
+      background: #0d0d0d; border-top: 2px solid var(--red);
+      overflow: hidden; display: flex; flex-direction: column;
+    }
+    .console-hdr {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 5px 13px; border-bottom: 1px solid #222; flex-shrink: 0;
+    }
+    .console-title { font-family: 'Bebas Neue'; font-size: .8rem; letter-spacing: .12em; color: var(--red); }
+    .console-x {
+      background: none; border: none; color: #555; cursor: pointer;
+      font-size: .78rem; transition: color .15s; padding: 2px 4px; line-height: 1;
+    }
+    .console-x:hover { color: var(--red); }
+    .console-body { flex: 1; overflow-y: auto; padding: 7px 13px; }
+    .c-line { margin-bottom: 3px; color: rgba(245,245,245,0.45); font-family: 'DM Mono'; font-size: .68rem; }
+    .c-line .ts { color: rgba(245,245,245,0.18); margin-right: 8px; }
+    .c-line.warn  { color: #f59e0b; }
+    .c-line.error { color: #e06060; }
+
+    /* ===== HELP PANEL ===== */
+    .help-panel {
+      position: fixed; top: 0; right: -340px; width: 340px; height: 100vh;
+      background: var(--bg-card); border-left: 2px solid var(--red);
+      z-index: 250; transition: right .3s cubic-bezier(.4,0,.2,1);
+      display: flex; flex-direction: column;
+      box-shadow: -8px 0 32px rgba(0,0,0,.4);
+    }
+    .help-panel.open { right: 0; }
+
+    .panel-hdr {
+      padding: 16px 18px; border-bottom: 1px solid var(--bg-border);
+      display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+    }
+    .panel-title { font-family: 'Bebas Neue'; font-size: 1.05rem; letter-spacing: .1em; color: var(--text); }
+    .panel-close {
+      background: none; border: none; color: var(--text-dim); cursor: pointer;
+      font-size: 1.05rem; line-height: 1; transition: color .15s;
+    }
+    .panel-close:hover { color: var(--red); }
+    .panel-body { padding: 18px; overflow-y: auto; flex: 1; }
+    .panel-section { margin-bottom: 20px; }
+    .panel-section h4 {
+      font-family: 'DM Mono'; font-size: .58rem; letter-spacing: .18em;
+      text-transform: uppercase; color: var(--red); margin-bottom: 8px;
+    }
+    .panel-section ul { list-style: none; }
+    .panel-section li {
+      font-size: .76rem; color: var(--text-dim); padding: 5px 0;
+      border-bottom: 1px solid var(--bg-border); cursor: pointer; transition: color .15s;
+    }
+    .panel-section li:last-child { border-bottom: none; }
+    .panel-section li:hover { color: var(--text); }
+
+    /* ===== MODALS ===== */
+    .overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.72); z-index: 300;
+      align-items: center; justify-content: center;
+    }
+    .overlay.open { display: flex; }
+
+    .modal {
+      background: var(--bg-card); border: 1px solid var(--bg-border);
+      border-top: 2px solid var(--red);
+      padding: 22px 24px; width: 90%; max-width: 480px;
+      max-height: 90vh; overflow-y: auto;
+      position: relative; animation: fadeUp .18s ease;
+    }
+    .modal-title { font-family: 'Bebas Neue'; font-size: 1.1rem; letter-spacing: .1em; color: var(--text); margin-bottom: 18px; }
+    .modal-close {
+      position: absolute; top: 14px; right: 16px;
+      background: none; border: none; color: var(--text-dim);
+      cursor: pointer; font-size: 1.05rem; line-height: 1; transition: color .15s;
+    }
+    .modal-close:hover { color: var(--red); }
+
+    /* Advanced Options */
+    .adv-row   { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+    .adv-field { margin-bottom: 14px; }
+    .adv-lbl   { font-family: 'DM Mono'; font-size: .62rem; color: var(--text-faint); letter-spacing: .06em; margin-bottom: 6px; display: block; }
+
+    /* Preferences */
+    .pref-section       { margin-bottom: 20px; }
+    .pref-section-title {
+      font-family: 'DM Mono'; font-size: .58rem; letter-spacing: .2em;
+      text-transform: uppercase; color: var(--red); margin-bottom: 10px;
+      padding-bottom: 6px; border-bottom: 1px solid var(--bg-border);
+    }
+    .pref-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 8px 0; border-bottom: 1px solid var(--bg-border);
+    }
+    .pref-row:last-child { border-bottom: none; }
+    .pref-key { font-family: 'DM Mono'; font-size: .63rem; color: var(--text-faint); }
+    .pref-val { font-family: 'DM Sans'; font-size: .78rem; color: var(--text); font-weight: 500; }
+
+    /* File explorer */
+    .file-list { margin: 10px 0; border: 1px solid var(--bg-border); max-height: 180px; overflow-y: auto; }
+    .file-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 12px; cursor: pointer;
+      font-family: 'DM Mono'; font-size: .68rem; color: var(--text-dim);
+      border-bottom: 1px solid var(--bg-border); transition: all .12s;
+    }
+    .file-item:last-child { border-bottom: none; }
+    .file-item:hover { background: var(--row-hover); color: var(--text); }
+
+    /* Modal actions */
+    .modal-acts { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
+
+    /* ===== FOOTER ===== */
+    footer {
+      position: fixed; bottom: 0; left: 0; right: 0; height: 22px;
+      background: var(--bg-card); border-top: 1px solid var(--bg-border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 16px; z-index: 100;
+      font-family: 'DM Mono'; font-size: .56rem; color: var(--text-faint); letter-spacing: .06em;
+    }
+
+    /* ===== ANIMATIONS ===== */
+    @keyframes fadeUp {
+      from { opacity:0; transform: translateY(10px); }
+      to   { opacity:1; transform: translateY(0); }
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 900px) {
+      .app-layout { grid-template-columns: 0 1fr; }
+      #appSidebar { display: none; }
+      .user-role  { display: none; }
+    }
+    @media (max-width: 600px) {
+      .logo-sub   { display: none; }
+      .user-name  { display: none; }
+      .modal      { max-width: calc(100% - 20px); }
+    }
+
+    /* Validation */
+    .is-invalid { border-color: var(--red) !important; box-shadow: 0 0 0 3px var(--red-glow) !important; }
+  </style>
+</head>
+<body>
+
+  <div class="header-top-bar"></div>
+
+  <!-- ===== HEADER ===== -->
+  <header>
+    <div class="header-left">
+      <img src="logo.png" alt="Styx" class="logo-img">
+      <div class="logo-text">
+        <span class="logo-title">STYX</span>
+        <span class="logo-sub">Calcul Actuariel · Assurances</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle" id="themeToggle">
+        <span class="theme-lbl" id="lblDark">Dark</span>
+        <div class="theme-track"><div class="theme-thumb"></div></div>
+        <span class="theme-lbl" id="lblLight">Light</span>
+      </div>
+      <div class="h-divider"></div>
+      <div class="user-badge">
+        <div class="user-avatar">PR</div>
+        <div class="user-info">
+          <span class="user-name">Pablo RABADAN</span>
+          <span class="user-role">Actuaire · ASSU Production</span>
+        </div>
+        <button class="user-signout">Sign Out</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== ICON NAV ===== -->
+  <nav class="icon-nav">
+    <div class="icon-btn-group">
+
+      <!-- New UFX Job -->
+      <button class="nav-icon" id="btnNewUfx" data-tip="UFX Job">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M8 2v12M2 8h12"/>
+        </svg>
+      </button>
+
+      <!-- Omen Jobs dropdown -->
+      <div class="nav-dropdown-wrap">
+        <button class="nav-icon has-drop" id="btnOmenJobs" data-tip="Omen Jobs">
+          <svg viewBox="0 0 16 16" fill="currentColor">
+            <rect x="2" y="2.5" width="12" height="2" rx=".5"/>
+            <rect x="2" y="7"   width="12" height="2" rx=".5"/>
+            <rect x="2" y="11.5" width="8" height="2" rx=".5"/>
+          </svg>
+          <span class="drop-arrow">▾</span>
+        </button>
+        <div class="nav-dropdown" id="omenDropdown">
+          <div class="job-type-opt" data-type="savings">    <span class="type-badge">S</span>  Savings</div>
+          <div class="job-type-opt" data-type="nonlife">    <span class="type-badge">N</span>  Non Life</div>
+          <div class="job-type-opt" data-type="risklife">   <span class="type-badge">RL</span> Risk Life</div>
+          <div class="job-type-opt" data-type="risklifekp"> <span class="type-badge">KP</span> Risk Life KP</div>
+          <div class="job-type-opt" data-type="tdr">        <span class="type-badge">T</span>  TdR</div>
+          <div class="job-type-opt" data-type="bdr">        <span class="type-badge">B</span>  BdR</div>
+        </div>
+      </div>
+
+      <!-- Settings -->
+      <button class="nav-icon" id="btnSettings" data-tip="Settings">
+        <svg viewBox="0 0 16 16" fill="currentColor">
+          <path d="M8 10.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z" opacity=".7"/>
+          <path d="M13.6 6.8l-.8-.46a5.9 5.9 0 000-1.68l.8-.46a.6.6 0 00.22-.82L12.98 2a.6.6 0 00-.82-.22l-.8.46A5.9 5.9 0 0010 1.77V.97A.6.6 0 009.4.4H6.6a.6.6 0 00-.6.57v.8A5.9 5.9 0 004.64 2.24l-.8-.46A.6.6 0 003.02 2L2.18 3.38a.6.6 0 00.22.82l.8.46a5.9 5.9 0 000 1.68l-.8.46a.6.6 0 00-.22.82L3.02 9a.6.6 0 00.82.22l.8-.46A5.9 5.9 0 006 9.23v.8a.6.6 0 00.6.57h2.8a.6.6 0 00.6-.57v-.8a5.9 5.9 0 001.36-.47l.8.46a.6.6 0 00.82-.22L13.82 7.6a.6.6 0 00-.22-.82z" transform="translate(0 2.5) scale(.9)"/>
+        </svg>
+      </button>
+
+      <!-- Monitoring -->
+      <button class="nav-icon" id="btnMonitoring" data-tip="Monitoring">
+        <svg viewBox="0 0 16 16" fill="currentColor">
+          <rect x="1"  y="10" width="3"   height="5"  rx=".5"/>
+          <rect x="5.5" y="7" width="3"   height="8"  rx=".5"/>
+          <rect x="10" y="4"  width="3"   height="11" rx=".5"/>
+          <rect x="14.5" y="1" width="1"  height="14" rx=".5"/>
+        </svg>
+      </button>
+
+      <!-- Console -->
+      <button class="nav-icon" id="btnConsole" data-tip="Console">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="1" y="2" width="14" height="10" rx="1"/>
+          <path d="M5 14h6M8 12v2"/>
+          <path d="M4.5 6.5L7 9l-2.5 2.5M8.5 11.5H12"/>
+        </svg>
+      </button>
+
+      <!-- About / Help -->
+      <button class="nav-icon" id="btnAbout" data-tip="About">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+          <circle cx="8" cy="8" r="6.5"/>
+          <path d="M8 7.5V11.5"/>
+          <circle cx="8" cy="5" r="1" fill="currentColor" stroke="none"/>
+        </svg>
+      </button>
+
+    </div>
+  </nav>
+
+  <!-- ===== APP LAYOUT ===== -->
+  <div class="app-layout" id="appLayout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="appSidebar">
+      <div class="sidebar-collapse-btn" id="btnCollapse">
+        <svg viewBox="0 0 12 12" id="collapseIcon"><path d="M8 2L4 6l4 4"/></svg>
+      </div>
+      <div class="sidebar-tabs" id="sidebarTabs"></div>
+    </aside>
+
+    <!-- JOB AREA -->
+    <main class="job-area" id="jobArea">
+      <div class="empty-state" id="emptyState">
+        <svg viewBox="0 0 24 24"><path d="M3 18V8l9-5 9 5v10H15v-5H9v5z"/></svg>
+        <p>Sélectionner un job dans la navigation</p>
+      </div>
+    </main>
+
+    <!-- CONSOLE PANEL -->
+    <div class="console-panel" id="consolePanel">
+      <div class="console-hdr">
+        <span class="console-title">Console</span>
+        <button class="console-x" id="btnCloseConsole">✕</button>
+      </div>
+      <div class="console-body" id="consoleBody"></div>
+    </div>
+
+  </div><!-- /app-layout -->
+
+  <!-- ===== HELP PANEL ===== -->
+  <div class="help-panel" id="helpPanel">
+    <div class="panel-hdr">
+      <span class="panel-title">Help Center</span>
+      <button class="panel-close" id="closeHelp">✕</button>
+    </div>
+    <div class="panel-body">
+      <div class="panel-section">
+        <h4>Soumettre un job</h4>
+        <ul>
+          <li>Soumettre un job Savings</li>
+          <li>Soumettre un job UFX</li>
+          <li>Configurer les scénarios</li>
+          <li>Options avancées</li>
+        </ul>
+      </div>
+      <div class="panel-section">
+        <h4>Monitoring</h4>
+        <ul>
+          <li>Comprendre les états de job</li>
+          <li>Filtrer les résultats</li>
+          <li>Progression en temps réel</li>
+        </ul>
+      </div>
+      <div class="panel-section">
+        <h4>Configuration</h4>
+        <ul>
+          <li>Paramètres utilisateur</li>
+          <li>Gestion des environnements</li>
+          <li>Thème Dark / Light</li>
+        </ul>
+      </div>
+      <div class="panel-section">
+        <h4>À propos</h4>
+        <ul>
+          <li>Version 2026.01.00</li>
+          <li>Moteur OMEN · SGA</li>
+          <li>© Société Générale Assurances</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL — Advanced Options ===== -->
+  <div class="overlay" id="mAdvanced">
+    <div class="modal" style="max-width:440px">
+      <div class="modal-title">Advanced Options</div>
+      <button class="modal-close" data-close="mAdvanced">✕</button>
+
+      <div class="adv-row">
+        <button class="btn-toggle active" data-grp="sliding">Sliding</button>
+        <button class="btn-toggle"        data-grp="sliding">Test Sliding</button>
+      </div>
+      <div class="adv-row">
+        <button class="btn-toggle" data-grp="task">Launch Input Task Only</button>
+      </div>
+
+      <div class="adv-field">
+        <label class="adv-lbl">Job Priority</label>
+        <select><option value="">— Choose —</option><option>Automatic</option><option>Normal</option><option>High</option></select>
+      </div>
+      <div class="adv-field">
+        <label class="adv-lbl">Task Type</label>
+        <select><option value="">— Choose —</option><option>Standard</option><option>SCR</option></select>
+      </div>
+      <div class="adv-field">
+        <label class="adv-lbl">Number Of Iterations for Life SCRs</label>
+        <input type="number" value="12" style="width:100px">
+      </div>
+      <div class="adv-row">
+        <button class="btn-toggle" data-grp="avg">Do Not Make Average</button>
+      </div>
+      <div class="adv-field" style="margin-bottom:0">
+        <label class="adv-lbl">Delayed Execution</label>
+        <input type="date" style="width:180px">
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL — File Explorer ===== -->
+  <div class="overlay" id="mBrowse">
+    <div class="modal" style="max-width:500px">
+      <div class="modal-title">Explorateur de fichiers</div>
+      <button class="modal-close" data-close="mBrowse">✕</button>
+      <input type="text" id="browsePath" value="\\srv\styx\recette\_usecases\savings\Cas02\4-Omen">
+      <div class="file-list" id="fileList">
+        <div class="file-item" data-folder="case">        <span>📁</span> case</div>
+        <div class="file-item" data-folder="convergence"><span>📁</span> convergence</div>
+        <div class="file-item" data-folder="input">      <span>📁</span> input</div>
+        <div class="file-item" data-folder="output">     <span>📁</span> output</div>
+        <div class="file-item" data-folder="scenario">   <span>📁</span> scenario</div>
+      </div>
+      <div class="modal-acts">
+        <button class="btn-submit" id="btnFileSelect">Sélectionner</button>
+        <button class="btn-secondary" data-close="mBrowse">Annuler</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL — Général / Préférences ===== -->
+  <div class="overlay" id="mGeneral">
+    <div class="modal" style="max-width:420px">
+      <div class="modal-title">Général</div>
+      <button class="modal-close" data-close="mGeneral">✕</button>
+
+      <div class="pref-section">
+        <div class="pref-section-title">Application</div>
+        <div class="pref-row"><span class="pref-key">Version</span>       <span class="pref-val">2026.01.00</span></div>
+        <div class="pref-row"><span class="pref-key">Environnement</span> <span class="pref-val">Recette</span></div>
+        <div class="pref-row"><span class="pref-key">Serveur</span>       <span class="pref-val mono" style="font-size:.62rem">\\srv\styx\recette</span></div>
+      </div>
+
+      <div class="pref-section">
+        <div class="pref-section-title">Préférences utilisateur</div>
+        <div class="pref-row">
+          <span class="pref-key">Thème</span>
+          <div class="toggle-group">
+            <button class="btn-toggle active" id="prefDark">Dark</button>
+            <button class="btn-toggle"        id="prefLight">Light</button>
+          </div>
+        </div>
+        <div class="pref-row">
+          <span class="pref-key">Langue</span>
+          <select style="width:80px"><option>FR</option><option>EN</option></select>
+        </div>
+        <div class="pref-row">
+          <span class="pref-key">Job Priority par défaut</span>
+          <select style="width:110px"><option>Automatic</option><option>Normal</option><option>High</option></select>
+        </div>
+      </div>
+
+      <div class="pref-section">
+        <div class="pref-section-title">Compte</div>
+        <div class="pref-row"><span class="pref-key">Utilisateur</span> <span class="pref-val">Pablo RABADAN</span></div>
+        <div class="pref-row"><span class="pref-key">Rôle</span>        <span class="pref-val">Actuaire</span></div>
+        <div class="pref-row"><span class="pref-key">Équipe</span>      <span class="pref-val">ASSU · Production</span></div>
+      </div>
+
+      <div class="modal-acts">
+        <button class="btn-submit" data-close="mGeneral">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== FOOTER ===== -->
+  <footer>
+    <span>© Groupe Société Générale | ASSU 2025</span>
+    <span>STYX · v2026.01.00</span>
+  </footer>
+
+  <!-- ===== JQUERY ===== -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <script>
+  $(function () {
+
+    // ─────────────────────────────────────────────
+    // THEME
+    // ─────────────────────────────────────────────
+    const THEME_KEY = 'styx-theme';
+
+    function applyTheme(t) {
+      $('html').attr('data-theme', t);
+      localStorage.setItem(THEME_KEY, t);
+      $('#lblDark').css('opacity',  t === 'dark'  ? 1 : .3);
+      $('#lblLight').css('opacity', t === 'light' ? 1 : .3);
+      $('#prefDark').toggleClass('active',  t === 'dark');
+      $('#prefLight').toggleClass('active', t === 'light');
+    }
+
+    $('#themeToggle').on('click', () =>
+      applyTheme($('html').attr('data-theme') === 'dark' ? 'light' : 'dark'));
+    $('#prefDark').on('click',  () => applyTheme('dark'));
+    $('#prefLight').on('click', () => applyTheme('light'));
+
+    applyTheme(localStorage.getItem(THEME_KEY) || 'dark');
+
+    // ─────────────────────────────────────────────
+    // SIDEBAR COLLAPSE
+    // ─────────────────────────────────────────────
+    $('#btnCollapse').on('click', function () {
+      const c = $('#appLayout').toggleClass('sidebar-collapsed').hasClass('sidebar-collapsed');
+      $('#collapseIcon path').attr('d', c ? 'M4 2l4 4-4 4' : 'M8 2L4 6l4 4');
+    });
+
+    // ─────────────────────────────────────────────
+    // CONSOLE
+    // ─────────────────────────────────────────────
+    function openConsole()  { $('#appLayout').addClass('console-open');    $('#btnConsole').addClass('active'); }
+    function closeConsole() { $('#appLayout').removeClass('console-open'); $('#btnConsole').removeClass('active'); }
+
+    $('#btnConsole').on('click', () =>
+      $('#appLayout').hasClass('console-open') ? closeConsole() : openConsole());
+    $('#btnCloseConsole').on('click', closeConsole);
+
+    function cLog(msg, type) {
+      const ts  = new Date().toLocaleTimeString('fr-FR');
+      const cls = type === 'warn' ? 'warn' : type === 'error' ? 'error' : '';
+      const $l  = $('<div class="c-line ' + cls + '"><span class="ts">[' + ts + ']</span>' + msg + '</div>');
+      $('#consoleBody').append($l);
+      const b = $('#consoleBody')[0];
+      b.scrollTop = b.scrollHeight;
+    }
+
+    // ─────────────────────────────────────────────
+    // HELP PANEL
+    // ─────────────────────────────────────────────
+    $('#btnAbout').on('click', function () {
+      $('#helpPanel').toggleClass('open');
+      $(this).toggleClass('active');
+    });
+    $('#closeHelp').on('click', () => {
+      $('#helpPanel').removeClass('open');
+      $('#btnAbout').removeClass('active');
+    });
+
+    // ─────────────────────────────────────────────
+    // MODALS
+    // ─────────────────────────────────────────────
+    function openModal(id)  { $('#' + id).addClass('open'); }
+    function closeModal(id) { $('#' + id).removeClass('open'); }
+
+    $(document).on('click', '[data-close]', function () { closeModal($(this).data('close')); });
+    $('.overlay').on('click', function (e) {
+      if ($(e.target).hasClass('overlay')) closeModal($(this).attr('id'));
+    });
+
+    $('#btnSettings').on('click', () => openModal('mGeneral'));
+    $(document).on('click', '.btn-adv',    () => openModal('mAdvanced'));
+    $(document).on('click', '.btn-browse', () => openModal('mBrowse'));
+
+    // Folder navigation in file explorer
+    $(document).on('click', '.file-item', function () {
+      const folder = $(this).data('folder');
+      const base   = $('#browsePath').val().replace(/\\$/, '');
+      $('#browsePath').val(base + '\\' + folder);
+    });
+
+    $('#btnFileSelect').on('click', function () {
+      const path = $('#browsePath').val();
+      cLog('Chemin sélectionné : ' + path);
+      closeModal('mBrowse');
+    });
+
+    // ─────────────────────────────────────────────
+    // ADV TOGGLE BUTTONS (single-select per group)
+    // ─────────────────────────────────────────────
+    $(document).on('click', '.btn-toggle[data-grp]', function () {
+      const g = $(this).data('grp');
+      $('[data-grp="' + g + '"]').not(this).removeClass('active');
+      $(this).toggleClass('active');
+    });
+
+    // ─────────────────────────────────────────────
+    // OMEN JOBS DROPDOWN
+    // ─────────────────────────────────────────────
+    $('#btnOmenJobs').on('click', function (e) {
+      e.stopPropagation();
+      $('#omenDropdown').toggleClass('open');
+    });
+    $(document).on('click', () => $('#omenDropdown').removeClass('open'));
+
+    // ─────────────────────────────────────────────
+    // TAB / JOB MANAGEMENT
+    // ─────────────────────────────────────────────
+    let jobIdx = 0;
+
+    const JOB_LABELS = {
+      savings:    'Omen Savings',
+      nonlife:    'Omen Non Life',
+      risklife:   'Omen Risk Life',
+      risklifekp: 'Omen Risk Life KP',
+      tdr:        'Omen TdR',
+      bdr:        'Omen BdR',
+      ufx:        'UFX Job',
+      monitoring: 'Monitoring',
+    };
+
+    function openJob(type) {
+      // Monitoring is singleton
+      if (type === 'monitoring') {
+        if ($('#view-monitoring').length) { activateTab('monitoring'); return; }
+        $('#jobArea').append(buildMonitoring());
+        $('#emptyState').hide();
+        addTab('monitoring', 'Monitoring');
+        activateTab('monitoring');
+        return;
+      }
+
+      jobIdx++;
+      const id    = type + '-' + jobIdx;
+      const label = JOB_LABELS[type] || type;
+      const html  = type === 'ufx' ? buildUfx(id) : buildOmen(id, type);
+      $('#jobArea').append(html);
+      $('#emptyState').hide();
+      addTab(id, label);
+      activateTab(id);
+      cLog('Job ouvert : ' + label);
+    }
+
+    function addTab(id, label) {
+      const $t = $(
+        '<div class="sidebar-tab" data-job="' + id + '">' +
+          '<span class="tab-label">' + label + '</span>' +
+          '<button class="tab-close" tabindex="-1">×</button>' +
+        '</div>'
+      );
+      $('#sidebarTabs').append($t);
+    }
+
+    function activateTab(id) {
+      $('.sidebar-tab').removeClass('active');
+      $('.sidebar-tab[data-job="' + id + '"]').addClass('active');
+      $('.job-view').removeClass('active');
+      $('#view-' + id).addClass('active');
+    }
+
+    // Click tab → activate
+    $(document).on('click', '.sidebar-tab', function () {
+      activateTab($(this).data('job'));
+    });
+
+    // Close tab
+    $(document).on('click', '.tab-close', function (e) {
+      e.stopPropagation();
+      const $tab = $(this).closest('.sidebar-tab');
+      const id   = $tab.data('job');
+      $tab.remove();
+      $('#view-' + id).remove();
+      const $rem = $('.sidebar-tab');
+      if ($rem.length) activateTab($rem.last().data('job'));
+      else $('#emptyState').show();
+    });
+
+    // Nav bindings
+    $('#btnNewUfx').on('click',    () => openJob('ufx'));
+    $('#btnMonitoring').on('click',() => openJob('monitoring'));
+    $(document).on('click', '.job-type-opt', function () {
+      openJob($(this).data('type'));
+      $('#omenDropdown').removeClass('open');
+    });
+
+    // ─────────────────────────────────────────────
+    // PERIOD BUTTON GROUPS (single active per group)
+    // ─────────────────────────────────────────────
+    $(document).on('click', '.period-btn', function () {
+      $(this).closest('.period-group').find('.period-btn').removeClass('active');
+      $(this).addClass('active');
+    });
+
+    // ─────────────────────────────────────────────
+    // SETTINGS TOGGLE (Reference / Custom)
+    // ─────────────────────────────────────────────
+    $(document).on('click', '.settings-tog', function () {
+      $(this).closest('.toggle-group').find('.settings-tog').removeClass('active');
+      $(this).addClass('active');
+    });
+
+    // ─────────────────────────────────────────────
+    // SCENARIOS "ALL" CHECKBOX
+    // ─────────────────────────────────────────────
+    $(document).on('change', '.chk-all', function () {
+      const checked = $(this).is(':checked');
+      $(this).closest('.job-view').find('.scen-table input[type=checkbox]').prop('checked', checked);
+    });
+
+    // ─────────────────────────────────────────────
+    // SUBMIT
+    // ─────────────────────────────────────────────
+    $(document).on('click', '.btn-submit-job', function () {
+      const $v    = $(this).closest('.job-view');
+      const $name = $v.find('.field-name');
+      const name  = $name.val().trim();
+
+      if (!name) {
+        $name.addClass('is-invalid').focus();
+        cLog('Validation : le champ Name est requis.', 'error');
+        openConsole();
+        return;
+      } else {
+        $name.removeClass('is-invalid');
+      }
+
+      openConsole();
+      cLog('Job soumis : ' + name);
+      cLog('Connexion à l\'environnement en cours…', 'warn');
+      setTimeout(() => cLog('Job démarré — 0% complété'), 900);
+      setTimeout(() => cLog('Progression : 25%'), 2200);
+      setTimeout(() => cLog('Progression : 60%'), 4000);
+      setTimeout(() => cLog('Progression : 100% — Job terminé avec succès.'), 6500);
+    });
+
+    // ─────────────────────────────────────────────
+    // MONITORING FILTERS
+    // ─────────────────────────────────────────────
+    $(document).on('input', '.mf-id, .mf-name, .mf-priority, .mf-account', function () {
+      const id   = $('.mf-id').val().toLowerCase();
+      const name = $('.mf-name').val().toLowerCase();
+      const prio = $('.mf-priority').val().toLowerCase();
+      const acc  = $('.mf-account').val().toLowerCase();
+      $('#monitorBody tr').each(function () {
+        const t = $(this).text().toLowerCase();
+        $(this).toggle(
+          (!id   || t.includes(id))   &&
+          (!name || t.includes(name)) &&
+          (!prio || t.includes(prio)) &&
+          (!acc  || t.includes(acc))
+        );
+      });
+    });
+
+    // ─────────────────────────────────────────────
+    // FORM BUILDERS
+    // ─────────────────────────────────────────────
+
+    function periodLine(rowClass) {
+      return (
+        '<div class="period-line">' +
+          '<label class="' + rowClass + '-label">' +
+            '<input type="checkbox" class="chk-' + rowClass + '">' +
+            (rowClass === 'det' ? 'Deterministic' : rowClass === 'sto' ? 'Stochastic' : '') +
+          '</label>' +
+          '<div class="period-group f-row">' +
+            '<input type="text" class="range-inp" value="1-1000">' +
+            '<button class="btn-toggle period-btn active">1 years</button>' +
+            '<button class="btn-toggle period-btn">5 years</button>' +
+            '<button class="btn-toggle period-btn">30 years</button>' +
+            '<button class="btn-toggle period-btn">40 years</button>' +
+            '<button class="btn-toggle period-btn">Custom</button>' +
+            '<input type="number" class="months-inp" value="12">' +
+            '<span class="months-lbl">month(s)</span>' +
+          '</div>' +
+        '</div>'
+      );
+    }
+
+    function scenariosBlock() {
+      const rows = [
+        ['1', '2022Y_EUR_S2_Officiel_Tx328VA19_central_ZC.csv', '2022Y_EUR_S2_central_ZC.csv',  '2022Y_EUR_S2_M_ZC.csv',     '2022Y_EUR_S2_central_ZC.csv'],
+        ['2', '2022Y_EUR_S2_Officiel_Tx328VA19_34_ZC.csv',      '2022Y_EUR_S2_34_ZC.csv',       '2022Y_EUR_S2_M_ZC.csv',     '2022Y_EUR_S2_34_ZC.csv'],
+        ['3', '2022Y_EUR_S2_Officiel_Tx328VA19_14_ZC.csv',      '2022Y_EUR_S2_14_ZC.csv',       '2022Y_EUR_S2_M_ZC.csv',     '2022Y_EUR_S2_14_ZC.csv'],
+      ];
+      const tds = rows.map(r =>
+        '<tr>' +
+          '<td><input type="checkbox" checked></td>' +
+          r.map(c => '<td>' + c + '</td>').join('') +
+        '</tr>'
+      ).join('');
+
+      return (
+        '<div class="f-row" style="margin-bottom:6px">' +
+          '<label style="display:flex;align-items:center;gap:6px;font-family:\'DM Mono\';font-size:.65rem;color:var(--text-dim);cursor:pointer">' +
+            '<input type="checkbox" class="chk-all" checked> all' +
+          '</label>' +
+        '</div>' +
+        '<div class="scenarios-wrap">' +
+          '<table class="scen-table">' +
+            '<thead><tr><th>Select</th><th>Num</th><th>Name</th><th>File RN</th><th>File Det</th><th>File Sto</th></tr></thead>' +
+            '<tbody>' + tds + '</tbody>' +
+          '</table>' +
+        '</div>'
+      );
+    }
+
+    function buildUfx(id) {
+      return (
+        '<div class="job-view" id="view-' + id + '">' +
+          '<div class="form-header">' +
+            '<div>' +
+              '<div class="form-title">New UFX Job</div>' +
+              '<div class="form-title-sub">Universal Format Exchange</div>' +
+            '</div>' +
+            '<div class="form-actions-col">' +
+              '<button class="btn-submit btn-submit-job">Submit</button>' +
+              '<button class="btn-icon" title="Réinitialiser">' +
+                '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h12"/><path d="M5 4V2h6v2"/><path d="M3 4l1 10h8l1-10"/><path d="M6.5 7.5v4M9.5 7.5v4"/></svg>' +
+              '</button>' +
+            '</div>' +
+          '</div>' +
+          '<div class="form-grid">' +
+            '<div class="fg-lbl">Name:</div>' +
+            '<div class="fg-ctrl"><input type="text" class="field-name" placeholder="Nom du job UFX"></div>' +
+            '<div class="fg-lbl">Path:</div>' +
+            '<div class="fg-ctrl"><input type="text" placeholder="\\\\srv\\styx\\recette\\..."></div>' +
+            '<div class="fg-lbl nb"></div>' +
+            '<div class="fg-ctrl nb">' +
+              '<label style="display:flex;align-items:center;gap:8px;font-family:\'DM Mono\';font-size:.65rem;color:var(--text-dim);cursor:pointer">' +
+                '<input type="checkbox"> Is Folder' +
+              '</label>' +
+            '</div>' +
+          '</div>' +
+        '</div>'
+      );
+    }
+
+    function buildOmen(id, type) {
+      const labels = { savings:'Savings', nonlife:'Non Life', risklife:'Risk Life', risklifekp:'Risk Life KP', tdr:'TdR', bdr:'BdR' };
+      const codes  = { savings:'S', nonlife:'N', risklife:'RL', risklifekp:'KP', tdr:'T', bdr:'B' };
+      const lbl    = labels[type] || type;
+      const code   = codes[type]  || type.toUpperCase();
+
+      return (
+        '<div class="job-view" id="view-' + id + '">' +
+          '<div class="form-header">' +
+            '<div>' +
+              '<div class="form-title">New Omen ' + lbl + ' Job</div>' +
+              '<div class="form-title-sub">Type ' + code + ' · OMEN 2026.01.00</div>' +
+            '</div>' +
+            '<div class="form-actions-col">' +
+              '<div class="form-actions-row">' +
+                '<button class="btn-submit btn-submit-job">Submit</button>' +
+                '<button class="btn-secondary btn-adv">Advanced Options</button>' +
+              '</div>' +
+              '<div class="form-actions-row">' +
+                '<button class="btn-secondary btn-browse">Browse</button>' +
+                '<button class="btn-secondary">Open</button>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+
+          '<div class="form-grid">' +
+
+            '<div class="fg-lbl">Name:</div>' +
+            '<div class="fg-ctrl"><input type="text" class="field-name" placeholder="XK_Omen_' + lbl.replace(' ','_') + '"></div>' +
+
+            '<div class="fg-lbl">Environment:</div>' +
+            '<div class="fg-ctrl"><input type="text" placeholder="\\\\srv\\MOTEUR\\recette\\usecases\\..."></div>' +
+
+            '<div class="fg-lbl">Inputs:</div>' +
+            '<div class="fg-ctrl">' +
+              '<select><option value="">— Choose an input —</option><option>Input23.01.00_2022Y_vfinale</option><option>Input23.01.00_2023Y_vfinale</option><option>Input24.01.00_2024Y_vfinale</option></select>' +
+            '</div>' +
+
+            '<div class="fg-lbl">User Settings:</div>' +
+            '<div class="fg-ctrl">' +
+              '<div class="f-row">' +
+                '<button class="btn-secondary btn-browse">Browse</button>' +
+                '<button class="btn-secondary">Last</button>' +
+              '</div>' +
+              '<div class="toggle-group">' +
+                '<button class="btn-toggle settings-tog active">Reference</button>' +
+                '<button class="btn-toggle settings-tog">Custom</button>' +
+              '</div>' +
+            '</div>' +
+
+            '<div class="fg-lbl">Version Omen:</div>' +
+            '<div class="fg-ctrl">' +
+              '<select><option>2026.01.00</option><option>2025.04.00</option><option>2025.01.00</option></select>' +
+              '<select><option>2026.01.00_merge</option><option>2026.01.00_stable</option></select>' +
+            '</div>' +
+
+            '<div class="fg-lbl">Iteration Range / Period:</div>' +
+            '<div class="fg-ctrl">' + periodLine('det') + periodLine('sto') + '</div>' +
+
+            '<div class="fg-lbl">Guaranteed Floor:</div>' +
+            '<div class="fg-ctrl">' +
+              '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-family:\'DM Mono\';font-size:.65rem;color:var(--text-dim)">' +
+                '<input type="checkbox" checked>' +
+              '</label>' +
+            '</div>' +
+
+            '<div class="fg-lbl">Pricer derivatives:</div>' +
+            '<div class="fg-ctrl">' +
+              '<div class="period-line">' +
+                '<label style="width:96px;display:flex;align-items:center;gap:6px;cursor:pointer;font-family:\'DM Mono\';font-size:.65rem;color:var(--text-dim)">' +
+                  '<input type="checkbox">' +
+                '</label>' +
+                '<div class="period-group f-row">' +
+                  '<input type="text" class="range-inp" value="1-1000">' +
+                  '<button class="btn-toggle period-btn active">1 years</button>' +
+                  '<button class="btn-toggle period-btn">5 years</button>' +
+                  '<button class="btn-toggle period-btn">30 years</button>' +
+                  '<button class="btn-toggle period-btn">40 years</button>' +
+                  '<button class="btn-toggle period-btn">Custom</button>' +
+                  '<input type="number" class="months-inp" value="12">' +
+                  '<span class="months-lbl">month(s)</span>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+
+            '<div class="fg-lbl">Job Omen Type:</div>' +
+            '<div class="fg-ctrl">' +
+              '<select><option>S2</option><option>S1</option><option>FR_GAAP</option><option>Solvency_II</option></select>' +
+            '</div>' +
+
+            '<div class="fg-lbl nb">Scenarios:</div>' +
+            '<div class="fg-ctrl nb">' + scenariosBlock() + '</div>' +
+
+          '</div>' +
+        '</div>'
+      );
+    }
+
+    function buildMonitoring() {
+      const rows = [
+        { id:'4', name:'X_Omen Savings Cas 05-delayed',  pct:100, state:'done',    priority:'Automatic', account:'Pablo R.',          created:'2-2 17:22', submitted:'9-1 1.8', updated:'9-1 6.0'  },
+        { id:'3', name:'X_Omen Savings Cas 05-delayed',  pct:100, state:'done',    priority:'Normal',    account:'Pablo R.',          created:'2-2 12:23', submitted:'9-1 1.2', updated:''         },
+        { id:'5', name:'X_Omen Savings Cas 05-delayed',  pct:8,   state:'running', priority:'Automatic', account:'Toby Jean Luc B.',  created:'2-2 12:54', submitted:'9-1 1.8', updated:''         },
+        { id:'1', name:'XG_Omen Savings Cas 02 #2',      pct:100, state:'done',    priority:'High',      account:'Pablo R.',          created:'2-2 11:8',  submitted:'2-2 17:24',updated:'9-1 1.8' },
+      ];
+
+      const trs = rows.map(r =>
+        '<tr>' +
+          '<td><span class="state-dot ' + r.state + '"></span></td>' +
+          '<td class="mono">' + r.id + '</td>' +
+          '<td class="mono">' + r.name + '</td>' +
+          '<td><div class="prog-cell"><div class="prog-wrap"><div class="prog-bar" style="width:' + r.pct + '%"></div></div><span class="prog-pct">' + r.pct + '%</span></div></td>' +
+          '<td class="mono">' + r.priority + '</td>' +
+          '<td class="mono">' + r.account + '</td>' +
+          '<td class="mono">' + r.created + '</td>' +
+          '<td class="mono">' + r.submitted + '</td>' +
+          '<td class="mono">' + r.updated + '</td>' +
+        '</tr>'
+      ).join('');
+
+      return (
+        '<div class="job-view" id="view-monitoring">' +
+          '<div class="monitor-filters">' +
+            '<input type="text" class="mf-id f-input-sm"       placeholder="Job Id"      style="width:80px">' +
+            '<input type="text" class="mf-name f-input-sm"     placeholder="Job Name"    style="width:180px">' +
+            '<input type="text" class="mf-priority f-input-sm" placeholder="Priority"    style="width:100px">' +
+            '<input type="text" class="mf-account f-input-sm"  placeholder="Account Name" style="width:140px">' +
+            '<label><input type="checkbox"> Full View</label>' +
+          '</div>' +
+          '<div class="monitor-wrap">' +
+            '<table class="monitor-table">' +
+              '<thead><tr>' +
+                '<th>State</th><th>Id</th><th>Name</th><th>Progress</th>' +
+                '<th>Priority</th><th>Account Name</th><th>Created</th><th>Submitted</th><th>Last Update</th>' +
+              '</tr></thead>' +
+              '<tbody id="monitorBody">' + trs + '</tbody>' +
+            '</table>' +
+          '</div>' +
+        '</div>'
+      );
+    }
+
+  }); // end document.ready
+  </script>
+</body>
+</html>
