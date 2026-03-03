@@ -137,6 +137,23 @@ footer{position:relative;z-index:1;border-top:1px solid var(--bg-border);padding
   .kpi-row      { grid-template-columns: 1fr 1fr; }
   .snb          { padding: 11px 12px; font-size: .58rem; }
 }
+
+/* -- HELP BUTTON & POPUP -- */
+.help-btn{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border:1px solid var(--bg-border);border-radius:50%;background:transparent;color:var(--text-dim);font-family:'DM Mono';font-size:.75rem;font-weight:500;cursor:pointer;transition:border-color .2s,color .2s,background .2s;flex-shrink:0;}
+.help-btn:hover{border-color:var(--red);color:var(--red);background:var(--red-glow);}
+.help-popup-wrap{position:relative;display:inline-flex;align-items:center;}
+.help-popup{display:none;position:absolute;top:calc(100% + 10px);right:0;width:320px;background:var(--bg-card);border:1px solid var(--bg-border);border-top:2px solid var(--red);box-shadow:0 12px 36px rgba(0,0,0,.35);z-index:400;animation:fadeUp .18s ease both;}
+.help-popup.open{display:block;}
+.help-popup-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--bg-border);}
+.help-popup-title{font-family:'Bebas Neue';font-size:.95rem;letter-spacing:.1em;color:var(--text);}
+.help-popup-close{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:1.1rem;line-height:1;padding:0;transition:color .15s;}
+.help-popup-close:hover{color:var(--red);}
+.help-popup-body{padding:16px;font-family:'DM Sans';font-size:.78rem;color:var(--text-dim);line-height:1.65;}
+.help-popup-body p{margin:0 0 10px;}
+.help-popup-body p:last-child{margin-bottom:0;}
+.help-popup-body strong{color:var(--text);font-weight:600;}
+.help-step{display:flex;gap:10px;margin-bottom:8px;align-items:flex-start;}
+.help-step-num{flex-shrink:0;width:18px;height:18px;background:var(--red);color:#fff;font-family:'Bebas Neue';font-size:.7rem;display:flex;align-items:center;justify-content:center;margin-top:2px;}
 </style>
 </head>
 <body>
@@ -172,10 +189,29 @@ footer{position:relative;z-index:1;border-top:1px solid var(--bg-border);padding
       <div class="mod-title">Archive Script Generator</div>
       <div class="mod-desc">Générez des scripts robocopy pour l'archivage automatisé vers le cold storage.</div>
     </div>
-    <a class="dl-tpl" href="#">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      Télécharger modèle CSV
-    </a>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div class="help-popup-wrap">
+        <button class="help-btn" id="btnHelp">?</button>
+        <div class="help-popup" id="helpPopup">
+          <div class="help-popup-header">
+            <span class="help-popup-title">Comment utiliser ce module</span>
+            <button class="help-popup-close" id="closeHelp">&times;</button>
+          </div>
+          <div class="help-popup-body">
+            <p>Ce module génère des <strong>scripts robocopy</strong> pour automatiser l'archivage de fichiers vers le cold storage réseau.</p>
+            <div class="help-step"><span class="help-step-num">1</span><span>Téléchargez le <strong>modèle CSV</strong> et remplissez-le avec vos chemins source et destination.</span></div>
+            <div class="help-step"><span class="help-step-num">2</span><span><strong>Importez le CSV</strong> via drag &amp; drop ou en cliquant sur la zone de dépôt.</span></div>
+            <div class="help-step"><span class="help-step-num">3</span><span>Configurez les <strong>options robocopy</strong> : flags, log, exclusions.</span></div>
+            <div class="help-step"><span class="help-step-num">4</span><span>Prévisualisez les commandes dans le tableau, puis <strong>exportez</strong> en .cmd ou .xml.</span></div>
+            <p style="margin-top:12px;padding-top:10px;border-top:1px solid var(--bg-border);font-size:.72rem;color:var(--text-faint);">Les chemins UNC générés sont compatibles avec les serveurs <strong>srvrbxassufp01</strong> et <strong>srvrbxassufp01cold</strong>.</p>
+          </div>
+        </div>
+      </div>
+      <a class="dl-tpl" href="#">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Télécharger modèle CSV
+      </a>
+    </div>
   </div>
 
   <div class="config-panel">
@@ -241,6 +277,7 @@ function handleCsvFile(f) {
   document.getElementById('csvLabel').textContent = '✓ ' + f.name;
 }
 
+const cmds = [
   {cmd:'robocopy "\\\\srvrbxassufp01\\hpc\\01_EPARGNE\\2023" "\\\\srvrbxassufp01cold\\Archives3\\01_EPARGNE\\2023" /mir /LOG:\\\\srvrbxassufp01\\hpc\\00_MOTEUR\\Archives\\2023\\cpy_archives_01_epargne_2023.log'},
   {cmd:'robocopy "\\\\srvrbxassufp01\\hpc\\02_PREVOYANCE_DOMMAGE\\01_S2\\2023" "\\\\srvrbxassufp01cold\\Archives3\\02_PREVOYANCE_DOMMAGE\\01_S2" /mir /LOG:\\\\srvrbxassufp01\\hpc\\00_MOTEUR\\Archives\\2023\\cpy_archives_02_prevoyance_s2_2023.log'},
   {cmd:'robocopy "\\\\srvrbxassufp01\\hpc\\02_PREVOYANCE_DOMMAGE\\02_IFRS17\\2023" "\\\\srvrbxassufp01cold\\Archives3\\02_PREVOYANCE_DOMMAGE\\02_IFRS17" /mir /LOG:\\\\srvrbxassufp01\\hpc\\00_MOTEUR\\Archives\\2023\\cpy_archives_02_prevoyance_ifrs17_2023.log'},
@@ -258,6 +295,22 @@ function renderTable(data){
   </td></tr>`).join('');
 }
 renderTable(cmds);
+
+// Help popup
+document.getElementById('btnHelp').addEventListener('click', function(e) {
+  e.stopPropagation();
+  document.getElementById('helpPopup').classList.toggle('open');
+});
+document.getElementById('closeHelp').addEventListener('click', function(e) {
+  e.stopPropagation();
+  document.getElementById('helpPopup').classList.remove('open');
+});
+document.addEventListener('click', function() {
+  document.getElementById('helpPopup').classList.remove('open');
+});
+document.getElementById('helpPopup').addEventListener('click', function(e) {
+  e.stopPropagation();
+});
 </script>
 </body>
 </html>
