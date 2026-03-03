@@ -44,16 +44,18 @@ main{flex:1;padding:108px 40px 60px;max-width:1280px;margin:0 auto;width:100%;po
 .mod-title{font-family:'Bebas Neue',sans-serif;font-size:2.6rem;letter-spacing:.06em;line-height:1;color:var(--text);transition:color .28s;}
 .mod-desc{font-size:.78rem;color:var(--text-dim);margin-top:5px;transition:color .28s;}
 
-.converter{display:grid;grid-template-columns:1fr 52px 1fr;gap:2px;flex:1;animation:fadeUp .5s .1s ease both;min-height:520px;}
+.converter{display:grid;grid-template-columns:1fr 1fr;gap:12px;flex:1;animation:fadeUp .5s .1s ease both;min-height:520px;}
 .panel{background:var(--bg-card);border:1px solid var(--bg-border);display:flex;flex-direction:column;transition:background .28s,border-color .28s;}
 .panel-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--bg-border);transition:border-color .28s;}
 .panel-lbl{font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--text-dim);transition:color .28s;}
 .ph-right{display:flex;gap:6px;}
 .ibtn{width:28px;height:28px;display:flex;align-items:center;justify-content:center;background:transparent;border:1px solid var(--bg-border);color:var(--text-dim);cursor:pointer;transition:border-color .2s,color .2s,background .28s;}
 .ibtn:hover{border-color:var(--red);color:var(--red);}
-.drop-zone{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border:2px dashed var(--bg-border);margin:14px;cursor:pointer;position:relative;transition:border-color .2s,background .2s;}
+.in-body{flex:1;position:relative;display:flex;}
+.drop-zone{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;border:2px dashed var(--bg-border);margin:14px;cursor:pointer;transition:border-color .2s,background .2s,opacity .15s;z-index:2;background:var(--bg-input);}
 .drop-zone.over{border-color:var(--red);background:var(--red-glow);}
 .drop-zone input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer;}
+.in-body.has-content .drop-zone{opacity:0;pointer-events:none;}
 .drop-icon{margin-bottom:10px;}
 .drop-icon svg{stroke:var(--red);}
 .drop-txt{font-family:'DM Mono',monospace;font-size:.73rem;color:var(--text-dim);letter-spacing:.04em;transition:color .28s;}
@@ -168,19 +170,16 @@ footer{position:relative;z-index:1;border-top:1px solid var(--bg-border);padding
           <button class="ibtn" onclick="clearIn()" title="Effacer"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button>
         </div>
       </div>
-      <div class="drop-zone" id="dz" ondragover="dz.classList.add('over');event.preventDefault()" ondragleave="dz.classList.remove('over')" ondrop="dz.classList.remove('over');handleDrop(event)">
-        <input type="file" accept=".json" onchange="readFile(this.files[0])">
-        <div class="drop-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg></div>
-        <div class="drop-txt">Déposez votre JSON WPF ici</div>
-        <div class="drop-sub">ou cliquez pour choisir un fichier</div>
+      <div class="in-body" id="inBody">
+        <div class="drop-zone" id="dz" ondragover="dz.classList.add('over');event.preventDefault()" ondragleave="dz.classList.remove('over')" ondrop="dz.classList.remove('over');handleDrop(event)">
+          <input type="file" accept=".json" onchange="readFile(this.files[0])">
+          <div class="drop-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg></div>
+          <div class="drop-txt">Déposez votre JSON WPF ici</div>
+          <div class="drop-sub">ou cliquez pour choisir un fichier · Ctrl+V pour coller</div>
+        </div>
+        <textarea class="code" id="inArea" placeholder="JSON WPF…" oninput="validate()"></textarea>
       </div>
-      <textarea class="code" id="inArea" placeholder="Ou collez votre JSON ici…" oninput="validate()" style="display:none"></textarea>
       <div class="status"><div class="sdot" id="inDot"></div><span id="inTxt">En attente d'entrée</span></div>
-    </div>
-
-    <!-- MIDDLE -->
-    <div class="mid">
-      <button class="cvt-btn" id="cvtBtn" onclick="convert()">Convertir</button>
     </div>
 
     <!-- OUTPUT -->
@@ -210,22 +209,22 @@ function toggleTheme(){applyTheme(document.documentElement.getAttribute('data-th
 applyTheme(localStorage.getItem(KEY)||'dark');
 
 let parsed=null;
-const dz=document.getElementById('dz');
+const inBody=document.getElementById('inBody');
 const inArea=document.getElementById('inArea');
 const outArea=document.getElementById('outArea');
 
-function showTA(){dz.style.display='none';inArea.style.display='block';}
-function clearIn(){inArea.value='';dz.style.display='flex';inArea.style.display='none';parsed=null;setStatus('inDot','inTxt','','En attente d\'entrée');setStatus('outDot','outTxt','','En attente');outArea.value='';document.getElementById('cvtBtn').classList.remove('show');}
+function setHasContent(val){inBody.classList.toggle('has-content',val);}
+function clearIn(){inArea.value='';setHasContent(false);parsed=null;setStatus('inDot','inTxt','','En attente d\'entrée');setStatus('outDot','outTxt','','En attente');outArea.value='';}
 function handleDrop(e){e.preventDefault();const f=e.dataTransfer.files[0];if(f)readFile(f);}
-function readFile(f){const r=new FileReader();r.onload=e=>{inArea.value=e.target.result;showTA();validate();};r.readAsText(f);}
-async function pasteIn(){try{inArea.value=await navigator.clipboard.readText();showTA();validate();}catch{}}
+function readFile(f){const r=new FileReader();r.onload=e=>{inArea.value=e.target.result;validate();};r.readAsText(f);}
+async function pasteIn(){try{inArea.value=await navigator.clipboard.readText();validate();}catch{}}
 function setStatus(dot,txt,state,msg){document.getElementById(dot).className='sdot'+( state?' '+state:'');document.getElementById(txt).textContent=msg;}
 function validate(){
   const v=inArea.value.trim();
-  if(!v)return;
-  showTA();
-  try{parsed=JSON.parse(v);setStatus('inDot','inTxt','ok','JSON valide — '+v.length+' car.');document.getElementById('cvtBtn').classList.add('show');}
-  catch(e){parsed=null;setStatus('inDot','inTxt','err','JSON invalide : '+e.message);document.getElementById('cvtBtn').classList.remove('show');}
+  setHasContent(!!v);
+  if(!v){parsed=null;setStatus('inDot','inTxt','','En attente d\'entrée');outArea.value='';setStatus('outDot','outTxt','','En attente');return;}
+  try{parsed=JSON.parse(v);setStatus('inDot','inTxt','ok','JSON valide — '+v.length+' car.');convert();}
+  catch(e){parsed=null;setStatus('inDot','inTxt','err','JSON invalide : '+e.message);outArea.value='';setStatus('outDot','outTxt','','En attente');}
 }
 function transformKeys(obj){
   if(Array.isArray(obj))return obj.map(transformKeys);
@@ -241,8 +240,12 @@ function convert(){
 function copyOut(){if(outArea.value)navigator.clipboard.writeText(outArea.value);}
 function dlOut(){if(!outArea.value)return;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([outArea.value],{type:'application/json'}));a.download='converted_web.json';a.click();}
 
-// Init: show textarea
-showTA();
+// Paste global (Ctrl+V) — fonctionne toujours, drop zone ou non
+document.addEventListener('paste', function(e) {
+  if (document.activeElement === outArea) return;
+  const text = e.clipboardData.getData('text');
+  if (text) { inArea.value = text; validate(); }
+});
 </script>
 </body>
 </html>
