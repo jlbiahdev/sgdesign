@@ -650,6 +650,13 @@ input::placeholder {
   color: var(--text-faint);
   font-style: italic;
 }
+input:disabled,
+select:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  background: var(--bg-border);
+  color: var(--text-faint);
+}
 input[type="checkbox"] {
   width: 14px;
   height: 14px;
@@ -1493,4 +1500,36 @@ footer {
 .is-invalid {
   border-color: var(--red) !important;
   box-shadow: 0 0 0 3px var(--red-glow) !important;
+}
+
+/* Context menu */
+.ctx-menu {
+  position: fixed;
+  background: var(--bg-card);
+  border: 1px solid var(--bg-border);
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.18);
+  z-index: 9000;
+  min-width: 160px;
+  padding: 3px 0;
+  user-select: none;
+}
+.ctx-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  cursor: pointer;
+  font-size: .72rem;
+  color: var(--text);
+  white-space: nowrap;
+}
+.ctx-item svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+  color: var(--text-dim);
+}
+.ctx-item:hover {
+  background: var(--bg-border);
 }

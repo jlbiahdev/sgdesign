@@ -61,8 +61,12 @@ $(function () {
     });
 
     function _resolve(method, path) {
+      if (!_db) return undefined;
       var key = method + ' ' + path;
-      return _db ? _db[key] : undefined;
+      if (key in _db) return _db[key];
+      // fallback: strip query string
+      var base = method + ' ' + path.split('?')[0];
+      return base in _db ? _db[base] : undefined;
     }
 
     // Simulate async call with optional 120ms delay
@@ -199,6 +203,14 @@ $(function () {
       }
     }
 
+    // Period buttons : active data-period per period-line
+    $ctx.find('.period-line').each(function () {
+      var name = $(this).find('[name$="Enabled"]').attr('name');
+      if (!name) return;
+      var prefix = name.replace('Enabled', '');
+      data[prefix + 'Period'] = $(this).find('.period-btn.active').data('period') || '';
+    });
+
     // Scénarios : array des Num sélectionnés
     var $scenBody = $ctx.find('.scen-table tbody');
     if ($scenBody.length) {
@@ -240,6 +252,17 @@ $(function () {
       if ($ctx.find('.btn-toggle[data-grp="' + g + '"]').length === 1 && g in data) {
         $(this).toggleClass('active', !!data[g]);
       }
+    });
+
+    // Period buttons : restore active state
+    $ctx.find('.period-line').each(function () {
+      var name = $(this).find('[name$="Enabled"]').attr('name');
+      if (!name) return;
+      var prefix = name.replace('Enabled', '');
+      var key = prefix + 'Period';
+      if (!(key in data)) return;
+      $(this).find('.period-btn').removeClass('active');
+      $(this).find('.period-btn[data-period="' + data[key] + '"]').addClass('active');
     });
 
     // Scénarios
@@ -416,12 +439,12 @@ $(function () {
       var viewId = $view.attr('id') || '';
       var type = viewId.replace(/^view-/, '').replace(/-\d+$/, '');
       var builders = {
-        savings: buildAdvSavings,
-        nonlife: buildAdvNonLife,
-        risklife: buildAdvRiskLife,
+        savings:    buildAdvSavings,
+        nonlife:    buildAdvNonLife,
+        risklife:   buildAdvRiskLife,
         risklifekp: buildAdvRiskLifeKp,
         tdr: buildAdvTdr,
-        bdr: buildAdvBdr,
+        brd: buildAdvBrd,
         'tool-compare': buildAdvTool,
         'tool-extract': buildAdvTool,
         'tool-report': buildAdvTool,
@@ -576,6 +599,26 @@ $(function () {
     });
   }
 
+  $(document).on('click', '.btn-open-env', function () {
+    var path = $(this).closest('.f-row').find('[name="environment"]').val().trim();
+    if (!path) {
+      openConsole();
+      cLog('Open : aucun chemin Environment renseigné.', 'error');
+      return;
+    }
+    // Convertit le chemin Windows en URI file://
+    var uri;
+    if (/^\\\\/.test(path)) {
+      // UNC : \\server\share\... → file://server/share/...
+      uri = 'file:' + path.replace(/\\/g, '/');
+    } else {
+      // Chemin local : C:\... → file:///C:/...
+      uri = 'file:///' + path.replace(/\\/g, '/').replace(/^\/+/, '');
+    }
+    window.open(uri);
+    cLog('Ouverture dans l\'explorateur : ' + path);
+  });
+
   $(document).on('click', '.btn-browse', function () {
     var $btn = $(this);
     var startPath = '';
@@ -660,12 +703,12 @@ $(function () {
   var _outputCache = [];
 
   var JOB_LABELS = {
-    savings: 'Omen Savings',
-    nonlife: 'Omen Non Life',
-    risklife: 'Omen Risk Life',
+    savings:    'Omen Savings',
+    nonlife:    'Omen Non Life',
+    risklife:   'Omen Risk Life',
     risklifekp: 'Omen Risk Life KP',
     tdr: 'Omen TdR',
-    bdr: 'Omen BdR',
+    brd: 'Omen Savings BRD',
     ufx: 'UFX Job',
     monitoring: 'Monitoring',
     'tool-compare': 'Tool · Compare',
@@ -699,12 +742,12 @@ $(function () {
     var stxKey = 'job.' + id;
     var label = JOB_LABELS[type] || type;
     var omenBuilders = {
-      savings: buildOmenSavings,
-      nonlife: buildOmenNonLife,
-      risklife: buildOmenRiskLife,
+      savings:    buildOmenSavings,
+      nonlife:    buildOmenNonLife,
+      risklife:   buildOmenRiskLife,
       risklifekp: buildOmenRiskLifeKp,
       tdr: buildOmenTdr,
-      bdr: buildOmenBdr,
+      brd: buildOmenBrd,
     };
     var html;
     if (type === 'ufx') html = buildUfx(id);
@@ -727,8 +770,12 @@ $(function () {
     STX.set(stxKey, meta);
 
     // Init API : peuple les selects depuis l'API
-    if (type === 'savings') initSavingsView($view);
-    if (type === 'nonlife') initNonLifeView($view);
+    if (type === 'savings')  initSavingsView($view);
+    if (type === 'brd')      initBrdView($view);
+    if (type === 'tdr')      initTdrView($view);
+    if (type === 'nonlife')  initNonLifeView($view);
+    if (type === 'risklife')   initRiskLifeView($view);
+    if (type === 'risklifekp') initRiskLifeKpView($view);
 
     addTab(id, label, type);
     activateTab(id);
@@ -833,12 +880,16 @@ $(function () {
     if (!type) return;
     var last = STX.get('lastSubmit.' + type);
     if (!last) {
-      cLog('Aucun job ' + type + ' soumis récemment.');
+      openConsole();
+      cLog('Aucun job ' + type + ' soumis récemment.', 'warn');
       return;
     }
 
     restoreView($view, last);
     syncBrowseButtons($view);
+
+    // Period checkboxes: fire change so .period-group toggling disabled class
+    $view.find('.chk-period').trigger('change');
 
     // Adv : écrire dans STX (pour saveJobView / future ouverture manuelle)
     if (last.adv) {
@@ -850,12 +901,12 @@ $(function () {
     // Ouvrir le panel directement depuis last.adv, sans passer par trigger/STX
     if ($view.find('.adv-chk').prop('checked')) {
       var advBuilders = {
-        savings: buildAdvSavings,
-        nonlife: buildAdvNonLife,
-        risklife: buildAdvRiskLife,
+        savings:    buildAdvSavings,
+        nonlife:    buildAdvNonLife,
+        risklife:   buildAdvRiskLife,
         risklifekp: buildAdvRiskLifeKp,
         tdr: buildAdvTdr,
-        bdr: buildAdvBdr,
+        brd: buildAdvBrd,
         'tool-compare': buildAdvTool,
         'tool-extract': buildAdvTool,
         'tool-report': buildAdvTool,
@@ -880,10 +931,12 @@ $(function () {
         });
         if (last.inputs) $sel.val(last.inputs);
       });
+      var _isRLType = (type === 'risklife' || type === 'risklifekp' || type === 'brd');
       if ($view.find('.scen-table').length) {
         API.exploreDir(envPath + '/scenario').then(function (node) {
           if (node.scenarios) {
-            rebuildScenarios($view, node.scenarios);
+            if (_isRLType) rebuildRLScenarios($view, node.scenarios);
+            else           rebuildScenarios($view, node.scenarios);
             // Réappliquer les sélections sauvegardées après le rebuild
             if (last.scenarios && last.scenarios.length) {
               $view.find('.scen-table tbody tr').each(function () {
@@ -1003,10 +1056,15 @@ $(function () {
     return norm.replace(/^\/+|\/+$/g, '');
   }
 
-  // Environment → Browse enable/disable + inputs + scénarios (debounced 600ms)
-  var _loadEnvData = debounce(function ($view) {
+  // Environment → inputs + scénarios au blur
+  function _resetEnvData($view) {
+    $view.find('[name="inputs"]').find('option:not(:first)').remove().end().val('');
+    $view.find('.scen-table tbody').empty();
+  }
+
+  function _loadEnvData($view) {
     var envPath = envToApiPath($view.find('[name="environment"]').val());
-    if (!envPath) return;
+    if (!envPath) { _resetEnvData($view); return; }
 
     // Inputs : dossiers de <env>/input
     API.exploreDir(envPath + '/input').then(function (node) {
@@ -1019,15 +1077,23 @@ $(function () {
       if (cur) $sel.val(cur);
     });
 
-    // Scénarios : ScenarioMoSesDto[] de <env>/scenario
+    // Scénarios : depuis <env>/scenario
     if ($view.find('.scen-table').length) {
+      var _id2 = $view.attr('id').replace('view-', '');
+      var _type2 = (STX.get('job.' + _id2) || {}).type;
+      var _isRL = (_type2 === 'risklife' || _type2 === 'risklifekp' || _type2 === 'brd');
       API.exploreDir(envPath + '/scenario').then(function (node) {
-        if (node.scenarios) rebuildScenarios($view, node.scenarios);
+        if (!node.scenarios) return;
+        if (_isRL) rebuildRLScenarios($view, node.scenarios);
+        else       rebuildScenarios($view, node.scenarios);
       });
     }
-  }, 600);
+  }
 
-  $(document).on('input change', '.job-view [name="environment"]', function () {
+  $(document).on('input', '.job-view [name="environment"]', function () {
+    syncBrowseButtons($(this).closest('.job-view'));
+  });
+  $(document).on('blur', '.job-view [name="environment"]', function () {
     var $view = $(this).closest('.job-view');
     syncBrowseButtons($view);
     _loadEnvData($view);
@@ -1093,9 +1159,222 @@ $(function () {
     return errs;
   }
 
+  function validateNonLife($v, name) {
+    var errs = validateOmenBase($v, name);
+    var period = parseInt($v.find('[name="period"]').val(), 10);
+    if (!period || period <= 0)
+      errs.push(name + ' : Period must be a positive number of years');
+    return errs;
+  }
+
+  function validateRiskLife($v, name) {
+    var errs = validateOmenBase($v, name);
+    var isAuto = $v.find('[name="autoIterations"]').is(':checked');
+    if (!isAuto) {
+      var iter = ($v.find('[name="iterations"]').val() || '').trim();
+      if (!iter)
+        errs.push(name + ' : Iterations is required (e.g. 1-1)');
+    }
+    var period = parseInt($v.find('[name="period"]').val(), 10);
+    if (!period || period <= 0)
+      errs.push(name + ' : Period must be a positive number of months');
+    var hasScen = $v.find('.scen-table tbody input[type="checkbox"]:checked').length > 0;
+    if (!hasScen)
+      errs.push(name + ' : you have to select at least one scenario');
+    return errs;
+  }
+
+  function validateRiskLifeKp($v, name) {
+    var errs = validateOmenBase($v, name);
+    var period = parseInt($v.find('[name="period"]').val(), 10);
+    if (!period || period <= 0)
+      errs.push(name + ' : Period must be a positive number of months');
+    var hasScen = $v.find('.scen-table tbody input[type="checkbox"]:checked').length > 0;
+    if (!hasScen)
+      errs.push(name + ' : you have to select at least one scenario');
+    return errs;
+  }
+
+  function validateTdr($v, name) {
+    var errs = validateOmenBase($v, name);
+    var period = parseInt($v.find('[name="period"]').val(), 10);
+    if (!period || period <= 0)
+      errs.push(name + ' : Period must be a positive number of months');
+    return errs;
+  }
+
+  function validateBrd($v, name) {
+    var errs = validateOmenBase($v, name);
+    var dur = parseInt($v.find('[name="projectionDuration"]').val(), 10);
+    if (!dur || dur <= 0)
+      errs.push(name + ' : Projection Duration must be a positive number of years');
+    var hasScen = $v.find('.scen-table tbody input[type="checkbox"]:checked').length > 0;
+    if (!hasScen)
+      errs.push(name + ' : you have to select at least one scenario');
+    return errs;
+  }
+
   var _validators = {
-    savings: validateSavings,
+    savings:    validateSavings,
+    brd:        validateBrd,
+    tdr:        validateTdr,
+    nonlife:    validateNonLife,
+    risklife:   validateRiskLife,
+    risklifekp: validateRiskLifeKp,
   };
+
+  // ─────────────────────────────────────────────
+  // CONTEXT MENU
+  // ─────────────────────────────────────────────
+  var _ctxClipboard = null; // { type, data }
+  var _ctxMenu = null;
+
+  function _isFormValid($view) {
+    var id = $view.attr('id').replace('view-', '');
+    var type = (STX.get('job.' + id) || {}).type;
+    var validate = _validators[type];
+    if (!validate) return false;
+    var name = ($view.find('.field-name').val() || '').trim() || 'job';
+    return validate($view, name).length === 0;
+  }
+
+  function _hideCtxMenu() {
+    if (_ctxMenu) { _ctxMenu.remove(); _ctxMenu = null; }
+  }
+
+  var _CTX_ICONS = {
+    'Refresh':       '<svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7A5 5 0 1 1 9.5 2.8"/><polyline points="12 1 12 4.5 8.5 4.5"/></svg>',
+    'Copy Settings': '<svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="1" width="8" height="9" rx="1.2"/><rect x="1" y="4" width="8" height="9" rx="1.2"/></svg>',
+    'Paste Settings':'<svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="10" height="10" rx="1.2"/><path d="M4 3V2a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><line x1="4" y1="7" x2="8" y2="7"/><line x1="4" y1="9.5" x2="7" y2="9.5"/></svg>',
+  };
+
+  function _showCtxMenu(items, x, y) {
+    _hideCtxMenu();
+    var $m = $('<div class="ctx-menu"></div>');
+    items.forEach(function (item) {
+      var icon = _CTX_ICONS[item.label] || '';
+      var $i = $('<div class="ctx-item"></div>').html(icon + '<span>' + item.label + '</span>');
+      $i.on('click', function () { _hideCtxMenu(); item.action(); });
+      $m.append($i);
+    });
+    $m.css({ left: x, top: y });
+    $('body').append($m);
+    _ctxMenu = $m;
+  }
+
+  $(document).on('contextmenu', '.job-view', function (e) {
+    var $view = $(this);
+    var id = $view.attr('id').replace('view-', '');
+    var type = (STX.get('job.' + id) || {}).type;
+    if (!type || !_validators[type]) return;
+
+    var valid = _isFormValid($view);
+    var hasClip = !!(_ctxClipboard && _ctxClipboard.type === type);
+
+    // Blank + no matching clipboard → no menu
+    if (!valid && !hasClip) return;
+
+    e.preventDefault();
+
+    var items = [];
+
+    // Refresh — always present when menu is shown
+    items.push({
+      label: 'Refresh',
+      action: function () {
+        var env = $view.find('[name="environment"]').val();
+        if (!env) return;
+        API.get('/api/JobManager/refreshinputs?environment=' + encodeURIComponent(env))
+          .then(function (data) {
+            var $sel = $view.find('[name="inputs"]');
+            var cur = $sel.val();
+            $sel.find('option:not(:first)').remove();
+            (data.inputs || []).forEach(function (s) {
+              $sel.append('<option>' + s + '</option>');
+            });
+            if (cur) $sel.val(cur);
+          });
+      }
+    });
+
+    if (valid) {
+      items.push({
+        label: 'Copy Settings',
+        action: function () {
+          var data = STX.get('job.' + id);
+          _ctxClipboard = { type: type, data: data };
+          try { navigator.clipboard.writeText(JSON.stringify(data, null, 2)); } catch (ex) {}
+        }
+      });
+    }
+
+    if (hasClip) {
+      items.push({
+        label: 'Paste Settings',
+        action: function () {
+          var data = _ctxClipboard.data;
+          restoreView($view, data);
+          syncBrowseButtons($view);
+
+          // Period checkboxes: fire change so .period-group toggling disabled class
+          $view.find('.chk-period').trigger('change');
+
+          // Advanced Options: save adv to STX + restore panel body (same as Last button)
+          if (data.adv) {
+            var cur = STX.get('job.' + id) || {};
+            STX.set('job.' + id, $.extend(cur, { adv: data.adv }));
+            restoreView($('#sidePanelBody'), data.adv);
+          }
+
+          // If Reference mode: trigger model change to reload correct versions, then re-apply version
+          if (data.model) {
+            $view.find('.ref-content [name="model"]').trigger('change');
+            if (data.version) $view.find('.ref-content [name="version"]').val(data.version);
+          }
+
+          // Load env data with post-load restore of inputs value
+          var envPath = envToApiPath($view.find('[name="environment"]').val());
+          if (!envPath) { saveJobView($view); return; }
+
+          API.exploreDir(envPath + '/input').then(function (node) {
+            var $sel = $view.find('[name="inputs"]');
+            $sel.find('option:not(:first)').remove();
+            (node.folders || []).forEach(function (s) {
+              $sel.append('<option>' + s + '</option>');
+            });
+            if (data.inputs) $sel.val(data.inputs);
+            saveJobView($view);
+          });
+
+          // Reload scenarios then re-apply selections
+          if ($view.find('.scen-table').length) {
+            var _isRL = (type === 'risklife' || type === 'risklifekp' || type === 'brd');
+            API.exploreDir(envPath + '/scenario').then(function (node) {
+              if (!node.scenarios) return;
+              if (_isRL) rebuildRLScenarios($view, node.scenarios);
+              else rebuildScenarios($view, node.scenarios);
+              if (data.scenarios) {
+                $view.find('.scen-table tbody tr').each(function () {
+                  var num = $(this).find('td').eq(1).text().trim();
+                  $(this).find('input[type=checkbox]').prop('checked', data.scenarios.indexOf(num) !== -1);
+                });
+              }
+            });
+          }
+        }
+      });
+    }
+
+    _showCtxMenu(items, e.clientX, e.clientY);
+  });
+
+  $(document).on('click', function (e) {
+    if (_ctxMenu && !$(e.target).closest('.ctx-menu').length) _hideCtxMenu();
+  });
+
+  $(document).on('keydown', function (e) {
+    if (e.key === 'Escape') _hideCtxMenu();
+  });
 
   // ─────────────────────────────────────────────
   // SUBMIT
@@ -1505,62 +1784,39 @@ $(function () {
   }
 
   function buildAdvNonLife() {
-    return (
-      advSlidingRow() +
-      '<div class="adv-row">' +
-      '<button class="btn-toggle" data-grp="launchInputTaskOnly">Launch Input Task Only</button>' +
-      '</div>' +
-      advCommon()
-    );
+    return '';
   }
 
   function buildAdvRiskLife() {
     return (
       advSlidingRow() +
-      '<div class="adv-row">' +
-      '<button class="btn-toggle" data-grp="launchInputTaskOnly">Launch Input Task Only</button>' +
-      '<button class="btn-toggle" data-grp="removeInputGeneration">Remove input generation</button>' +
-      '</div>' +
       '<div class="adv-field">' +
-      '<label class="adv-lbl">Number Of Iterations for Life SCRs</label>' +
-      '<input type="number" name="iterationsLifeSCR" style="width:100px">' +
-      '</div>' +
-      advCommon()
+      '<label class="adv-lbl">Job priority</label>' +
+      '<select name="priority"><option>Automatic</option><option selected>Normal</option><option>High</option></select>' +
+      '</div>'
     );
   }
 
   function buildAdvRiskLifeKp() {
     return (
       advSlidingRow() +
-      '<div class="adv-row">' +
-      '<button class="btn-toggle" data-grp="launchInputTaskOnly">Launch Input Task Only</button>' +
-      '<button class="btn-toggle" data-grp="removeInputGeneration">Remove input generation</button>' +
-      '</div>' +
       '<div class="adv-field">' +
-      '<label class="adv-lbl">Number Of Iterations for Life SCRs</label>' +
-      '<input type="number" name="iterationsLifeSCR" style="width:100px">' +
-      '</div>' +
-      advCommon()
+      '<label class="adv-lbl">Job priority</label>' +
+      '<select name="priority"><option>Automatic</option><option selected>Normal</option><option>High</option></select>' +
+      '</div>'
     );
   }
 
   function buildAdvTdr() {
-    return (
-      advSlidingRow() +
-      '<div class="adv-row">' +
-      '<button class="btn-toggle" data-grp="launchInputTaskOnly">Launch Input Task Only</button>' +
-      '</div>' +
-      advCommon()
-    );
+    return '';
   }
 
-  function buildAdvBdr() {
+  function buildAdvBrd() {
     return (
-      advSlidingRow() +
-      '<div class="adv-row">' +
-      '<button class="btn-toggle" data-grp="launchInputTaskOnly">Launch Input Task Only</button>' +
-      '</div>' +
-      advCommon()
+      '<div class="adv-field">' +
+      '<label class="adv-lbl">Job priority</label>' +
+      '<select name="priority"><option>Automatic</option><option selected>Normal</option><option>High</option></select>' +
+      '</div>'
     );
   }
 
@@ -1593,7 +1849,7 @@ $(function () {
     return (
       '<div class="f-row" style="margin-bottom:6px">' +
       '<label style="display:flex;align-items:center;gap:6px;font-family:\'DM Mono\';font-size:.65rem;color:var(--text-dim);cursor:pointer">' +
-      '<input type="checkbox" class="chk-all"> all' +
+      '<input type="checkbox" class="chk-all"> All' +
       '</label>' +
       '</div>' +
       '<div class="scenarios-wrap">' +
@@ -1666,7 +1922,7 @@ $(function () {
       '<div class="f-row">' +
       '<input type="text" name="environment" style="flex:1;min-width:0" placeholder="\\\\srv\\MOTEUR\\recette\\usecases\\...">' +
       '<button class="btn-secondary btn-browse btn-browse-env" disabled style="opacity:.35;cursor:not-allowed">Browse</button>' +
-      '<button class="btn-secondary">Open</button>' +
+      '<button class="btn-secondary btn-open-env">Open</button>' +
       '</div>' +
       '</div>' +
 
@@ -1746,7 +2002,7 @@ $(function () {
     (scenarios || []).forEach(function (sc) {
       $tbody.append(
         '<tr>' +
-        '<td><input type="checkbox"' + (sc.isScenarioSelected ? ' checked' : '') + '></td>' +
+        '<td><input type="checkbox"></td>' +
         '<td>' + sc.scenarioNum + '</td>' +
         '<td>' + (sc.calVif || '') + '</td>' +
         '<td>' + (sc.filename || '') + '</td>' +
@@ -1815,6 +2071,31 @@ $(function () {
     });
   }
 
+  function getBrdInit() {
+    var cached = STX.get('initCache.brd');
+    if (cached && (Date.now() - cached.ts) < 86400000) {
+      return $.Deferred().resolve(cached.data).promise();
+    }
+    return API.get('/api/JobManager/brd/init').then(function (init) {
+      STX.set('initCache.brd', { data: init, ts: Date.now() });
+      return init;
+    });
+  }
+
+  function initBrdView($view) {
+    getBrdInit().then(function (init) {
+      if (init.defaultName) $view.find('[name="jobName"]').val(init.defaultName);
+      if (init.defaultProjectionDuration != null) $view.find('[name="projectionDuration"]').val(init.defaultProjectionDuration);
+      if (init.models && init.models.length) {
+        var $modelSel = $view.find('.ref-content [name="model"]');
+        $modelSel.empty();
+        init.models.forEach(function (m) { $modelSel.append('<option>' + m.model + '</option>'); });
+        fillVersionSelect($view, init.models[0].versions);
+      }
+      saveJobView($view);
+    });
+  }
+
   function getNonLifeInit() {
     var cached = STX.get('initCache.nonlife');
     if (cached && (Date.now() - cached.ts) < 86400000) {
@@ -1841,6 +2122,129 @@ $(function () {
       saveJobView($view);
     });
   }
+
+  function getTdrInit() {
+    var cached = STX.get('initCache.tdr');
+    if (cached && (Date.now() - cached.ts) < 86400000) {
+      return $.Deferred().resolve(cached.data).promise();
+    }
+    return API.get('/api/JobManager/tdr/init').then(function (init) {
+      STX.set('initCache.tdr', { data: init, ts: Date.now() });
+      return init;
+    });
+  }
+
+  function initTdrView($view) {
+    getTdrInit().then(function (init) {
+      if (init.defaultName) $view.find('[name="jobName"]').val(init.defaultName);
+      if (init.defaultPeriod != null) $view.find('[name="period"]').val(init.defaultPeriod);
+      if (init.models && init.models.length) {
+        var $modelSel = $view.find('.ref-content [name="model"]');
+        $modelSel.empty();
+        init.models.forEach(function (m) { $modelSel.append('<option>' + m.model + '</option>'); });
+        fillVersionSelect($view, init.models[0].versions);
+      }
+      saveJobView($view);
+    });
+  }
+
+  function getRiskLifeInit() {
+    var cached = STX.get('initCache.risklife');
+    if (cached && (Date.now() - cached.ts) < 86400000) {
+      return $.Deferred().resolve(cached.data).promise();
+    }
+    return API.get('/api/JobManager/risklife/init').then(function (init) {
+      STX.set('initCache.risklife', { data: init, ts: Date.now() });
+      return init;
+    });
+  }
+
+  function rebuildRLScenarios($view, scenarios) {
+    var $tbody = $view.find('.scen-table tbody');
+    $tbody.empty();
+    (scenarios || []).forEach(function (sc) {
+      $tbody.append(
+        '<tr>' +
+        '<td><input type="checkbox"></td>' +
+        '<td>' + sc.scenarioNum + '</td>' +
+        '<td>' + (sc.calVif || '') + '</td>' +
+        '</tr>'
+      );
+    });
+  }
+
+  function initRiskLifeView($view) {
+    getRiskLifeInit().then(function (init) {
+      if (init.defaultName) $view.find('[name="jobName"]').val(init.defaultName);
+      if (init.defaultIterations) $view.find('[name="iterations"]').val(init.defaultIterations);
+      if (init.defaultPeriod != null) $view.find('[name="period"]').val(init.defaultPeriod);
+      var autoOn = !!init.defaultAutoIterations;
+      $view.find('[name="autoIterations"]').prop('checked', autoOn);
+      $view.find('[name="iterations"]').prop('disabled', autoOn);
+      if (init.models && init.models.length) {
+        var $modelSel = $view.find('.ref-content [name="model"]');
+        $modelSel.empty();
+        init.models.forEach(function (m) {
+          $modelSel.append('<option>' + m.model + '</option>');
+        });
+        fillVersionSelect($view, init.models[0].versions);
+      }
+      if (init.jobOmenTypes && init.jobOmenTypes.length) {
+        var $omenSel = $view.find('[name="omenType"]');
+        $omenSel.empty();
+        init.jobOmenTypes.forEach(function (t) { $omenSel.append('<option>' + t + '</option>'); });
+        if (init.defaultJobType) $omenSel.val(init.defaultJobType);
+      }
+      saveJobView($view);
+    });
+  }
+
+  // S2 Select / S2 Deselect
+  function getRiskLifeKpInit() {
+    var cached = STX.get('initCache.risklifekp');
+    if (cached && (Date.now() - cached.ts) < 86400000) {
+      return $.Deferred().resolve(cached.data).promise();
+    }
+    return API.get('/api/JobManager/risklifekp/init').then(function (init) {
+      STX.set('initCache.risklifekp', { data: init, ts: Date.now() });
+      return init;
+    });
+  }
+
+  function initRiskLifeKpView($view) {
+    getRiskLifeKpInit().then(function (init) {
+      if (init.defaultName) $view.find('[name="jobName"]').val(init.defaultName);
+      if (init.defaultIterations) $view.find('[name="iterations"]').val(init.defaultIterations);
+      if (init.defaultPeriod != null) $view.find('[name="period"]').val(init.defaultPeriod);
+      var autoOn = !!init.defaultAutoIterations;
+      $view.find('[name="autoIterations"]').prop('checked', autoOn);
+      $view.find('[name="iterations"]').prop('disabled', autoOn);
+      if (init.models && init.models.length) {
+        var $modelSel = $view.find('.ref-content [name="model"]');
+        $modelSel.empty();
+        init.models.forEach(function (m) { $modelSel.append('<option>' + m.model + '</option>'); });
+        fillVersionSelect($view, init.models[0].versions);
+      }
+      if (init.jobOmenTypes && init.jobOmenTypes.length) {
+        var $omenSel = $view.find('[name="omenType"]');
+        $omenSel.empty();
+        init.jobOmenTypes.forEach(function (t) { $omenSel.append('<option>' + t + '</option>'); });
+        if (init.defaultJobType) $omenSel.val(init.defaultJobType);
+      }
+      saveJobView($view);
+    });
+  }
+
+  $(document).on('change', '[name="autoIterations"]', function () {
+    $(this).closest('.job-view').find('[name="iterations"]').prop('disabled', $(this).is(':checked'));
+  });
+
+  $(document).on('click', '.rl-s2-select', function () {
+    $(this).closest('.fg-ctrl').find('.scen-table tbody input[type=checkbox]').prop('checked', true);
+  });
+  $(document).on('click', '.rl-s2-deselect', function () {
+    $(this).closest('.fg-ctrl').find('.scen-table tbody input[type=checkbox]').prop('checked', false);
+  });
 
   function buildOmenSavings(id) {
     return buildOmenForm(id, {
@@ -1887,31 +2291,118 @@ $(function () {
     });
   }
 
+  function rlScenarioBlock() {
+    return (
+      '<div class="f-row" style="margin-bottom:6px">' +
+      '<label style="display:flex;align-items:center;gap:6px;font-family:\'DM Mono\';font-size:.65rem;color:var(--text-dim);cursor:pointer">' +
+      '<input type="checkbox" class="chk-all"> All' +
+      '</label>' +
+      '</div>' +
+      '<div class="scenarios-wrap">' +
+      '<table class="scen-table">' +
+      '<thead><tr><th>Select</th><th>Num</th><th>Name</th></tr></thead>' +
+      '<tbody></tbody>' +
+      '</table>' +
+      '</div>'
+    );
+  }
+
   function buildOmenRiskLife(id) {
     return buildOmenForm(id, {
       label: 'Risk Life',
-      code: 'RL'
+      code: 'RL',
+      extraRows:
+        '<div class="fg-lbl">Iterations:</div>' +
+        '<div class="fg-ctrl">' +
+        '<div class="f-row" style="align-items:center;gap:8px">' +
+        '<input type="text" name="iterations" style="width:70px" placeholder="1-1">' +
+        '<label style="display:flex;align-items:center;gap:6px;font-family:\'DM Mono\';font-size:.65rem;color:var(--text-dim);cursor:pointer">' +
+        '<input type="checkbox" name="autoIterations"> Auto' +
+        '</label>' +
+        '</div>' +
+        '</div>' +
+
+        '<div class="fg-lbl">Period:</div>' +
+        '<div class="fg-ctrl">' +
+        '<div class="f-row" style="align-items:center;gap:8px">' +
+        '<input type="number" name="period" style="width:80px" min="1">' +
+        '<span class="months-lbl">Month(s)</span>' +
+        '</div>' +
+        '</div>' +
+
+        '<div class="fg-lbl">Job Omen Type:</div>' +
+        '<div class="fg-ctrl">' +
+        '<select name="omenType"></select>' +
+        '</div>' +
+
+        '<div class="fg-lbl nb">Scenarios:</div>' +
+        '<div class="fg-ctrl nb">' + rlScenarioBlock() + '</div>',
     });
   }
 
   function buildOmenRiskLifeKp(id) {
     return buildOmenForm(id, {
       label: 'Risk Life KP',
-      code: 'KP'
+      code: 'KP',
+      extraRows:
+        '<div class="fg-lbl">Iterations:</div>' +
+        '<div class="fg-ctrl">' +
+        '<div class="f-row" style="align-items:center;gap:8px">' +
+        '<input type="text" name="iterations" style="width:70px" placeholder="1-1">' +
+        '<label style="display:flex;align-items:center;gap:6px;font-family:\'DM Mono\';font-size:.65rem;color:var(--text-dim);cursor:pointer">' +
+        '<input type="checkbox" name="autoIterations"> Auto' +
+        '</label>' +
+        '</div>' +
+        '</div>' +
+
+        '<div class="fg-lbl">Period:</div>' +
+        '<div class="fg-ctrl">' +
+        '<div class="f-row" style="align-items:center;gap:8px">' +
+        '<input type="number" name="period" style="width:80px" min="1">' +
+        '<span class="months-lbl">Month(s)</span>' +
+        '</div>' +
+        '</div>' +
+
+        '<div class="fg-lbl">Job Omen Type:</div>' +
+        '<div class="fg-ctrl">' +
+        '<select name="omenType"></select>' +
+        '</div>' +
+
+        '<div class="fg-lbl nb">Scenarios:</div>' +
+        '<div class="fg-ctrl nb">' + rlScenarioBlock() + '</div>',
     });
   }
 
   function buildOmenTdr(id) {
     return buildOmenForm(id, {
       label: 'TdR',
-      code: 'T'
+      code: 'T',
+      extraRows:
+        '<div class="fg-lbl">Period:</div>' +
+        '<div class="fg-ctrl">' +
+        '<div class="f-row" style="align-items:center;gap:8px">' +
+        '<input type="number" name="period" style="width:80px" min="1">' +
+        '<span class="months-lbl">Month(s)</span>' +
+        '</div>' +
+        '</div>',
     });
   }
 
-  function buildOmenBdr(id) {
+  function buildOmenBrd(id) {
     return buildOmenForm(id, {
-      label: 'BdR',
-      code: 'B',
+      label: 'Savings BRD',
+      code: 'BRD',
+      extraRows:
+        '<div class="fg-lbl">Projection Duration:</div>' +
+        '<div class="fg-ctrl">' +
+        '<div class="f-row" style="align-items:center;gap:8px">' +
+        '<input type="number" name="projectionDuration" style="width:80px" min="1">' +
+        '<span class="months-lbl">Year(s)</span>' +
+        '</div>' +
+        '</div>' +
+
+        '<div class="fg-lbl nb">Scenarios:</div>' +
+        '<div class="fg-ctrl nb">' + rlScenarioBlock() + '</div>',
     });
   }
 
