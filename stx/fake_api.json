@@ -1,0 +1,950 @@
+{
+  "_comment": "Fake API responses for Styx REST API (OpenAPI 3.0.4). Keyed by 'METHOD /path'.",
+
+  "GET /api/JobEnvironment/explore": {
+    "_root": "\\\\srvrbxassufp01",
+    "_tree": {
+      "": {
+        "folders": ["hpc"],
+        "files":   []
+      },
+
+      "hpc": {
+        "folders": ["Cas01", "Cas02", "Cas03", "Cas04", "Cas05"],
+        "files":   []
+      },
+
+      "hpc/Cas01":          { "folders": ["4-Omen"], "files": [] },
+      "hpc/Cas01/4-Omen":   { "folders": ["input", "output", "scenario"], "files": [] },
+
+      "hpc/Cas01/4-Omen/input": {
+        "folders": [
+          "04_Dividendes_v2",
+          "Input23.01.00_2022Y_vfinale",
+          "Input23.01.00_2022Y_vfinale - Copy",
+          "Input23.01.00_2022Y_vfinale_2021",
+          "Input23.01.00_2022Y_vfinale_2022",
+          "Input23.01.00_2022Y_vfinale_2023",
+          "Input23.01.00_2022Y_vfinale_2024",
+          "Input23.01.00_2022Y_vfinale_2025",
+          "Input23.01.00_2022Y_vfinale_2026",
+          "Input23.01.00_2022Y_vfinale_cible",
+          "Input23.01.00_2022Y_vfinale_pgg1",
+          "Input23.01.00_2022Y_vfinale_pgg2",
+          "Input_EBA2021_adverse_v9_init_alloc",
+          "Input_final_KP",
+          "Input_Gap"
+        ],
+        "files": []
+      },
+      "hpc/Cas01/4-Omen/input/Input23.01.00_2022Y_vfinale": {
+        "folders": [],
+        "files": ["portfolio.xml", "params_savings.json", "hypotheses.csv", "mapping.xlsx"]
+      },
+      "hpc/Cas01/4-Omen/input/Input23.01.00_2022Y_vfinale_cible": {
+        "folders": [],
+        "files": ["portfolio.xml", "params_savings.json", "hypotheses.csv"]
+      },
+      "hpc/Cas01/4-Omen/input/Input23.01.00_2022Y_vfinale_pgg1": {
+        "folders": [],
+        "files": ["portfolio.xml", "params_savings.json"]
+      },
+      "hpc/Cas01/4-Omen/input/Input23.01.00_2022Y_vfinale_pgg2": {
+        "folders": [],
+        "files": ["portfolio.xml", "params_savings.json"]
+      },
+
+      "hpc/Cas01/4-Omen/output": {
+        "folders": ["2022Y_run01", "2022Y_run02"],
+        "files":   []
+      },
+      "hpc/Cas01/4-Omen/output/2022Y_run01": {
+        "folders": [],
+        "files": ["output_central.csv", "output_stress_up.csv", "output_stress_down.csv", "summary.xlsx"]
+      },
+      "hpc/Cas01/4-Omen/output/2022Y_run02": {
+        "folders": [],
+        "files": ["output_central.csv", "output_stress_up.csv", "summary.xlsx"]
+      },
+
+      "hpc/Cas01/4-Omen/scenario": {
+        "folders": [],
+        "files":   [],
+        "scenarios": [
+          {
+            "scenarioNum": 1, "calVif": "central",
+            "filename": "scenario_central.csv", "filenameDot": "scenario_central.dot", "filenameSp": "scenario_central.sp",
+            "filenameL": ["scenario_central_l1.csv", "scenario_central_l2.csv"], "filenameDotL": ["scenario_central_l1.dot"], "filenameSpL": [],
+            "dollFilenameL": [], "dollFilenameDotD": [], "dollFilenameSpL": [], "listDollarFiles": [],
+            "description": "Central scenario", "isScenarioSelected": true, "isEnabled": true, "depth": 0
+          },
+          {
+            "scenarioNum": 2, "calVif": "stress_up",
+            "filename": "scenario_stress_up.csv", "filenameDot": "scenario_stress_up.dot", "filenameSp": "scenario_stress_up.sp",
+            "filenameL": ["scenario_stress_up_l1.csv"], "filenameDotL": [], "filenameSpL": [],
+            "dollFilenameL": [], "dollFilenameDotD": [], "dollFilenameSpL": [], "listDollarFiles": [],
+            "description": "Rate up stress", "isScenarioSelected": false, "isEnabled": true, "depth": 0
+          },
+          {
+            "scenarioNum": 3, "calVif": "stress_down",
+            "filename": "scenario_stress_down.csv", "filenameDot": "scenario_stress_down.dot", "filenameSp": "scenario_stress_down.sp",
+            "filenameL": ["scenario_stress_down_l1.csv"], "filenameDotL": [], "filenameSpL": [],
+            "dollFilenameL": [], "dollFilenameDotD": [], "dollFilenameSpL": [], "listDollarFiles": [],
+            "description": "Rate down stress", "isScenarioSelected": false, "isEnabled": true, "depth": 0
+          },
+          {
+            "scenarioNum": 4, "calVif": "lapse_mass",
+            "filename": "scenario_lapse_mass.csv", "filenameDot": null, "filenameSp": null,
+            "filenameL": [], "filenameDotL": [], "filenameSpL": [],
+            "dollFilenameL": [], "dollFilenameDotD": [], "dollFilenameSpL": [], "listDollarFiles": [],
+            "description": "Mass lapse", "isScenarioSelected": false, "isEnabled": false, "depth": 0
+          },
+          {
+            "scenarioNum": 5, "calVif": "mortality_up",
+            "filename": "scenario_mortality_up.csv", "filenameDot": null, "filenameSp": null,
+            "filenameL": [], "filenameDotL": [], "filenameSpL": [],
+            "dollFilenameL": [], "dollFilenameDotD": [], "dollFilenameSpL": [], "listDollarFiles": [],
+            "description": "Mortality up stress", "isScenarioSelected": false, "isEnabled": true, "depth": 0
+          }
+        ]
+      },
+
+      "hpc/Cas02":          { "folders": ["4-Omen"], "files": [] },
+      "hpc/Cas02/4-Omen":   { "folders": ["case", "input", "output", "scenario"], "files": [] },
+      "hpc/Cas02/4-Omen/case": { "folders": [], "files": [] },
+      "hpc/Cas02/4-Omen/input": {
+        "folders": [
+          "Input23.01.00_2022Y_vfinale",
+          "Input23.01.00_2022Y_vfinale_cible"
+        ],
+        "files": []
+      },
+      "hpc/Cas02/4-Omen/output":   { "folders": [], "files": [] },
+      "hpc/Cas02/4-Omen/scenario": {
+        "folders": [],
+        "files":   [],
+        "scenarios": [
+          {
+            "scenarioNum": 1, "calVif": "central",
+            "filename": "scenario_central.csv", "filenameDot": "scenario_central.dot", "filenameSp": "scenario_central.sp",
+            "filenameL": ["scenario_central_l1.csv", "scenario_central_l2.csv"], "filenameDotL": ["scenario_central_l1.dot"], "filenameSpL": [],
+            "dollFilenameL": [], "dollFilenameDotD": [], "dollFilenameSpL": [], "listDollarFiles": [],
+            "description": "Central scenario", "isScenarioSelected": true, "isEnabled": true, "depth": 0
+          },
+          {
+            "scenarioNum": 2, "calVif": "stress_up",
+            "filename": "scenario_stress_up.csv", "filenameDot": "scenario_stress_up.dot", "filenameSp": "scenario_stress_up.sp",
+            "filenameL": ["scenario_stress_up_l1.csv"], "filenameDotL": [], "filenameSpL": [],
+            "dollFilenameL": [], "dollFilenameDotD": [], "dollFilenameSpL": [], "listDollarFiles": [],
+            "description": "Rate up stress", "isScenarioSelected": false, "isEnabled": true, "depth": 0
+          },
+          {
+            "scenarioNum": 3, "calVif": "stress_down",
+            "filename": "scenario_stress_down.csv", "filenameDot": "scenario_stress_down.dot", "filenameSp": "scenario_stress_down.sp",
+            "filenameL": ["scenario_stress_down_l1.csv"], "filenameDotL": [], "filenameSpL": [],
+            "dollFilenameL": [], "dollFilenameDotD": [], "dollFilenameSpL": [], "listDollarFiles": [],
+            "description": "Rate down stress", "isScenarioSelected": false, "isEnabled": true, "depth": 0
+          },
+          {
+            "scenarioNum": 4, "calVif": "lapse_mass",
+            "filename": "scenario_lapse_mass.csv", "filenameDot": null, "filenameSp": null,
+            "filenameL": [], "filenameDotL": [], "filenameSpL": [],
+            "dollFilenameL": [], "dollFilenameDotD": [], "dollFilenameSpL": [], "listDollarFiles": [],
+            "description": "Mass lapse", "isScenarioSelected": false, "isEnabled": false, "depth": 0
+          },
+          {
+            "scenarioNum": 5, "calVif": "mortality_up",
+            "filename": "scenario_mortality_up.csv", "filenameDot": null, "filenameSp": null,
+            "filenameL": [], "filenameDotL": [], "filenameSpL": [],
+            "dollFilenameL": [], "dollFilenameDotD": [], "dollFilenameSpL": [], "listDollarFiles": [],
+            "description": "Mortality up stress", "isScenarioSelected": false, "isEnabled": true, "depth": 0
+          }
+        ]
+      },
+
+      "hpc/Cas03":          { "folders": ["4-Omen"], "files": [] },
+      "hpc/Cas03/4-Omen":   { "folders": ["input", "output", "scenario"], "files": [] },
+      "hpc/Cas03/4-Omen/input": {
+        "folders": [
+          "Input23.01.00_2022Y_vfinale",
+          "Input23.01.00_2022Y_vfinale_cible",
+          "Input23.01.00_2022Y_vfinale_pgg1",
+          "Input23.01.00_2022Y_vfinale_pgg2",
+          "Input_EBA2021_adverse_v9_init_alloc",
+          "Input_Gap"
+        ],
+        "files": []
+      },
+      "hpc/Cas03/4-Omen/output":   { "folders": [], "files": [] },
+      "hpc/Cas03/4-Omen/scenario": {
+        "folders": [],
+        "files":   [],
+        "scenarios": [
+          {
+            "scenarioNum": 1, "calVif": "central",
+            "filename": "scenario_central.csv", "filenameDot": "scenario_central.dot", "filenameSp": "scenario_central.sp",
+            "filenameL": ["scenario_central_l1.csv", "scenario_central_l2.csv"], "filenameDotL": ["scenario_central_l1.dot"], "filenameSpL": [],
+            "dollFilenameL": [], "dollFilenameDotD": [], "dollFilenameSpL": [], "listDollarFiles": [],
+            "description": "Central scenario", "isScenarioSelected": true, "isEnabled": true, "depth": 0
+          },
+          {
+            "scenarioNum": 2, "calVif": "stress_up",
+            "filename": "scenario_stress_up.csv", "filenameDot": "scenario_stress_up.dot", "filenameSp": "scenario_stress_up.sp",
+            "filenameL": ["scenario_stress_up_l1.csv"], "filenameDotL": [], "filenameSpL": [],
+            "dollFilenameL": [], "dollFilenameDotD": [], "dollFilenameSpL": [], "listDollarFiles": [],
+            "description": "Rate up stress", "isScenarioSelected": false, "isEnabled": true, "depth": 0
+          },
+          {
+            "scenarioNum": 3, "calVif": "stress_down",
+            "filename": "scenario_stress_down.csv", "filenameDot": "scenario_stress_down.dot", "filenameSp": "scenario_stress_down.sp",
+            "filenameL": ["scenario_stress_down_l1.csv"], "filenameDotL": [], "filenameSpL": [],
+            "dollFilenameL": [], "dollFilenameDotD": [], "dollFilenameSpL": [], "listDollarFiles": [],
+            "description": "Rate down stress", "isScenarioSelected": false, "isEnabled": true, "depth": 0
+          },
+          {
+            "scenarioNum": 4, "calVif": "lapse_mass",
+            "filename": "scenario_lapse_mass.csv", "filenameDot": null, "filenameSp": null,
+            "filenameL": [], "filenameDotL": [], "filenameSpL": [],
+            "dollFilenameL": [], "dollFilenameDotD": [], "dollFilenameSpL": [], "listDollarFiles": [],
+            "description": "Mass lapse", "isScenarioSelected": false, "isEnabled": false, "depth": 0
+          },
+          {
+            "scenarioNum": 5, "calVif": "mortality_up",
+            "filename": "scenario_mortality_up.csv", "filenameDot": null, "filenameSp": null,
+            "filenameL": [], "filenameDotL": [], "filenameSpL": [],
+            "dollFilenameL": [], "dollFilenameDotD": [], "dollFilenameSpL": [], "listDollarFiles": [],
+            "description": "Mortality up stress", "isScenarioSelected": false, "isEnabled": true, "depth": 0
+          }
+        ]
+      },
+
+      "hpc/Cas04":          { "folders": ["4-Omen"], "files": [] },
+      "hpc/Cas04/4-Omen":   { "folders": ["input", "output", "scenario"], "files": [] },
+      "hpc/Cas04/4-Omen/input": {
+        "folders": [
+          "04_Dividendes_v2",
+          "Input23.01.00_2022Y_vfinale",
+          "Input23.01.00_2022Y_vfinale_cible",
+          "Input23.01.00_2022Y_vfinale_pgg1",
+          "Input23.01.00_2022Y_vfinale_pgg2",
+          "Input_EBA2021_adverse_v9_init_alloc",
+          "Input_final_KP",
+          "Input_Gap"
+        ],
+        "files": []
+      },
+      "hpc/Cas04/4-Omen/output":   { "folders": [], "files": [] },
+      "hpc/Cas04/4-Omen/scenario": {
+        "folders": [],
+        "files":   [],
+        "scenarios": [
+          {
+            "scenarioNum": 1, "calVif": "central",
+            "filename": "scenario_central.csv", "filenameDot": "scenario_central.dot", "filenameSp": "scenario_central.sp",
+            "filenameL": ["scenario_central_l1.csv", "scenario_central_l2.csv"], "filenameDotL": ["scenario_central_l1.dot"], "filenameSpL": [],
+            "dollFilenameL": [], "dollFilenameDotD": [], "dollFilenameSpL": [], "listDollarFiles": [],
+            "description": "Central scenario", "isScenarioSelected": true, "isEnabled": true, "depth": 0
+          },
+          {
+            "scenarioNum": 2, "calVif": "stress_up",
+            "filename": "scenario_stress_up.csv", "filenameDot": "scenario_stress_up.dot", "filenameSp": "scenario_stress_up.sp",
+            "filenameL": ["scenario_stress_up_l1.csv"], "filenameDotL": [], "filenameSpL": [],
+            "dollFilenameL": [], "dollFilenameDotD": [], "dollFilenameSpL": [], "listDollarFiles": [],
+            "description": "Rate up stress", "isScenarioSelected": false, "isEnabled": true, "depth": 0
+          },
+          {
+            "scenarioNum": 3, "calVif": "stress_down",
+            "filename": "scenario_stress_down.csv", "filenameDot": "scenario_stress_down.dot", "filenameSp": "scenario_stress_down.sp",
+            "filenameL": ["scenario_stress_down_l1.csv"], "filenameDotL": [], "filenameSpL": [],
+            "dollFilenameL": [], "dollFilenameDotD": [], "dollFilenameSpL": [], "listDollarFiles": [],
+            "description": "Rate down stress", "isScenarioSelected": false, "isEnabled": true, "depth": 0
+          },
+          {
+            "scenarioNum": 4, "calVif": "lapse_mass",
+            "filename": "scenario_lapse_mass.csv", "filenameDot": null, "filenameSp": null,
+            "filenameL": [], "filenameDotL": [], "filenameSpL": [],
+            "dollFilenameL": [], "dollFilenameDotD": [], "dollFilenameSpL": [], "listDollarFiles": [],
+            "description": "Mass lapse", "isScenarioSelected": false, "isEnabled": false, "depth": 0
+          },
+          {
+            "scenarioNum": 5, "calVif": "mortality_up",
+            "filename": "scenario_mortality_up.csv", "filenameDot": null, "filenameSp": null,
+            "filenameL": [], "filenameDotL": [], "filenameSpL": [],
+            "dollFilenameL": [], "dollFilenameDotD": [], "dollFilenameSpL": [], "listDollarFiles": [],
+            "description": "Mortality up stress", "isScenarioSelected": false, "isEnabled": true, "depth": 0
+          }
+        ]
+      },
+
+      "hpc/Cas05":          { "folders": ["4-Omen"], "files": [] },
+      "hpc/Cas05/4-Omen":   { "folders": ["input", "output", "scenario"], "files": [] },
+      "hpc/Cas05/4-Omen/input": {
+        "folders": [
+          "Input23.01.00_2022Y_vfinale",
+          "Input23.01.00_2022Y_vfinale_cible"
+        ],
+        "files": []
+      },
+      "hpc/Cas05/4-Omen/output":   { "folders": [], "files": [] },
+      "hpc/Cas05/4-Omen/scenario": {
+        "folders": [],
+        "files":   [],
+        "scenarios": [
+          {
+            "scenarioNum": 1, "calVif": "central",
+            "filename": "scenario_central.csv", "filenameDot": "scenario_central.dot", "filenameSp": "scenario_central.sp",
+            "filenameL": ["scenario_central_l1.csv", "scenario_central_l2.csv"], "filenameDotL": ["scenario_central_l1.dot"], "filenameSpL": [],
+            "dollFilenameL": [], "dollFilenameDotD": [], "dollFilenameSpL": [], "listDollarFiles": [],
+            "description": "Central scenario", "isScenarioSelected": true, "isEnabled": true, "depth": 0
+          },
+          {
+            "scenarioNum": 2, "calVif": "stress_up",
+            "filename": "scenario_stress_up.csv", "filenameDot": "scenario_stress_up.dot", "filenameSp": "scenario_stress_up.sp",
+            "filenameL": ["scenario_stress_up_l1.csv"], "filenameDotL": [], "filenameSpL": [],
+            "dollFilenameL": [], "dollFilenameDotD": [], "dollFilenameSpL": [], "listDollarFiles": [],
+            "description": "Rate up stress", "isScenarioSelected": false, "isEnabled": true, "depth": 0
+          },
+          {
+            "scenarioNum": 3, "calVif": "stress_down",
+            "filename": "scenario_stress_down.csv", "filenameDot": "scenario_stress_down.dot", "filenameSp": "scenario_stress_down.sp",
+            "filenameL": ["scenario_stress_down_l1.csv"], "filenameDotL": [], "filenameSpL": [],
+            "dollFilenameL": [], "dollFilenameDotD": [], "dollFilenameSpL": [], "listDollarFiles": [],
+            "description": "Rate down stress", "isScenarioSelected": false, "isEnabled": true, "depth": 0
+          },
+          {
+            "scenarioNum": 4, "calVif": "lapse_mass",
+            "filename": "scenario_lapse_mass.csv", "filenameDot": null, "filenameSp": null,
+            "filenameL": [], "filenameDotL": [], "filenameSpL": [],
+            "dollFilenameL": [], "dollFilenameDotD": [], "dollFilenameSpL": [], "listDollarFiles": [],
+            "description": "Mass lapse", "isScenarioSelected": false, "isEnabled": false, "depth": 0
+          },
+          {
+            "scenarioNum": 5, "calVif": "mortality_up",
+            "filename": "scenario_mortality_up.csv", "filenameDot": null, "filenameSp": null,
+            "filenameL": [], "filenameDotL": [], "filenameSpL": [],
+            "dollFilenameL": [], "dollFilenameDotD": [], "dollFilenameSpL": [], "listDollarFiles": [],
+            "description": "Mortality up stress", "isScenarioSelected": false, "isEnabled": true, "depth": 0
+          }
+        ]
+      }
+    }
+  },
+
+  "GET /api/JobEnvironment/inputs": [
+    "Input23.01.00_2022Y_vfinale", "Input22.01.00_2022Y_v1", "Input23.01.00_2023Y_vfinale", "Input23.01.00_2023Y_v2", "Input24.01.00_2024Y_vfinale", "Input24.01.00_2024Y_v1"
+  ],
+
+  "GET /api/JobEnvironment/inputs/scenario": [
+    {
+      "scenarioNum": 1,
+      "calVif": "central",
+      "filename":     "scenario_central.csv",
+      "filenameDot":  "scenario_central.dot",
+      "filenameSp":   "scenario_central.sp",
+      "filenameL":    ["scenario_central_l1.csv", "scenario_central_l2.csv"],
+      "filenameDotL": ["scenario_central_l1.dot"],
+      "filenameSpL":  [],
+      "dollFilenameL":    [],
+      "dollFilenameDotD": [],
+      "dollFilenameSpL":  [],
+      "listDollarFiles":  [],
+      "description": "Central scenario",
+      "isScenarioSelected": true,
+      "isEnabled": true,
+      "depth": 0
+    },
+    {
+      "scenarioNum": 2,
+      "calVif": "stress_up",
+      "filename":     "scenario_stress_up.csv",
+      "filenameDot":  "scenario_stress_up.dot",
+      "filenameSp":   "scenario_stress_up.sp",
+      "filenameL":    ["scenario_stress_up_l1.csv"],
+      "filenameDotL": [],
+      "filenameSpL":  [],
+      "dollFilenameL":    [],
+      "dollFilenameDotD": [],
+      "dollFilenameSpL":  [],
+      "listDollarFiles":  [],
+      "description": "Rate up stress",
+      "isScenarioSelected": false,
+      "isEnabled": true,
+      "depth": 0
+    },
+    {
+      "scenarioNum": 3,
+      "calVif": "stress_down",
+      "filename":     "scenario_stress_down.csv",
+      "filenameDot":  "scenario_stress_down.dot",
+      "filenameSp":   "scenario_stress_down.sp",
+      "filenameL":    ["scenario_stress_down_l1.csv"],
+      "filenameDotL": [],
+      "filenameSpL":  [],
+      "dollFilenameL":    [],
+      "dollFilenameDotD": [],
+      "dollFilenameSpL":  [],
+      "listDollarFiles":  [],
+      "description": "Rate down stress",
+      "isScenarioSelected": false,
+      "isEnabled": true,
+      "depth": 0
+    },
+    {
+      "scenarioNum": 4,
+      "calVif": "lapse_mass",
+      "filename":     "scenario_lapse_mass.csv",
+      "filenameDot":  null,
+      "filenameSp":   null,
+      "filenameL":    [],
+      "filenameDotL": [],
+      "filenameSpL":  [],
+      "dollFilenameL":    [],
+      "dollFilenameDotD": [],
+      "dollFilenameSpL":  [],
+      "listDollarFiles":  [],
+      "description": "Mass lapse",
+      "isScenarioSelected": false,
+      "isEnabled": false,
+      "depth": 0
+    },
+    {
+      "scenarioNum": 5,
+      "calVif": "mortality_up",
+      "filename":     "scenario_mortality_up.csv",
+      "filenameDot":  null,
+      "filenameSp":   null,
+      "filenameL":    [],
+      "filenameDotL": [],
+      "filenameSpL":  [],
+      "dollFilenameL":    [],
+      "dollFilenameDotD": [],
+      "dollFilenameSpL":  [],
+      "listDollarFiles":  [],
+      "description": "Mortality up stress",
+      "isScenarioSelected": false,
+      "isEnabled": true,
+      "depth": 0
+    }
+  ],
+
+  "GET /api/JobGrid/jobs": {
+    "status": "OK",
+    "message": null,
+    "warnings": null,
+    "jobs": [
+      { "id": 1134535, "name": "E2026 e1 sto 2028_sto_alm_16", "userAccountId": "MOS_WORK",  "userName": "MOSES WORKER",     "progress": 90,  "submitTime": "2026-03-06T18:55:00Z", "createTime": "2026-03-06T20:33:00Z", "changeTime": "2026-03-06T20:27:00Z", "state": "Running", "priority": "BelowNormal",  "hasChildrens": true,  "workFolder": null, "gridCost": 0,  "isFastPass": false },
+      { "id": 1134517, "name": "E2026 e1 sto 2027_sto_alm_15", "userAccountId": "MOS_WORK",  "userName": "MOSES WORKER",     "progress": 94,  "submitTime": "2026-03-06T18:55:00Z", "createTime": "2026-03-06T20:34:00Z", "changeTime": "2026-03-06T20:27:00Z", "state": "Running", "priority": "BelowNormal",  "hasChildrens": true,  "workFolder": null, "gridCost": 0,  "isFastPass": false },
+      { "id": 1134367, "name": "Ufx",                           "userAccountId": "JUL_CLAUS", "userName": "Julien CLAUS",     "progress": 100, "submitTime": "2026-03-06T18:27:00Z", "createTime": "2026-03-06T18:27:00Z", "changeTime": "2026-03-06T18:27:00Z", "state": "Done",    "priority": "Normal",        "hasChildrens": false, "workFolder": null, "gridCost": 0,  "isFastPass": false },
+      { "id": 1134366, "name": "Ufx",                           "userAccountId": "JUL_CLAUS", "userName": "Julien CLAUS",     "progress": 100, "submitTime": "2026-03-06T18:20:00Z", "createTime": "2026-03-06T18:20:00Z", "changeTime": "2026-03-06T18:20:00Z", "state": "Done",    "priority": "Normal",        "hasChildrens": false, "workFolder": null, "gridCost": 0,  "isFastPass": false },
+      { "id": 1134364, "name": "E2026 e1 sto 2028",             "userAccountId": "JUL_CLAUS", "userName": "Julien CLAUS",     "progress": 63,  "submitTime": "2026-03-06T18:19:00Z", "createTime": "2026-03-06T18:19:00Z", "changeTime": "2026-03-06T18:20:00Z", "state": "Running", "priority": "Normal",        "hasChildrens": true,  "workFolder": null, "gridCost": 0,  "isFastPass": false },
+      { "id": 1134347, "name": "MS_haussetaux_testcentral",      "userAccountId": "PAB_RABA", "userName": "Pablo RABADAN",    "progress": 100, "submitTime": "2026-03-06T18:14:00Z", "createTime": "2026-03-06T18:14:00Z", "changeTime": "2026-03-06T18:55:00Z", "state": "Done",    "priority": "Normal",        "hasChildrens": true,  "workFolder": null, "gridCost": 25, "isFastPass": false },
+      { "id": 1134299, "name": "hausse_taux_action",             "userAccountId": "PAB_RABA", "userName": "Pablo RABADAN",    "progress": 100, "submitTime": "2026-03-06T18:05:00Z", "createTime": "2026-03-06T18:06:00Z", "changeTime": "2026-03-06T18:06:00Z", "state": "Done",    "priority": "Normal",        "hasChildrens": true,  "workFolder": null, "gridCost": 2,  "isFastPass": false },
+      { "id": 1134297, "name": "E2026 e1 sto 2027",             "userAccountId": "PAB_RABA", "userName": "Pablo RABADAN",    "progress": 57,  "submitTime": "2026-03-06T17:52:00Z", "createTime": "2026-03-06T17:52:00Z", "changeTime": "2026-03-06T18:55:00Z", "state": "Running", "priority": "BelowNormal",   "hasChildrens": true,  "workFolder": null, "gridCost": 25, "isFastPass": false },
+      { "id": 1134296, "name": "Sensi_Pente_0703_02h",          "userAccountId": "GRE_KERL", "userName": "Gregoire KERLEAU", "progress": 0,   "submitTime": "2026-03-06T17:36:00Z", "createTime": "2026-03-06T17:36:00Z", "changeTime": "2026-03-06T17:36:00Z", "state": "Pending", "priority": "BelowNormal",   "hasChildrens": true,  "workFolder": null, "gridCost": 47, "isFastPass": false },
+      { "id": 1129052, "name": "IFRS17Q1test",                  "userAccountId": "AND_SOSK", "userName": "Andrea SOSKOVA",  "progress": 33,  "submitTime": "2026-03-05T09:42:00Z", "createTime": "2026-03-05T09:42:00Z", "changeTime": "2026-03-05T09:47:00Z", "state": "Running", "priority": "AboveNormal",   "hasChildrens": true,  "workFolder": null, "gridCost": 0,  "isFastPass": false }
+    ]
+  },
+
+  "GET /api/JobGrid/jobs/children?jobId=1134535": {
+    "status": "OK", "message": null, "warnings": null, "jobId": 1134535,
+    "jobGroups": [
+      { "id": 1, "status": 1, "name": "Run sto_alm_16", "progress": 90, "updated": "2026-03-06T20:27:00Z", "parentId": 1134535, "launchedJobCount": 3, "children": [
+        { "id": 1134538, "state": 2, "name": "E2026_sto_alm_16_batch_1", "progress": 100, "priority": "BelowNormal", "created": "2026-03-06T18:55:00Z", "submitted": "2026-03-06T18:55:00Z", "updated": "2026-03-06T20:10:00Z" },
+        { "id": 1134539, "state": 1, "name": "E2026_sto_alm_16_batch_2", "progress": 85,  "priority": "BelowNormal", "created": "2026-03-06T18:55:00Z", "submitted": "2026-03-06T18:55:00Z", "updated": "2026-03-06T20:27:00Z" },
+        { "id": 1134540, "state": 1, "name": "E2026_sto_alm_16_batch_3", "progress": 90,  "priority": "BelowNormal", "created": "2026-03-06T18:55:00Z", "submitted": "2026-03-06T18:55:00Z", "updated": "2026-03-06T20:27:00Z" }
+      ]}
+    ]
+  },
+
+  "GET /api/JobGrid/jobs/children?jobId=1134517": {
+    "status": "OK", "message": null, "warnings": null, "jobId": 1134517,
+    "jobGroups": [
+      { "id": 1, "status": 1, "name": "Run sto_alm_15", "progress": 94, "updated": "2026-03-06T20:27:00Z", "parentId": 1134517, "launchedJobCount": 2, "children": [
+        { "id": 1134519, "state": 2, "name": "E2026_sto_alm_15_batch_1", "progress": 100, "priority": "BelowNormal", "created": "2026-03-06T18:55:00Z", "submitted": "2026-03-06T18:55:00Z", "updated": "2026-03-06T20:15:00Z" },
+        { "id": 1134520, "state": 1, "name": "E2026_sto_alm_15_batch_2", "progress": 88,  "priority": "BelowNormal", "created": "2026-03-06T18:55:00Z", "submitted": "2026-03-06T18:55:00Z", "updated": "2026-03-06T20:27:00Z" }
+      ]}
+    ]
+  },
+
+  "GET /api/JobGrid/jobs/children?jobId=1134364": {
+    "status": "OK", "message": null, "warnings": null, "jobId": 1134364,
+    "jobGroups": [
+      { "id": 1, "status": 2, "name": "Generate inputs", "progress": 100, "updated": "2026-03-06T18:19:00Z", "parentId": 1134364, "launchedJobCount": 1, "children": [
+        { "id": 1134365, "state": 2, "name": "E2026_sto_2028_GenerateInputs", "progress": 100, "priority": "Normal", "created": "2026-03-06T18:19:00Z", "submitted": "2026-03-06T18:19:00Z", "updated": "2026-03-06T18:19:00Z" }
+      ]},
+      { "id": 2, "status": 1, "name": "Run sto_2028", "progress": 63, "updated": "2026-03-06T18:20:00Z", "parentId": 1134364, "launchedJobCount": 2, "children": [
+        { "id": 1134370, "state": 2, "name": "E2026_sto_2028_det_1", "progress": 100, "priority": "Normal", "created": "2026-03-06T18:19:00Z", "submitted": "2026-03-06T18:19:00Z", "updated": "2026-03-06T18:20:00Z" },
+        { "id": 1134371, "state": 1, "name": "E2026_sto_2028_det_2", "progress": 30,  "priority": "Normal", "created": "2026-03-06T18:19:00Z", "submitted": "2026-03-06T18:19:00Z", "updated": "2026-03-06T18:20:00Z" }
+      ]}
+    ]
+  },
+
+  "GET /api/JobGrid/jobs/children?jobId=1134347": {
+    "status": "OK", "message": null, "warnings": null, "jobId": 1134347,
+    "jobGroups": [
+      { "id": 1, "status": 2, "name": "Generate inputs", "progress": 100, "updated": "2026-03-06T18:14:00Z", "parentId": 1134347, "launchedJobCount": 1, "children": [
+        { "id": 1134348, "state": 2, "name": "MS_haussetaux_GenerateInputs", "progress": 100, "priority": "Normal", "created": "2026-03-06T18:14:00Z", "submitted": "2026-03-06T18:14:00Z", "updated": "2026-03-06T18:14:00Z" }
+      ]},
+      { "id": 2, "status": 2, "name": "Run det_haussetaux", "progress": 100, "updated": "2026-03-06T18:55:00Z", "parentId": 1134347, "launchedJobCount": 1, "children": [
+        { "id": 1134350, "state": 2, "name": "MS_hausse_det_1", "progress": 100, "priority": "Normal", "created": "2026-03-06T18:14:00Z", "submitted": "2026-03-06T18:14:00Z", "updated": "2026-03-06T18:55:00Z" }
+      ]}
+    ]
+  },
+
+  "GET /api/JobGrid/jobs/children?jobId=1134299": {
+    "status": "OK", "message": null, "warnings": null, "jobId": 1134299,
+    "jobGroups": [
+      { "id": 1, "status": 2, "name": "Generate inputs", "progress": 100, "updated": "2026-03-06T18:05:00Z", "parentId": 1134299, "launchedJobCount": 1, "children": [
+        { "id": 1134300, "state": 2, "name": "hausse_taux_action_GenerateInputs", "progress": 100, "priority": "Normal", "created": "2026-03-06T18:05:00Z", "submitted": "2026-03-06T18:05:00Z", "updated": "2026-03-06T18:05:00Z" }
+      ]},
+      { "id": 2, "status": 2, "name": "Run det_hausse_act", "progress": 100, "updated": "2026-03-06T18:06:00Z", "parentId": 1134299, "launchedJobCount": 1, "children": [
+        { "id": 1134302, "state": 2, "name": "hausse_act_det_1", "progress": 100, "priority": "Normal", "created": "2026-03-06T18:05:00Z", "submitted": "2026-03-06T18:05:00Z", "updated": "2026-03-06T18:06:00Z" }
+      ]}
+    ]
+  },
+
+  "GET /api/JobGrid/jobs/children?jobId=1134297": {
+    "status": "OK", "message": null, "warnings": null, "jobId": 1134297,
+    "jobGroups": [
+      { "id": 1, "status": 2, "name": "Generate inputs", "progress": 100, "updated": "2026-03-06T17:52:00Z", "parentId": 1134297, "launchedJobCount": 1, "children": [
+        { "id": 1134298, "state": 2, "name": "E2026_sto_2027_GenerateInputs", "progress": 100, "priority": "BelowNormal", "created": "2026-03-06T17:52:00Z", "submitted": "2026-03-06T17:52:00Z", "updated": "2026-03-06T17:52:00Z" }
+      ]},
+      { "id": 2, "status": 1, "name": "Run sto_2027", "progress": 57, "updated": "2026-03-06T18:55:00Z", "parentId": 1134297, "launchedJobCount": 25, "children": [
+        { "id": 1134310, "state": 2, "name": "E2026_sto_2027_det_1", "progress": 100, "priority": "BelowNormal", "created": "2026-03-06T17:52:00Z", "submitted": "2026-03-06T17:52:00Z", "updated": "2026-03-06T18:55:00Z" },
+        { "id": 1134311, "state": 1, "name": "E2026_sto_2027_det_2", "progress": 45,  "priority": "BelowNormal", "created": "2026-03-06T17:52:00Z", "submitted": "2026-03-06T17:52:00Z", "updated": "2026-03-06T18:55:00Z" },
+        { "id": 1134312, "state": 0, "name": "E2026_sto_2027_det_3", "progress": 0,   "priority": "BelowNormal", "created": "2026-03-06T17:52:00Z", "submitted": "2026-03-06T17:52:00Z", "updated": "2026-03-06T17:52:00Z" }
+      ]}
+    ]
+  },
+
+  "GET /api/JobGrid/jobs/children?jobId=1134296": {
+    "status": "OK", "message": null, "warnings": null, "jobId": 1134296,
+    "jobGroups": [
+      { "id": 1, "status": 0, "name": "Generate inputs", "progress": 0, "updated": "2026-03-06T17:36:00Z", "parentId": 1134296, "launchedJobCount": 1, "children": [
+        { "id": 1134297, "state": 0, "name": "Sensi_Pente_GenerateInputs", "progress": 0, "priority": "BelowNormal", "created": "2026-03-06T17:36:00Z", "submitted": "2026-03-06T17:36:00Z", "updated": "2026-03-06T17:36:00Z" }
+      ]},
+      { "id": 2, "status": 0, "name": "Run sensi_pente", "progress": 0, "updated": "2026-03-06T17:36:00Z", "parentId": 1134296, "launchedJobCount": 47, "children": [
+        { "id": 1134320, "state": 0, "name": "Sensi_Pente_det_1", "progress": 0, "priority": "BelowNormal", "created": "2026-03-06T17:36:00Z", "submitted": "2026-03-06T17:36:00Z", "updated": "2026-03-06T17:36:00Z" },
+        { "id": 1134321, "state": 0, "name": "Sensi_Pente_det_2", "progress": 0, "priority": "BelowNormal", "created": "2026-03-06T17:36:00Z", "submitted": "2026-03-06T17:36:00Z", "updated": "2026-03-06T17:36:00Z" }
+      ]}
+    ]
+  },
+
+  "GET /api/JobGrid/jobs/children?jobId=1129052": {
+    "status": "OK", "message": null, "warnings": null, "jobId": 1129052,
+    "jobGroups": [
+      { "id": 1, "status": 2, "name": "Generate inputs", "progress": 100, "updated": "2026-03-05T09:40:00Z", "parentId": 1129052, "launchedJobCount": 1, "children": [
+        { "id": 1129053, "state": 2, "name": "IFRS17Q1test_GenerateInputs", "progress": 100, "priority": "AboveNormal", "created": "2026-03-05T09:39:00Z", "submitted": "2026-03-05T09:39:00Z", "updated": "2026-03-05T09:40:00Z" }
+      ]},
+      { "id": 2, "status": 1, "name": "Run det_alm_1", "progress": 33, "updated": "2026-03-05T09:41:00Z", "parentId": 1129052, "launchedJobCount": 3, "children": [
+        { "id": 1129054, "state": 2, "name": "IFRS17Q1test_det_alm_1",           "progress": 100, "priority": "AboveNormal", "created": "2026-03-05T09:40:00Z", "submitted": "2026-03-05T09:40:00Z", "updated": "2026-03-05T09:41:00Z" },
+        { "id": 1129055, "state": 0, "name": "IFRS17Q1test_Aggregate_det_alm_1", "progress": 0,   "priority": "AboveNormal", "created": "2026-03-05T09:40:00Z", "submitted": "2026-03-05T09:40:00Z", "updated": "2026-03-05T09:41:00Z" },
+        { "id": 1129056, "state": 0, "name": "IFRS17Q1test_CopyBack_det_alm_1",  "progress": 0,   "priority": "AboveNormal", "created": "2026-03-05T09:40:00Z", "submitted": "2026-03-05T09:40:00Z", "updated": "2026-03-05T09:41:00Z" }
+      ]},
+      { "id": 3, "status": 0, "name": "Copy & Delete Temp", "progress": 0, "updated": "2026-03-05T09:40:00Z", "parentId": 1129052, "launchedJobCount": 1, "children": [
+        { "id": 1129057, "state": 0, "name": "IFRS17Q1test_CopyDeleteTemp", "progress": 0, "priority": "AboveNormal", "created": "2026-03-05T09:40:00Z", "submitted": "2026-03-05T09:40:00Z", "updated": "2026-03-05T09:40:00Z" }
+      ]}
+    ]
+  },
+
+  "GET /api/JobGrid/jobs/1134535/tasks": {
+    "status": "OK", "message": null, "warnings": null, "jobId": 1134535,
+    "tasks": [
+      { "id": 1, "state": "Running", "command": "\\\\srvrbxassufp01\\hpc\\Applications\\StyxProduction\\Styx\\Application Files\\Styx_5_0_0_1287\\StyxLauncher.Cmd.exe -submitOmen sto_alm_16", "output": null, "startTime": "2026-03-06T18:55:10Z", "endTime": null }
+    ]
+  },
+
+  "GET /api/JobGrid/jobs/1134517/tasks": {
+    "status": "OK", "message": null, "warnings": null, "jobId": 1134517,
+    "tasks": [
+      { "id": 1, "state": "Running", "command": "\\\\srvrbxassufp01\\hpc\\Applications\\StyxProduction\\Styx\\Application Files\\Styx_5_0_0_1287\\StyxLauncher.Cmd.exe -submitOmen sto_alm_15", "output": null, "startTime": "2026-03-06T18:55:08Z", "endTime": null }
+    ]
+  },
+
+  "GET /api/JobGrid/jobs/1134367/tasks": {
+    "status": "OK", "message": null, "warnings": null, "jobId": 1134367,
+    "tasks": [
+      { "id": 1, "state": "Done", "command": "\\\\srvrbxassufp01\\hpc\\Applications\\StxProduction\\Tools\\HpcTools\\Ufx\\V21\\HpcTools.Ufx.exe \"\\\\srvrbxassufp01\\hpc\\01_EPARGN\\ufx_input_2026.xml\"", "output": null, "startTime": "2026-03-06T18:27:32Z", "endTime": "2026-03-06T18:27:36Z" }
+    ]
+  },
+
+  "GET /api/JobGrid/jobs/1134366/tasks": {
+    "status": "OK", "message": null, "warnings": null, "jobId": 1134366,
+    "tasks": [
+      { "id": 1, "state": "Done", "command": "\\\\srvrbxassufp01\\hpc\\Applications\\StxProduction\\Tools\\HpcTools\\Ufx\\V21\\HpcTools.Ufx.exe \"\\\\srvrbxassufp01\\hpc\\01_EPARGN\\ufx_input_2026.xml\"", "output": null, "startTime": "2026-03-06T18:20:11Z", "endTime": "2026-03-06T18:20:17Z" }
+    ]
+  },
+
+  "GET /api/JobGrid/jobs/1134364/tasks": {
+    "status": "OK", "message": null, "warnings": null, "jobId": 1134364,
+    "tasks": [
+      { "id": 1, "state": "Done", "command": "\\\\srvrbxassufp01\\hpc\\Applications\\StyxProduction\\Styx\\Application Files\\Styx_5_0_0_1287\\StyxLauncher.Cmd.exe -submitOmen sto_2028", "output": null, "startTime": "2026-03-06T18:19:04Z", "endTime": "2026-03-06T18:19:21Z" }
+    ]
+  },
+
+  "GET /api/JobGrid/jobs/1134347/tasks": {
+    "status": "OK", "message": null, "warnings": null, "jobId": 1134347,
+    "tasks": [
+      { "id": 1, "state": "Done", "command": "\\\\srvrbxassufp01\\hpc\\Applications\\StyxProduction\\Styx\\Application Files\\Styx_5_0_0_1287\\StyxLauncher.Cmd.exe -submitOmen det_haussetaux", "output": null, "startTime": "2026-03-06T18:14:02Z", "endTime": "2026-03-06T18:14:19Z" }
+    ]
+  },
+
+  "GET /api/JobGrid/jobs/1134299/tasks": {
+    "status": "OK", "message": null, "warnings": null, "jobId": 1134299,
+    "tasks": [
+      { "id": 1, "state": "Done", "command": "\\\\srvrbxassufp01\\hpc\\Applications\\StyxProduction\\Styx\\Application Files\\Styx_5_0_0_1287\\StyxLauncher.Cmd.exe -submitOmen det_hausse_act", "output": null, "startTime": "2026-03-06T18:05:03Z", "endTime": "2026-03-06T18:05:17Z" }
+    ]
+  },
+
+  "GET /api/JobGrid/jobs/1134297/tasks": {
+    "status": "OK", "message": null, "warnings": null, "jobId": 1134297,
+    "tasks": [
+      { "id": 1, "state": "Done", "command": "\\\\srvrbxassufp01\\hpc\\Applications\\StyxProduction\\Styx\\Application Files\\Styx_5_0_0_1287\\StyxLauncher.Cmd.exe -submitOmen sto_2027", "output": null, "startTime": "2026-03-06T17:52:05Z", "endTime": "2026-03-06T17:52:22Z" }
+    ]
+  },
+
+  "GET /api/JobGrid/jobs/1134296/tasks": {
+    "status": "OK", "message": null, "warnings": null, "jobId": 1134296,
+    "tasks": []
+  },
+
+  "GET /api/JobGrid/jobs/1129052/tasks": {
+    "status": "OK", "message": null, "warnings": null, "jobId": 1129052,
+    "tasks": [
+      { "id": 1, "state": "Done", "command": "\\\\srvrbxassufp01\\hpc\\Applications\\StyxProduction\\Styx\\Application Files\\Styx_5_0_0_1287\\StyxLauncher.Cmd.exe -submitOmen IFRS17Q1test", "output": null, "startTime": "2026-03-05T09:39:51Z", "endTime": "2026-03-05T09:40:07Z" }
+    ]
+  },
+
+  "GET /api/JobGrid/jobs/1134538/tasks": { "status": "OK", "message": null, "warnings": null, "jobId": 1134538, "tasks": [
+    { "id": 1, "state": "Done", "command": "StyxLauncher.Cmd.exe -preProcess sto_alm_16_batch_1",        "output": "[18:55:12] Loading model v2026.01.00_prod\n[18:55:14] Reading scenario library: 2000 paths\n[18:55:18] Pre-processing complete.", "startTime": "2026-03-06T18:55:12Z", "endTime": "2026-03-06T18:58:00Z" },
+    { "id": 2, "state": "Done", "command": "StyxLauncher.Cmd.exe -runScenario sto_alm_16_batch_1 1-500",  "output": "[18:58:01] Running scenarios 1-500\n[19:05:30] 250/500 done\n[19:16:23] 500/500 done\nDuration: 18m22s — Peak memory: 3.8 GB", "startTime": "2026-03-06T18:58:01Z", "endTime": "2026-03-06T19:16:23Z" },
+    { "id": 3, "state": "Done", "command": "StyxLauncher.Cmd.exe -runScenario sto_alm_16_batch_1 501-1000","output": "[19:16:24] Running scenarios 501-1000\n[19:26:00] 750/1000 done\n[19:35:29] 1000/1000 done\nDuration: 19m05s — Peak memory: 3.9 GB", "startTime": "2026-03-06T19:16:24Z", "endTime": "2026-03-06T19:35:29Z" },
+    { "id": 4, "state": "Done", "command": "StyxLauncher.Cmd.exe -runScenario sto_alm_16_batch_1 1001-1500","output": "[19:35:30] Running scenarios 1001-1500\n[19:45:25] 1250/1500 done\n[19:55:21] 1500/1500 done\nDuration: 19m51s — Peak memory: 4.1 GB", "startTime": "2026-03-06T19:35:30Z", "endTime": "2026-03-06T19:55:21Z" },
+    { "id": 5, "state": "Done", "command": "StyxLauncher.Cmd.exe -runScenario sto_alm_16_batch_1 1501-2000","output": "[19:55:22] Running scenarios 1501-2000\n[20:02:40] 1750/2000 done\n[20:09:54] 2000/2000 done\nDuration: 14m32s — Peak memory: 3.7 GB", "startTime": "2026-03-06T19:55:22Z", "endTime": "2026-03-06T20:09:54Z" },
+    { "id": 6, "state": "Done", "command": "StyxLauncher.Cmd.exe -postProcess sto_alm_16_batch_1",        "output": "[20:09:55] Aggregating 2000 scenario results\n[20:10:00] Writing to \\\\srvrbxassufp01\\hpc\\output\\sto_alm_16\\batch_1.csv\n[20:10:01] Done. Total duration: 01:14:49", "startTime": "2026-03-06T20:09:55Z", "endTime": "2026-03-06T20:10:01Z" }
+  ] },
+  "GET /api/JobGrid/jobs/1134539/tasks": { "status": "OK", "message": null, "warnings": null, "jobId": 1134539, "tasks": [
+    { "id": 1, "state": "Done",    "command": "StyxLauncher.Cmd.exe -preProcess sto_alm_16_batch_2",        "output": "[18:55:14] Pre-processing complete. 2000 paths loaded.", "startTime": "2026-03-06T18:55:14Z", "endTime": "2026-03-06T18:58:05Z" },
+    { "id": 2, "state": "Done",    "command": "StyxLauncher.Cmd.exe -runScenario sto_alm_16_batch_2 1-500",  "output": "[18:58:06] Scenarios 1-500 done\nDuration: 18m10s", "startTime": "2026-03-06T18:58:06Z", "endTime": "2026-03-06T19:16:16Z" },
+    { "id": 3, "state": "Done",    "command": "StyxLauncher.Cmd.exe -runScenario sto_alm_16_batch_2 501-1000","output": "[19:16:17] Scenarios 501-1000 done\nDuration: 19m22s", "startTime": "2026-03-06T19:16:17Z", "endTime": "2026-03-06T19:35:39Z" },
+    { "id": 4, "state": "Running", "command": "StyxLauncher.Cmd.exe -runScenario sto_alm_16_batch_2 1001-1500", "output": null, "startTime": "2026-03-06T19:35:40Z", "endTime": null },
+    { "id": 5, "state": "Pending", "command": "StyxLauncher.Cmd.exe -runScenario sto_alm_16_batch_2 1501-2000", "output": null, "startTime": null, "endTime": null },
+    { "id": 6, "state": "Pending", "command": "StyxLauncher.Cmd.exe -postProcess sto_alm_16_batch_2",           "output": null, "startTime": null, "endTime": null }
+  ] },
+  "GET /api/JobGrid/jobs/1134540/tasks": { "status": "OK", "message": null, "warnings": null, "jobId": 1134540, "tasks": [
+    { "id": 1, "state": "Done",    "command": "StyxLauncher.Cmd.exe -preProcess sto_alm_16_batch_3",        "output": "[18:55:14] Pre-processing complete.", "startTime": "2026-03-06T18:55:14Z", "endTime": "2026-03-06T18:58:10Z" },
+    { "id": 2, "state": "Running", "command": "StyxLauncher.Cmd.exe -runScenario sto_alm_16_batch_3 1-500",  "output": null, "startTime": "2026-03-06T18:58:11Z", "endTime": null },
+    { "id": 3, "state": "Pending", "command": "StyxLauncher.Cmd.exe -runScenario sto_alm_16_batch_3 501-1000","output": null, "startTime": null, "endTime": null },
+    { "id": 4, "state": "Pending", "command": "StyxLauncher.Cmd.exe -postProcess sto_alm_16_batch_3",        "output": null, "startTime": null, "endTime": null }
+  ] },
+
+  "GET /api/JobGrid/jobs/1134519/tasks": { "status": "OK", "message": null, "warnings": null, "jobId": 1134519, "tasks": [
+    { "id": 1, "state": "Done", "command": "StyxLauncher.Cmd.exe -preProcess sto_alm_15_batch_1",         "output": "[18:55:10] Pre-processing complete. 3000 paths loaded.", "startTime": "2026-03-06T18:55:10Z", "endTime": "2026-03-06T18:58:00Z" },
+    { "id": 2, "state": "Done", "command": "StyxLauncher.Cmd.exe -runScenario sto_alm_15_batch_1 1-750",   "output": "[18:58:01] Scenarios 1-750 done\nDuration: 22m05s — Peak memory: 4.2 GB", "startTime": "2026-03-06T18:58:01Z", "endTime": "2026-03-06T19:20:06Z" },
+    { "id": 3, "state": "Done", "command": "StyxLauncher.Cmd.exe -runScenario sto_alm_15_batch_1 751-1500", "output": "[19:20:07] Scenarios 751-1500 done\nDuration: 22m41s — Peak memory: 4.3 GB", "startTime": "2026-03-06T19:20:07Z", "endTime": "2026-03-06T19:42:48Z" },
+    { "id": 4, "state": "Done", "command": "StyxLauncher.Cmd.exe -runScenario sto_alm_15_batch_1 1501-3000","output": "[19:42:49] Scenarios 1501-3000 done\nDuration: 32m05s — Peak memory: 4.5 GB", "startTime": "2026-03-06T19:42:49Z", "endTime": "2026-03-06T20:14:54Z" },
+    { "id": 5, "state": "Done", "command": "StyxLauncher.Cmd.exe -postProcess sto_alm_15_batch_1",         "output": "[20:14:55] Aggregating results\n[20:14:59] Writing output files\n[20:15:00] Done. Total duration: 01:19:50", "startTime": "2026-03-06T20:14:55Z", "endTime": "2026-03-06T20:15:00Z" }
+  ] },
+  "GET /api/JobGrid/jobs/1134520/tasks": { "status": "OK", "message": null, "warnings": null, "jobId": 1134520, "tasks": [
+    { "id": 1, "state": "Done",    "command": "StyxLauncher.Cmd.exe -preProcess sto_alm_15_batch_2",         "output": "[18:55:12] Pre-processing complete.", "startTime": "2026-03-06T18:55:12Z", "endTime": "2026-03-06T18:58:02Z" },
+    { "id": 2, "state": "Done",    "command": "StyxLauncher.Cmd.exe -runScenario sto_alm_15_batch_2 1-750",   "output": "[18:58:03] Scenarios 1-750 done\nDuration: 22m18s", "startTime": "2026-03-06T18:58:03Z", "endTime": "2026-03-06T19:20:21Z" },
+    { "id": 3, "state": "Running", "command": "StyxLauncher.Cmd.exe -runScenario sto_alm_15_batch_2 751-1500", "output": null, "startTime": "2026-03-06T19:20:22Z", "endTime": null },
+    { "id": 4, "state": "Pending", "command": "StyxLauncher.Cmd.exe -runScenario sto_alm_15_batch_2 1501-3000","output": null, "startTime": null, "endTime": null },
+    { "id": 5, "state": "Pending", "command": "StyxLauncher.Cmd.exe -postProcess sto_alm_15_batch_2",          "output": null, "startTime": null, "endTime": null }
+  ] },
+
+  "GET /api/JobGrid/jobs/1134365/tasks": { "status": "OK", "message": null, "warnings": null, "jobId": 1134365, "tasks": [
+    { "id": 1, "state": "Done", "command": "StyxLauncher.Cmd.exe -copyInputFiles sto_2028",   "output": "[18:19:05] Copying input files from repository\n[18:19:08] 14 files copied to \\\\srvrbxassufp01\\hpc\\Cas01\\4-Omen\\input", "startTime": "2026-03-06T18:19:05Z", "endTime": "2026-03-06T18:19:09Z" },
+    { "id": 2, "state": "Done", "command": "StyxLauncher.Cmd.exe -generateInputs sto_2028",   "output": "[18:19:10] Generating actuarial inputs\n[18:19:17] 2028 projection grids generated (DET+STO)\n[18:19:20] Inputs written to input/sto_2028_inputs.bin", "startTime": "2026-03-06T18:19:10Z", "endTime": "2026-03-06T18:19:20Z" },
+    { "id": 3, "state": "Done", "command": "StyxLauncher.Cmd.exe -validateInputs sto_2028",   "output": "[18:19:21] Validation OK — 0 errors, 2 warnings\nWARN: yield_curve.csv has 3 extrapolated points beyond 40Y", "startTime": "2026-03-06T18:19:21Z", "endTime": "2026-03-06T18:19:25Z" }
+  ] },
+  "GET /api/JobGrid/jobs/1134370/tasks": { "status": "OK", "message": null, "warnings": null, "jobId": 1134370, "tasks": [
+    { "id":  1, "state": "Done", "command": "StyxLauncher.Cmd.exe -runDet sto_2028 scen_1",   "output": "Scenario 1 done. NPV=1243.7M", "startTime": "2026-03-06T18:19:25Z", "endTime": "2026-03-06T18:19:28Z" },
+    { "id":  2, "state": "Done", "command": "StyxLauncher.Cmd.exe -runDet sto_2028 scen_2",   "output": "Scenario 2 done. NPV=1198.2M", "startTime": "2026-03-06T18:19:29Z", "endTime": "2026-03-06T18:19:32Z" },
+    { "id":  3, "state": "Done", "command": "StyxLauncher.Cmd.exe -runDet sto_2028 scen_3",   "output": "Scenario 3 done. NPV=1312.4M", "startTime": "2026-03-06T18:19:33Z", "endTime": "2026-03-06T18:19:36Z" },
+    { "id":  4, "state": "Done", "command": "StyxLauncher.Cmd.exe -runDet sto_2028 scen_4",   "output": "Scenario 4 done. NPV=1089.6M", "startTime": "2026-03-06T18:19:37Z", "endTime": "2026-03-06T18:19:40Z" },
+    { "id":  5, "state": "Done", "command": "StyxLauncher.Cmd.exe -runDet sto_2028 scen_5",   "output": "Scenario 5 done. NPV=1401.1M", "startTime": "2026-03-06T18:19:41Z", "endTime": "2026-03-06T18:19:44Z" },
+    { "id":  6, "state": "Done", "command": "StyxLauncher.Cmd.exe -runDet sto_2028 scen_6",   "output": "Scenario 6 done. NPV=1155.9M", "startTime": "2026-03-06T18:19:45Z", "endTime": "2026-03-06T18:19:48Z" },
+    { "id":  7, "state": "Done", "command": "StyxLauncher.Cmd.exe -runDet sto_2028 scen_7",   "output": "Scenario 7 done. NPV=1278.3M", "startTime": "2026-03-06T18:19:49Z", "endTime": "2026-03-06T18:19:52Z" },
+    { "id":  8, "state": "Done", "command": "StyxLauncher.Cmd.exe -runDet sto_2028 scen_8",   "output": "Scenario 8 done. NPV=1334.0M", "startTime": "2026-03-06T18:19:53Z", "endTime": "2026-03-06T18:19:56Z" },
+    { "id":  9, "state": "Done", "command": "StyxLauncher.Cmd.exe -runDet sto_2028 scen_9",   "output": "Scenario 9 done. NPV=1210.5M", "startTime": "2026-03-06T18:19:57Z", "endTime": "2026-03-06T18:20:00Z" },
+    { "id": 10, "state": "Done", "command": "StyxLauncher.Cmd.exe -aggregate sto_2028_det_1", "output": "[18:20:01] Aggregating 9 deterministic results\n[18:20:03] Mean NPV: 1247.1M — StdDev: 96.3M\n[18:20:04] Results written to det_1_aggregate.csv", "startTime": "2026-03-06T18:20:01Z", "endTime": "2026-03-06T18:20:04Z" }
+  ] },
+  "GET /api/JobGrid/jobs/1134371/tasks": { "status": "OK", "message": null, "warnings": null, "jobId": 1134371, "tasks": [
+    { "id": 1, "state": "Done",    "command": "StyxLauncher.Cmd.exe -runDet sto_2028 scen_10", "output": "Scenario 10 done. NPV=1266.8M", "startTime": "2026-03-06T18:19:25Z", "endTime": "2026-03-06T18:19:29Z" },
+    { "id": 2, "state": "Done",    "command": "StyxLauncher.Cmd.exe -runDet sto_2028 scen_11", "output": "Scenario 11 done. NPV=1190.4M", "startTime": "2026-03-06T18:19:30Z", "endTime": "2026-03-06T18:19:34Z" },
+    { "id": 3, "state": "Running", "command": "StyxLauncher.Cmd.exe -runDet sto_2028 scen_12", "output": null, "startTime": "2026-03-06T18:19:35Z", "endTime": null },
+    { "id": 4, "state": "Pending", "command": "StyxLauncher.Cmd.exe -runDet sto_2028 scen_13", "output": null, "startTime": null, "endTime": null },
+    { "id": 5, "state": "Pending", "command": "StyxLauncher.Cmd.exe -aggregate sto_2028_det_2","output": null, "startTime": null, "endTime": null }
+  ] },
+
+  "GET /api/JobGrid/jobs/1134348/tasks": { "status": "OK", "message": null, "warnings": null, "jobId": 1134348, "tasks": [
+    { "id": 1, "state": "Done", "command": "StyxLauncher.Cmd.exe -copyInputFiles det_haussetaux", "output": "[18:14:03] 11 files copied.", "startTime": "2026-03-06T18:14:03Z", "endTime": "2026-03-06T18:14:06Z" },
+    { "id": 2, "state": "Done", "command": "StyxLauncher.Cmd.exe -generateInputs det_haussetaux", "output": "[18:14:07] Inputs generated for hausse_taux stress scenario\n[18:14:17] Validation OK — 0 errors\n[18:14:18] Done.", "startTime": "2026-03-06T18:14:07Z", "endTime": "2026-03-06T18:14:18Z" }
+  ] },
+  "GET /api/JobGrid/jobs/1134350/tasks": { "status": "OK", "message": null, "warnings": null, "jobId": 1134350, "tasks": [
+    { "id": 1, "state": "Done", "command": "StyxLauncher.Cmd.exe -runDet hausse_taux scen_1",  "output": "Scenario 1 done. NPV_delta=-87.4M", "startTime": "2026-03-06T18:14:22Z", "endTime": "2026-03-06T18:14:40Z" },
+    { "id": 2, "state": "Done", "command": "StyxLauncher.Cmd.exe -runDet hausse_taux scen_2",  "output": "Scenario 2 done. NPV_delta=-94.1M", "startTime": "2026-03-06T18:14:41Z", "endTime": "2026-03-06T18:15:01Z" },
+    { "id": 3, "state": "Done", "command": "StyxLauncher.Cmd.exe -runDet hausse_taux scen_3",  "output": "Scenario 3 done. NPV_delta=-102.8M", "startTime": "2026-03-06T18:15:02Z", "endTime": "2026-03-06T18:15:24Z" },
+    { "id": 4, "state": "Done", "command": "StyxLauncher.Cmd.exe -runDet hausse_taux scen_4",  "output": "Scenario 4 done. NPV_delta=-78.9M",  "startTime": "2026-03-06T18:15:25Z", "endTime": "2026-03-06T18:15:45Z" },
+    { "id": 5, "state": "Done", "command": "StyxLauncher.Cmd.exe -runDet hausse_taux scen_5",  "output": "Scenario 5 done. NPV_delta=-111.3M", "startTime": "2026-03-06T18:15:46Z", "endTime": "2026-03-06T18:16:08Z" },
+    { "id": 6, "state": "Done", "command": "StyxLauncher.Cmd.exe -runDet hausse_taux scen_6",  "output": "Scenario 6 done. NPV_delta=-95.7M",  "startTime": "2026-03-06T18:16:09Z", "endTime": "2026-03-06T18:16:30Z" },
+    { "id": 7, "state": "Done", "command": "StyxLauncher.Cmd.exe -runDet hausse_taux scen_7",  "output": "Scenario 7 done. NPV_delta=-88.2M",  "startTime": "2026-03-06T18:16:31Z", "endTime": "2026-03-06T18:16:52Z" },
+    { "id": 8, "state": "Done", "command": "StyxLauncher.Cmd.exe -runDet hausse_taux scen_8",  "output": "Scenario 8 done. NPV_delta=-99.6M",  "startTime": "2026-03-06T18:16:53Z", "endTime": "2026-03-06T18:17:14Z" },
+    { "id": 9, "state": "Done", "command": "StyxLauncher.Cmd.exe -aggregate hausse_det_1",     "output": "[18:54:55] Aggregating 8 stress results\nMean NPV_delta: -94.8M — Max: -111.3M\n[18:55:00] Done.", "startTime": "2026-03-06T18:54:55Z", "endTime": "2026-03-06T18:55:00Z" }
+  ] },
+
+  "GET /api/JobGrid/jobs/1134300/tasks": { "status": "OK", "message": null, "warnings": null, "jobId": 1134300, "tasks": [
+    { "id": 1, "state": "Done", "command": "StyxLauncher.Cmd.exe -copyInputFiles det_hausse_act", "output": "[18:05:04] 9 files copied.", "startTime": "2026-03-06T18:05:04Z", "endTime": "2026-03-06T18:05:07Z" },
+    { "id": 2, "state": "Done", "command": "StyxLauncher.Cmd.exe -generateInputs det_hausse_act", "output": "[18:05:08] Inputs generated\n[18:05:15] Validation OK\n[18:05:16] Done.", "startTime": "2026-03-06T18:05:08Z", "endTime": "2026-03-06T18:05:16Z" }
+  ] },
+  "GET /api/JobGrid/jobs/1134302/tasks": { "status": "OK", "message": null, "warnings": null, "jobId": 1134302, "tasks": [
+    { "id": 1, "state": "Done", "command": "StyxLauncher.Cmd.exe -runDet hausse_act scen_1",  "output": "Scenario 1 done. BEL_delta=-43.2M", "startTime": "2026-03-06T18:05:20Z", "endTime": "2026-03-06T18:05:34Z" },
+    { "id": 2, "state": "Done", "command": "StyxLauncher.Cmd.exe -runDet hausse_act scen_2",  "output": "Scenario 2 done. BEL_delta=-51.7M", "startTime": "2026-03-06T18:05:35Z", "endTime": "2026-03-06T18:05:49Z" },
+    { "id": 3, "state": "Done", "command": "StyxLauncher.Cmd.exe -aggregate hausse_act_det_1","output": "[18:05:56] Aggregating results\nMean BEL_delta: -47.5M\n[18:06:00] Done.", "startTime": "2026-03-06T18:05:56Z", "endTime": "2026-03-06T18:06:00Z" }
+  ] },
+
+  "GET /api/JobGrid/jobs/1134298/tasks": { "status": "OK", "message": null, "warnings": null, "jobId": 1134298, "tasks": [
+    { "id": 1, "state": "Done", "command": "StyxLauncher.Cmd.exe -copyInputFiles sto_2027",   "output": "[17:52:06] 14 files copied.", "startTime": "2026-03-06T17:52:06Z", "endTime": "2026-03-06T17:52:09Z" },
+    { "id": 2, "state": "Done", "command": "StyxLauncher.Cmd.exe -generateInputs sto_2027",   "output": "[17:52:10] 2027 projection grids generated\n[17:52:20] Validation OK — 0 errors, 1 warning\nWARN: dividend_table missing for product EPARGNE_PEL\n[17:52:21] Done.", "startTime": "2026-03-06T17:52:10Z", "endTime": "2026-03-06T17:52:21Z" }
+  ] },
+  "GET /api/JobGrid/jobs/1134310/tasks": { "status": "OK", "message": null, "warnings": null, "jobId": 1134310, "tasks": [
+    { "id": 1, "state": "Done", "command": "StyxLauncher.Cmd.exe -runScenario sto_2027_det_1 1-500",   "output": "[17:52:25] Scenarios 1-500 done\nDuration: 20m14s", "startTime": "2026-03-06T17:52:25Z", "endTime": "2026-03-06T18:12:39Z" },
+    { "id": 2, "state": "Done", "command": "StyxLauncher.Cmd.exe -runScenario sto_2027_det_1 501-1000", "output": "[18:12:40] Scenarios 501-1000 done\nDuration: 21m05s", "startTime": "2026-03-06T18:12:40Z", "endTime": "2026-03-06T18:33:45Z" },
+    { "id": 3, "state": "Done", "command": "StyxLauncher.Cmd.exe -runScenario sto_2027_det_1 1001-1500","output": "[18:33:46] Scenarios 1001-1500 done\nDuration: 21m18s", "startTime": "2026-03-06T18:33:46Z", "endTime": "2026-03-06T18:55:04Z" },
+    { "id": 4, "state": "Done", "command": "StyxLauncher.Cmd.exe -aggregate sto_2027_det_1",           "output": "[18:54:55] Aggregating 1500 results\n[18:55:00] Done. Total: 01:02:35", "startTime": "2026-03-06T18:54:55Z", "endTime": "2026-03-06T18:55:00Z" }
+  ] },
+  "GET /api/JobGrid/jobs/1134311/tasks": { "status": "OK", "message": null, "warnings": null, "jobId": 1134311, "tasks": [
+    { "id": 1, "state": "Done",    "command": "StyxLauncher.Cmd.exe -runScenario sto_2027_det_2 1-500",   "output": "[17:52:25] Scenarios 1-500 done\nDuration: 20m22s", "startTime": "2026-03-06T17:52:25Z", "endTime": "2026-03-06T18:12:47Z" },
+    { "id": 2, "state": "Running", "command": "StyxLauncher.Cmd.exe -runScenario sto_2027_det_2 501-1000", "output": null, "startTime": "2026-03-06T18:12:48Z", "endTime": null },
+    { "id": 3, "state": "Pending", "command": "StyxLauncher.Cmd.exe -aggregate sto_2027_det_2",            "output": null, "startTime": null, "endTime": null }
+  ] },
+  "GET /api/JobGrid/jobs/1134312/tasks": { "status": "OK", "message": null, "warnings": null, "jobId": 1134312, "tasks": [
+    { "id": 1, "state": "Pending", "command": "StyxLauncher.Cmd.exe -runScenario sto_2027_det_3 1-500",   "output": null, "startTime": null, "endTime": null },
+    { "id": 2, "state": "Pending", "command": "StyxLauncher.Cmd.exe -runScenario sto_2027_det_3 501-1000", "output": null, "startTime": null, "endTime": null },
+    { "id": 3, "state": "Pending", "command": "StyxLauncher.Cmd.exe -aggregate sto_2027_det_3",            "output": null, "startTime": null, "endTime": null }
+  ] },
+
+  "GET /api/JobGrid/jobs/1134320/tasks": { "status": "OK", "message": null, "warnings": null, "jobId": 1134320, "tasks": [
+    { "id": 1, "state": "Pending", "command": "StyxLauncher.Cmd.exe -runDet sensi_pente scen_1", "output": null, "startTime": null, "endTime": null },
+    { "id": 2, "state": "Pending", "command": "StyxLauncher.Cmd.exe -runDet sensi_pente scen_2", "output": null, "startTime": null, "endTime": null },
+    { "id": 3, "state": "Pending", "command": "StyxLauncher.Cmd.exe -runDet sensi_pente scen_3", "output": null, "startTime": null, "endTime": null }
+  ] },
+  "GET /api/JobGrid/jobs/1134321/tasks": { "status": "OK", "message": null, "warnings": null, "jobId": 1134321, "tasks": [
+    { "id": 1, "state": "Pending", "command": "StyxLauncher.Cmd.exe -runDet sensi_pente scen_4", "output": null, "startTime": null, "endTime": null },
+    { "id": 2, "state": "Pending", "command": "StyxLauncher.Cmd.exe -runDet sensi_pente scen_5", "output": null, "startTime": null, "endTime": null }
+  ] },
+
+  "GET /api/JobGrid/jobs/1129053/tasks": { "status": "OK", "message": null, "warnings": null, "jobId": 1129053, "tasks": [
+    { "id": 1, "state": "Done", "command": "StyxLauncher.Cmd.exe -copyInputFiles IFRS17Q1test",  "output": "[09:39:52] 18 files copied.", "startTime": "2026-03-05T09:39:52Z", "endTime": "2026-03-05T09:39:57Z" },
+    { "id": 2, "state": "Done", "command": "StyxLauncher.Cmd.exe -generateInputs IFRS17Q1test",  "output": "[09:39:58] IFRS17 Q1 projection inputs generated\n[09:40:04] Validation OK — 0 errors\n[09:40:06] Done.", "startTime": "2026-03-05T09:39:58Z", "endTime": "2026-03-05T09:40:06Z" }
+  ] },
+  "GET /api/JobGrid/jobs/1129054/tasks": { "status": "OK", "message": null, "warnings": null, "jobId": 1129054, "tasks": [
+    { "id": 1, "state": "Done", "command": "StyxLauncher.Cmd.exe -runDet IFRS17Q1test alm_1", "output": "ALM scenario 1 done.\nBEL=2847.3M — RA=142.4M — CSM=381.2M", "startTime": "2026-03-05T09:40:08Z", "endTime": "2026-03-05T09:40:22Z" },
+    { "id": 2, "state": "Done", "command": "StyxLauncher.Cmd.exe -runDet IFRS17Q1test alm_2", "output": "ALM scenario 2 done.\nBEL=2891.6M — RA=144.6M — CSM=378.9M", "startTime": "2026-03-05T09:40:23Z", "endTime": "2026-03-05T09:40:37Z" },
+    { "id": 3, "state": "Done", "command": "StyxLauncher.Cmd.exe -runDet IFRS17Q1test alm_3", "output": "ALM scenario 3 done.\nBEL=2803.8M — RA=140.2M — CSM=384.5M", "startTime": "2026-03-05T09:40:38Z", "endTime": "2026-03-05T09:40:52Z" },
+    { "id": 4, "state": "Done", "command": "StyxLauncher.Cmd.exe -aggregate IFRS17Q1test_det_alm_1", "output": "[09:40:53] Aggregating 3 ALM results\nMean BEL: 2847.6M — Mean CSM: 381.5M\n[09:41:00] Written to det_alm_1_aggregate.csv", "startTime": "2026-03-05T09:40:53Z", "endTime": "2026-03-05T09:41:00Z" }
+  ] },
+  "GET /api/JobGrid/jobs/1129055/tasks": { "status": "OK", "message": null, "warnings": null, "jobId": 1129055, "tasks": [
+    { "id": 1, "state": "Pending", "command": "StyxLauncher.Cmd.exe -aggregate IFRS17Q1test_Aggregate_1", "output": null, "startTime": null, "endTime": null },
+    { "id": 2, "state": "Pending", "command": "StyxLauncher.Cmd.exe -aggregate IFRS17Q1test_Aggregate_2", "output": null, "startTime": null, "endTime": null }
+  ] },
+  "GET /api/JobGrid/jobs/1129056/tasks": { "status": "OK", "message": null, "warnings": null, "jobId": 1129056, "tasks": [
+    { "id": 1, "state": "Pending", "command": "StyxLauncher.Cmd.exe -copyBack IFRS17Q1test results_alm_1", "output": null, "startTime": null, "endTime": null },
+    { "id": 2, "state": "Pending", "command": "StyxLauncher.Cmd.exe -copyBack IFRS17Q1test results_alm_2", "output": null, "startTime": null, "endTime": null },
+    { "id": 3, "state": "Pending", "command": "StyxLauncher.Cmd.exe -copyBack IFRS17Q1test results_summary","output": null, "startTime": null, "endTime": null }
+  ] },
+  "GET /api/JobGrid/jobs/1129057/tasks": { "status": "OK", "message": null, "warnings": null, "jobId": 1129057, "tasks": [
+    { "id": 1, "state": "Pending", "command": "StyxLauncher.Cmd.exe -copyDelete IFRS17Q1test temp_inputs",  "output": null, "startTime": null, "endTime": null },
+    { "id": 2, "state": "Pending", "command": "StyxLauncher.Cmd.exe -copyDelete IFRS17Q1test temp_working", "output": null, "startTime": null, "endTime": null }
+  ] },
+
+  "GET /api/JobManager/savings/init": {
+    "status": "OK",
+    "message": null,
+    "defaultName": "X_Omen Savings",
+    "detChecked": true,
+    "stoChecked": false,
+    "defaultDetPeriodSim": 12,
+    "defaultDetIterations": "1-2000",
+    "defaultStoPeriodSim": 12,
+    "defaultStoIterations": "1-3000",
+    "defaultPricerPeriodSim": 12,
+    "defaultPricerIterations": "1-4000",
+    "models": [
+      {
+        "model": "2026.01.00",
+        "versions": ["2026.01.00_dev", "2026.01.00_test", "2026.01.00_rec", "2026.01.00_hom", "2026.01.00_prod"]
+      },
+      {
+        "model": "2025.12.00",
+        "versions": ["2025.12.00_dev", "2025.12.00_test", "2025.12.00_rec", "2025.12.00_hom", "2025.12.00_prod"]
+      },
+      {
+        "model": "2025.11.00",
+        "versions": ["2025.11.00_dev", "2025.11.00_test", "2025.11.00_rec", "2025.11.00_hom", "2025.11.00_prod"]
+      }
+    ],
+    "taskTypes": ["Full", "Deterministic", "Stochastic", "InputOnly"],
+    "defaultTaskType": "Full",
+    "priorities": ["Normal", "High", "Automatic"],
+    "jobOmenTypes": ["S2", "S1", "FR_GAAP", "Solvency_II"],
+    "defaultJobPriority": "Normal",
+    "defaultJobType": "S2",
+    "defaultIsGuaranteedFloorChecked": true,
+    "defaultIsTrdPricerEnabled": false
+  },
+
+  "GET /api/JobManager/inputs": [
+    "Input24.01.00_2024Y_vfinale",
+    "Input23.01.00_2023Y_vfinale",
+    "Input23.01.00_2022Y_vfinale",
+    "Input22.01.00_2022Y_v1",
+    "Input24.01.00_2024Y_v1"
+  ],
+
+  "GET /api/JobManager/savings/models/versions": {
+    "model": "OMEN_Savings",
+    "versions": ["2026.01.00", "2025.04.00", "2025.01.00", "2024.04.00", "2024.01.00"]
+  },
+
+  "GET /api/JobManager/savings/models/scenarios": [
+    {
+      "scenarioNum": 1,
+      "calVif": "central",
+      "filename": "scenario_central.csv",
+      "filenameDot": "scenario_central.dot",
+      "filenameSp":  "scenario_central.sp",
+      "filenameL":    ["scenario_central_l1.csv", "scenario_central_l2.csv"],
+      "filenameDotL": ["scenario_central_l1.dot"],
+      "filenameSpL":  [],
+      "dollFilenameL":    [],
+      "dollFilenameDotD": [],
+      "dollFilenameSpL":  [],
+      "listDollarFiles":  [],
+      "description": "Central scenario",
+      "isScenarioSelected": true,
+      "isEnabled": true,
+      "depth": 0
+    },
+    {
+      "scenarioNum": 2,
+      "calVif": "stress_up",
+      "filename": "scenario_stress_up.csv",
+      "filenameDot": "scenario_stress_up.dot",
+      "filenameSp":  "scenario_stress_up.sp",
+      "filenameL":    ["scenario_stress_up_l1.csv"],
+      "filenameDotL": [],
+      "filenameSpL":  [],
+      "dollFilenameL":    [],
+      "dollFilenameDotD": [],
+      "dollFilenameSpL":  [],
+      "listDollarFiles":  [],
+      "description": "Rate up stress",
+      "isScenarioSelected": false,
+      "isEnabled": true,
+      "depth": 0
+    },
+    {
+      "scenarioNum": 3,
+      "calVif": "stress_down",
+      "filename": "scenario_stress_down.csv",
+      "filenameDot": "scenario_stress_down.dot",
+      "filenameSp":  "scenario_stress_down.sp",
+      "filenameL":    ["scenario_stress_down_l1.csv"],
+      "filenameDotL": [],
+      "filenameSpL":  [],
+      "dollFilenameL":    [],
+      "dollFilenameDotD": [],
+      "dollFilenameSpL":  [],
+      "listDollarFiles":  [],
+      "description": "Rate down stress",
+      "isScenarioSelected": false,
+      "isEnabled": true,
+      "depth": 0
+    },
+    {
+      "scenarioNum": 4,
+      "calVif": "lapse_mass",
+      "filename": "scenario_lapse_mass.csv",
+      "filenameDot": null,
+      "filenameSp":  null,
+      "filenameL":    [],
+      "filenameDotL": [],
+      "filenameSpL":  [],
+      "dollFilenameL":    [],
+      "dollFilenameDotD": [],
+      "dollFilenameSpL":  [],
+      "listDollarFiles":  [],
+      "description": "Mass lapse",
+      "isScenarioSelected": false,
+      "isEnabled": false,
+      "depth": 0
+    },
+    {
+      "scenarioNum": 5,
+      "calVif": "mortality_up",
+      "filename": "scenario_mortality_up.csv",
+      "filenameDot": null,
+      "filenameSp":  null,
+      "filenameL":    [],
+      "filenameDotL": [],
+      "filenameSpL":  [],
+      "dollFilenameL":    [],
+      "dollFilenameDotD": [],
+      "dollFilenameSpL":  [],
+      "listDollarFiles":  [],
+      "description": "Mortality up stress",
+      "isScenarioSelected": false,
+      "isEnabled": true,
+      "depth": 0
+    }
+  ],
+
+  "POST /api/JobGrid/submit/savings": {
+    "parentId": 1001,
+    "launchedJobCount": 1,
+    "apiResults": {
+      "lightGridSubmissionResult": [
+        {
+          "jobId": 1001,
+          "tasksIds": [
+            { "id": 10011, "gridId": 42 },
+            { "id": 10012, "gridId": 42 }
+          ]
+        }
+      ],
+      "externalApiSubmissionResult": {
+        "ids": [
+          { "id": 10011, "bpcId": 2001, "xGridId": 301 }
+        ],
+        "status": "Submitted",
+        "message": null
+      }
+    }
+  },
+
+  "POST /api/JobGrid/submit/ufx": {
+    "parentId": 1002,
+    "launchedJobCount": 1,
+    "apiResults": {
+      "lightGridSubmissionResult": [
+        {
+          "jobId": 1002,
+          "tasksIds": [
+            { "id": 10021, "gridId": 42 }
+          ]
+        }
+      ],
+      "externalApiSubmissionResult": {
+        "ids": [
+          { "id": 10021, "bpcId": 2002, "xGridId": 302 }
+        ],
+        "status": "Submitted",
+        "message": null
+      }
+    }
+  },
+
+  "POST /api/TaskFlow/taskState": {}
+}
