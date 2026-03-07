@@ -726,8 +726,9 @@ $(function () {
     syncBrowseButtons($view);
     STX.set(stxKey, meta);
 
-    // Init API : toujours pour Savings (l'API donne les listes à jour)
+    // Init API : peuple les selects depuis l'API
     if (type === 'savings') initSavingsView($view);
+    if (type === 'nonlife') initNonLifeView($view);
 
     addTab(id, label, type);
     activateTab(id);
@@ -1814,6 +1815,33 @@ $(function () {
     });
   }
 
+  function getNonLifeInit() {
+    var cached = STX.get('initCache.nonlife');
+    if (cached && (Date.now() - cached.ts) < 86400000) {
+      return $.Deferred().resolve(cached.data).promise();
+    }
+    return API.get('/api/JobManager/nonlife/init').then(function (init) {
+      STX.set('initCache.nonlife', { data: init, ts: Date.now() });
+      return init;
+    });
+  }
+
+  function initNonLifeView($view) {
+    getNonLifeInit().then(function (init) {
+      if (init.defaultName) $view.find('[name="jobName"]').val(init.defaultName);
+      if (init.defaultPeriod != null) $view.find('[name="period"]').val(init.defaultPeriod);
+      if (init.models && init.models.length) {
+        var $modelSel = $view.find('.ref-content [name="model"]');
+        $modelSel.empty();
+        init.models.forEach(function (m) {
+          $modelSel.append('<option>' + m.model + '</option>');
+        });
+        fillVersionSelect($view, init.models[0].versions);
+      }
+      saveJobView($view);
+    });
+  }
+
   function buildOmenSavings(id) {
     return buildOmenForm(id, {
       label: 'Savings',
@@ -1847,7 +1875,15 @@ $(function () {
   function buildOmenNonLife(id) {
     return buildOmenForm(id, {
       label: 'Non Life',
-      code: 'N'
+      code: 'N',
+      extraRows:
+        '<div class="fg-lbl">Period:</div>' +
+        '<div class="fg-ctrl">' +
+        '<div class="f-row" style="align-items:center;gap:8px">' +
+        '<input type="number" name="period" style="width:80px" min="1" max="200">' +
+        '<span class="months-lbl">Year(s)</span>' +
+        '</div>' +
+        '</div>',
     });
   }
 
