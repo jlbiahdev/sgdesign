@@ -881,6 +881,42 @@ input[type="checkbox"] {
   cursor: pointer;
 }
 
+.mf-sep {
+  width: 1px;
+  height: 18px;
+  background: var(--bg-border);
+  flex-shrink: 0;
+}
+.mf-states {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.mf-state-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 99px;
+  border: 1px solid var(--bg-border);
+  background: transparent;
+  color: var(--text-faint);
+  font-size: 0.67rem;
+  font-family: "DM Mono", monospace;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+  white-space: nowrap;
+}
+.mf-state-btn:hover {
+  background: var(--bg-border);
+  color: var(--text-dim);
+}
+.mf-state-btn.active {
+  background: var(--bg-border);
+  border-color: var(--text-faint);
+  color: var(--text);
+}
+
 .monitor-wrap {
   overflow-x: auto;
 }
@@ -927,17 +963,16 @@ input[type="checkbox"] {
   background: var(--green);
 }
 .state-dot.running {
-  background: #f59e0b;
+  background: #06b6d4;
 }
 .state-dot.error {
   background: var(--red);
 }
 .state-dot.pending {
-  background: var(--text-faint);
-  border: 1px solid var(--bg-border);
+  background: #111827;
 }
 .state-dot.cancelled {
-  background: #6b7280;
+  background: #eab308;
 }
 
 .prog-wrap {

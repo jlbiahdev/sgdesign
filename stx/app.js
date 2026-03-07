@@ -17,12 +17,19 @@ $(function () {
   $('#themeToggle').on('click', () =>
     applyTheme($('html').attr('data-theme') === 'dark' ? 'light' : 'dark'));
   // Delegated: prefDark/prefLight vivent dans le side panel (injecté dynamiquement)
-  $(document).on('click', '#prefDark', function () {
-    applyTheme('dark');
-  });
-  $(document).on('click', '#prefLight', function () {
-    applyTheme('light');
-  });
+  $(document).on('click', '#prefDark',  function () { applyTheme('dark'); });
+  $(document).on('click', '#prefLight', function () { applyTheme('light'); });
+
+  // ── API mode toggle (injecté dynamiquement dans le side panel Settings) ──
+  function _applyApiMode(mode) {
+    API.setMode(mode);
+    STX.merge('settings', { apiMode: mode });
+    $('#prefApiFake').toggleClass('active', mode === 'fake');
+    $('#prefApiReal').toggleClass('active', mode === 'real');
+    $('#apiRealSettings').toggle(mode === 'real');
+  }
+  $(document).on('click', '#prefApiFake', function () { _applyApiMode('fake'); });
+  $(document).on('click', '#prefApiReal', function () { _applyApiMode('real'); });
 
   applyTheme(localStorage.getItem(THEME_KEY) || 'dark');
 
@@ -55,77 +62,118 @@ $(function () {
   // API (fake via fake_api.json)
   // ─────────────────────────────────────────────
   var API = (function () {
-    var _db = null;
-    var _loading = $.getJSON('fake_api.json').then(function (data) {
-      _db = data;
-    });
 
-    function _resolve(method, path) {
+    // ── Mode & config (persistés dans STX 'settings') ──
+    var _mode    = (STX.get('settings') || {}).apiMode    || 'fake';
+    var _baseUrl = (STX.get('settings') || {}).apiBaseUrl || '';
+
+    // ══════════════════════════════════════════════
+    // FAKE — lit fake_api.json
+    // ══════════════════════════════════════════════
+    var _db = null;
+    var _fakeReady = $.getJSON('fake_api.json').then(function (data) { _db = data; });
+
+    function _fakeResolve(method, path) {
       if (!_db) return undefined;
       var key = method + ' ' + path;
       if (key in _db) return _db[key];
-      // fallback: strip query string
-      var base = method + ' ' + path.split('?')[0];
-      return base in _db ? _db[base] : undefined;
+      var noQ = path.split('?')[0];
+      var base = method + ' ' + noQ;
+      if (base in _db) return _db[base];
+      var parent = method + ' ' + noQ.replace(/\/[^/]+$/, '');
+      return parent in _db ? _db[parent] : undefined;
     }
 
-    // Simulate async call with optional 120ms delay
-    function call(method, path) {
+    function _fakeCall(method, path) {
       return $.Deferred(function (dfd) {
-        $.when(_loading).then(function () {
-          var resp = _resolve(method, path);
+        $.when(_fakeReady).then(function () {
+          var resp = _fakeResolve(method, path);
           if (resp === undefined) {
-            console.warn('[API] No fake response for:', method, path);
-            dfd.reject({
-              status: 404,
-              message: 'Not found in fake_api.json: ' + method + ' ' + path
-            });
+            console.warn('[API:fake] No response for:', method, path);
+            dfd.reject({ status: 404, message: 'Not found in fake_api.json: ' + method + ' ' + path });
             return;
           }
-          setTimeout(function () {
-            dfd.resolve($.extend(true, {}, resp));
-          }, 120);
+          setTimeout(function () { dfd.resolve($.extend(true, {}, resp)); }, 120);
         });
       }).promise();
     }
 
-    // Explore: retourne { folders[], files[] } — synchrone une fois _db chargé
     var _tree = null;
-
     function _ensureTree() {
       if (!_tree && _db) _tree = (_db['GET /api/JobEnvironment/explore'] || {})._tree || {};
       return _tree || {};
     }
 
-    function exploreDir(path) {
+    function _fakeExploreDir(path, opts) {
+      var isFolder  = !!(opts && opts.isFolder);
+      var extension = (opts && opts.extension) ? String(opts.extension).replace(/^\./, '').toLowerCase() : null;
       return $.Deferred(function (dfd) {
-        $.when(_loading).always(function () {
-          var node = _ensureTree()[path || ''] || {
-            folders: [],
-            files: []
-          };
-          dfd.resolve({
-            folders: node.folders || [],
-            files: node.files || [],
-            scenarios: node.scenarios || null,
-          });
+        $.when(_fakeReady).always(function () {
+          var node = _ensureTree()[path || ''] || { folders: [], files: [] };
+          var files = node.files || [];
+          if (isFolder) {
+            files = [];
+          } else if (extension) {
+            files = files.filter(function (f) {
+              return f.toLowerCase().slice(-(extension.length + 1)) === '.' + extension;
+            });
+          }
+          dfd.resolve({ folders: node.folders || [], files: files, scenarios: node.scenarios || null });
         });
       }).promise();
     }
 
-    function getRoot() {
-      return _db ? ((_db['GET /api/JobEnvironment/explore'] || {})._root || '') : '';
+    // ══════════════════════════════════════════════
+    // REAL — appels HTTP vers _baseUrl
+    // ══════════════════════════════════════════════
+    function _ajax(method, path, data) {
+      var opts = {
+        url: _baseUrl + path,
+        method: method,
+        contentType: 'application/json',
+        headers: { Accept: 'application/json' },
+      };
+      if (data !== undefined) opts.data = JSON.stringify(data);
+      return $.ajax(opts).then(null, function (xhr) {
+        var msg = '';
+        try { msg = xhr.responseJSON.message || xhr.statusText; } catch (e) { msg = xhr.statusText || String(xhr.status); }
+        console.error('[API:real]', method, path, '→', xhr.status, msg);
+        return $.Deferred().reject({ status: xhr.status, message: msg }).promise();
+      });
     }
 
+    function _realExploreDir(path, opts) {
+      var params = { path: path || '' };
+      if (opts && opts.isFolder)  params.isFolder  = true;
+      if (opts && opts.extension) params.extension = opts.extension;
+      return _ajax('GET', '/api/JobEnvironment/explore?' + $.param(params))
+        .then(function (resp) {
+          return { folders: resp.folders || [], files: resp.files || [], scenarios: resp.scenarios || null };
+        });
+    }
+
+    // ══════════════════════════════════════════════
+    // Interface publique
+    // ══════════════════════════════════════════════
     return {
       get: function (path) {
-        return call('GET', path);
+        return _mode === 'real' ? _ajax('GET', path) : _fakeCall('GET', path);
       },
-      post: function (path) {
-        return call('POST', path);
+      post: function (path, data) {
+        return _mode === 'real' ? _ajax('POST', path, data) : _fakeCall('POST', path);
       },
-      exploreDir: exploreDir,
-      getRoot: getRoot,
+      exploreDir: function (path, opts) {
+        return _mode === 'real' ? _realExploreDir(path, opts) : _fakeExploreDir(path, opts);
+      },
+      getRoot: function () {
+        return _mode === 'real'
+          ? ((STX.get('settings') || {}).apiRoot || '')
+          : (_db ? ((_db['GET /api/JobEnvironment/explore'] || {})._root || '') : '');
+      },
+      getMode:    function ()    { return _mode; },
+      setMode:    function (m)   { _mode = m; },
+      getBaseUrl: function ()    { return _baseUrl; },
+      setBaseUrl: function (url) { _baseUrl = url; },
     };
   })();
 
@@ -375,7 +423,8 @@ $(function () {
       !$(e.target).closest('#sidePanel').length &&
       !$(e.target).closest('#btnAbout').length &&
       !$(e.target).closest('#btnSettings').length &&
-      !$(e.target).closest('.adv-chk-label').length) {
+      !$(e.target).closest('.adv-chk-label').length &&
+      !$(e.target).closest('.btn-help-job').length) {
       closeSidePanel();
     }
   });
@@ -418,6 +467,126 @@ $(function () {
       '</div>'
     );
   }
+
+  // ─── Aide contextuelle par type de job ───────
+  var _JOB_HELP = {
+    savings: {
+      synopsis: 'Run OMEN de type Épargne — déterministe, stochastique et pricer.',
+      fields: [
+        ['Environnement', 'Chemin réseau UNC vers le dossier use case OMEN (ex. \\\\srv\\MOTEUR\\recette\\usecases\\Cas01). Le bouton Browse s\'active dès qu\'un chemin est renseigné.'],
+        ['Inputs', 'Choisissez le jeu de données d\'entrée dans la liste. Les inputs disponibles sont chargés depuis le sous-dossier input/ de l\'environnement.'],
+        ['Version Omen', 'Sélectionnez la version du moteur OMEN à utiliser. Passez en mode Custom pour saisir un chemin de version spécifique.'],
+        ['Périodes & itérations', 'Définissez les périodes (en mois) et le nombre d\'itérations pour les modes Deterministic, Stochastic et Pricer. Cochez la case pour activer chaque mode.'],
+        ['Guaranteed Floor', 'Activez cette option pour forcer un plancher garanti sur les résultats.'],
+        ['Job Omen Type', 'Sélectionnez le type de run OMEN (ex. Full, Sensitivity…).'],
+        ['Advanced Options', 'Sliding, Test Sliding, Launch Input Task Only, Remove Input Generation, itérations SCR Life, priorité HPC, type de tâche (alm / Standard / SCR), exécution différée.'],
+      ],
+    },
+    nonlife: {
+      synopsis: 'Run OMEN pour les produits Non Life — dommages et prévoyance.',
+      fields: [
+        ['Environnement', 'Chemin réseau UNC vers le dossier use case Non Life. Browse disponible dès qu\'un chemin est saisi.'],
+        ['Inputs', 'Sélectionnez le jeu de données d\'entrée depuis le sous-dossier input/.'],
+        ['Version Omen', 'Version du moteur OMEN pour ce run Non Life.'],
+        ['Périodes & itérations', 'Définissez la période de simulation (mois) et le nombre d\'itérations pour Deterministic et Stochastic.'],
+        ['Job Omen Type', 'Type de run OMEN à exécuter.'],
+      ],
+    },
+    risklife: {
+      synopsis: 'Run OMEN Risk Life avec projection stochastique sur scénarios.',
+      fields: [
+        ['Environnement', 'Chemin réseau UNC vers le dossier use case Risk Life.'],
+        ['Inputs', 'Jeu de données d\'entrée chargé depuis input/.'],
+        ['Version Omen', 'Version du moteur OMEN à utiliser.'],
+        ['Durée de projection', 'Nombre de mois de projection.'],
+        ['Itérations', 'Nombre d\'itérations stochastiques. Cochez Auto pour le calcul automatique.'],
+        ['Scénarios', 'Sélectionnez un ou plusieurs scénarios à lancer. Au moins un scénario est requis.'],
+        ['Advanced Options', 'Sliding, Test Sliding, priorité du job (Automatic / Normal / High).'],
+      ],
+    },
+    risklifekp: {
+      synopsis: 'Run OMEN Risk Life pour la Pologne (KP) — calcul de capital réglementaire.',
+      fields: [
+        ['Environnement', 'Chemin réseau UNC vers le dossier use case Risk Life KP.'],
+        ['Inputs', 'Jeu de données d\'entrée chargé depuis input/.'],
+        ['Version Omen', 'Version du moteur OMEN à utiliser.'],
+        ['Période', 'Nombre de mois de la période de simulation.'],
+        ['Itérations', 'Nombre d\'itérations. Cochez Auto pour le calcul automatique.'],
+        ['Scénarios', 'Sélectionnez les scénarios à inclure dans le run.'],
+        ['Advanced Options', 'Sliding, Test Sliding, priorité du job (Automatic / Normal / High).'],
+      ],
+    },
+    tdr: {
+      synopsis: 'Run OMEN pour le calcul du Taux de Rendement.',
+      fields: [
+        ['Environnement', 'Chemin réseau UNC vers le dossier use case TdR.'],
+        ['Inputs', 'Jeu de données d\'entrée depuis input/.'],
+        ['Version Omen', 'Version du moteur OMEN.'],
+        ['Période', 'Durée de simulation en mois.'],
+      ],
+    },
+    brd: {
+      synopsis: 'Run OMEN Savings avec projection Brut de Rachat et Décès.',
+      fields: [
+        ['Environnement', 'Chemin réseau UNC vers le dossier use case Savings BRD.'],
+        ['Inputs', 'Jeu de données d\'entrée depuis input/.'],
+        ['Version Omen', 'Version du moteur OMEN.'],
+        ['Durée de projection', 'Nombre d\'années de projection (entier positif).'],
+        ['Scénarios', 'Sélectionnez les scénarios à inclure dans le run.'],
+        ['Advanced Options', 'Priorité du job (Automatic / Normal / High).'],
+      ],
+    },
+    ufx: {
+      synopsis: 'Reporting réglementaire au format UFX — Universal Format Exchange.',
+      fields: [
+        ['Path', 'Chemin réseau UNC complet vers le fichier ou dossier UFX à traiter.'],
+        ['Is Folder', 'Cochez cette option pour que le Browse ne liste que les dossiers (aucun fichier).'],
+      ],
+    },
+    custominput: {
+      synopsis: 'Applique des scripts d\'actions personnalisées sur un dossier d\'inputs.',
+      fields: [
+        ['Input to Custom', 'Chemin réseau UNC vers le dossier contenant les fichiers d\'entrée à transformer.'],
+        ['Custom Actions', 'Chemin réseau UNC vers le dossier contenant les scripts d\'actions à appliquer aux inputs.'],
+      ],
+    },
+    scenariotransformator: {
+      synopsis: 'Transforme des scénarios économiques vers le format d\'un modèle cible.',
+      fields: [
+        ['Environnement', 'Chemin réseau UNC vers le dossier de données à transformer. Le bouton Browse s\'active dès qu\'un chemin est renseigné.'],
+        ['Model Type', 'Version de modèle pour la transformation : 2017, 2018, 2020 ou 2020 V2.'],
+        ['Période', 'Fréquence de la transformation : Mois (mensuelle) ou Année (annuelle).'],
+        ['Nb itérations', 'Nombre d\'itérations de la transformation de scénarios.'],
+        ['Coupons', 'Type de coupon à générer : ZC (zéro coupon) ou TC (taux constant).'],
+        ['Split', 'Activez cette option pour découper la sortie en fichiers séparés par scénario.'],
+      ],
+    },
+  };
+
+  function buildJobHelp(type) {
+    var info = _JOB_HELP[type];
+    if (!info) return '<div class="panel-section"><p>Aucune aide disponible pour ce type de job.</p></div>';
+    var rows = info.fields.map(function (e) {
+      return '<li><strong>' + e[0] + '</strong> — ' + e[1] + '</li>';
+    }).join('');
+    return (
+      '<div class="panel-section"><h4>' + info.synopsis + '</h4></div>' +
+      '<div class="panel-section"><ul>' + rows + '</ul></div>'
+    );
+  }
+
+  $(document).on('click', '.btn-help-job', function () {
+    var $view = $(this).closest('.job-view');
+    var id = $view.attr('id').replace('view-', '');
+    var type = (STX.get('job.' + id) || {}).type;
+    var label = JOB_LABELS[type] || 'Job';
+    var title = label + ' — Guide';
+    if ($('#sidePanel').hasClass('open') && $('#sidePanelTitle').text() === title) {
+      closeSidePanel();
+    } else {
+      openSidePanel(title, buildJobHelp(type));
+    }
+  });
 
   $('#btnAbout').on('click', function () {
     if ($('#sidePanel').hasClass('open') && $('#sidePanelTitle').text() === 'Help Center') {
@@ -503,12 +672,19 @@ $(function () {
       openSidePanel('Général', buildSettingsContent());
       // Restore depuis storage
       var saved = STX.get('settings') || {};
-      if (saved.langue) $('#sidePanelBody [name="langue"]').val(saved.langue);
-      if (saved.priority) $('#sidePanelBody [name="priority"]').val(saved.priority);
+      if (saved.langue)    $('#sidePanelBody [name="langue"]').val(saved.langue);
+      if (saved.priority)  $('#sidePanelBody [name="priority"]').val(saved.priority);
+      if (saved.apiBaseUrl) $('#sidePanelBody [name="apiBaseUrl"]').val(saved.apiBaseUrl);
+      if (saved.apiRoot)   $('#sidePanelBody [name="apiRoot"]').val(saved.apiRoot);
       // Sync état des boutons thème
       var t = $('html').attr('data-theme');
       $('#prefDark').toggleClass('active', t === 'dark');
       $('#prefLight').toggleClass('active', t !== 'dark');
+      // Sync état des boutons API
+      var apiMode = API.getMode();
+      $('#prefApiFake').toggleClass('active', apiMode === 'fake');
+      $('#prefApiReal').toggleClass('active', apiMode === 'real');
+      $('#apiRealSettings').toggle(apiMode === 'real');
     }
   });
 
@@ -520,6 +696,7 @@ $(function () {
         data[$(this).attr('name')] = $(this).val();
       });
       STX.set('settings', data);
+      if (data.apiBaseUrl !== undefined) API.setBaseUrl(data.apiBaseUrl);
     }
   });
 
@@ -556,15 +733,36 @@ $(function () {
       '<div class="pref-row"><span class="pref-key">Équipe</span>      <span class="pref-val">ASSU · Production</span></div>' +
       '</div>' +
       '<div class="panel-section">' +
+      '<h4>API</h4>' +
+      '<div class="pref-row">' +
+      '<span class="pref-key">Mode</span>' +
+      '<div class="toggle-group">' +
+      '<button class="btn-toggle" id="prefApiFake">Fake</button>' +
+      '<button class="btn-toggle" id="prefApiReal">Real</button>' +
+      '</div>' +
+      '</div>' +
+      '<div id="apiRealSettings" style="display:none">' +
+      '<div class="pref-row">' +
+      '<span class="pref-key">Base URL</span>' +
+      '<input type="text" name="apiBaseUrl" style="width:140px;font-size:.6rem" placeholder="http://srv:5000">' +
+      '</div>' +
+      '<div class="pref-row">' +
+      '<span class="pref-key">Racine réseau</span>' +
+      '<input type="text" name="apiRoot" style="width:140px;font-size:.6rem" placeholder="\\\\\\\\srv">' +
+      '</div>' +
+      '</div>' +
+      '</div>' +
+      '<div class="panel-section">' +
       '<button class="btn-submit" style="width:100%" id="btnSaveSettings">Enregistrer</button>' +
       '</div>'
     );
   }
   // ── Explorateur de fichiers ───────────────────
-  var _browseTarget = null; // input appelant
-  var _browseCurrent = ''; // chemin API courant (chemin complet dans le fake tree)
-  var _browseBase = ''; // chemin de départ (= chemin normalisé d'Environment, ou '')
-  var _browseRoot = ''; // préfixe d'affichage (valeur brute du champ Environment)
+  var _browseTarget = null;       // input appelant
+  var _browseCurrent = '';        // chemin API courant (chemin complet dans le fake tree)
+  var _browseBase = '';           // chemin de départ (= chemin normalisé d'Environment, ou '')
+  var _browseRoot = '';           // préfixe d'affichage (valeur brute du champ Environment)
+  var _browseIsFolderOnly = false; // true → n'affiche que les dossiers (isFolder=true)
 
   // Chemin à afficher : _browseRoot + partie RELATIVE à _browseBase
   function _browseDisplay(apiPath) {
@@ -581,7 +779,7 @@ $(function () {
 
   function loadBrowseDir(apiPath) {
     _browseCurrent = apiPath || '';
-    API.exploreDir(_browseCurrent).then(function (node) {
+    API.exploreDir(_browseCurrent, { isFolder: _browseIsFolderOnly }).then(function (node) {
       var html = '';
       // Afficher ".." uniquement si on est au-delà du dossier de départ
       if (_browseCurrent !== _browseBase) {
@@ -624,6 +822,7 @@ $(function () {
     var startPath = '';
     _browseRoot = '';
     _browseBase = '';
+    _browseIsFolderOnly = false;
     if ($btn.data('ver-action') === 'browse') {
       _browseTarget = $btn.closest('.fg-ctrl').find('[name="customVersion"]');
     } else {
@@ -634,6 +833,14 @@ $(function () {
       _browseBase = ''; // toujours depuis la racine
       _browseTarget = $btn.closest('.f-row').find('[name="environment"]');
       startPath = ''; // toujours depuis _root, peu importe la valeur saisie
+    }
+    if ($btn.hasClass('btn-browse-ufx')) {
+      _browseRoot = API.getRoot();
+      _browseIsFolderOnly = $btn.closest('.f-row').find('[name="isFolder"]').is(':checked');
+    }
+    if ($btn.hasClass('btn-browse-folder')) {
+      _browseRoot = API.getRoot();
+      _browseIsFolderOnly = true;
     }
     if (_browseTarget && !_browseTarget.length) _browseTarget = null;
     loadBrowseDir(startPath);
@@ -714,6 +921,8 @@ $(function () {
     'tool-compare': 'Tool · Compare',
     'tool-extract': 'Tool · Extract',
     'tool-report': 'Tool · Report',
+    'custominput': 'Custom Input',
+    'scenariotransformator': 'Scenario Transformator',
   };
 
   function openJob(type) {
@@ -751,6 +960,8 @@ $(function () {
     };
     var html;
     if (type === 'ufx') html = buildUfx(id);
+    else if (type === 'custominput') html = buildCustomInput(id);
+    else if (type === 'scenariotransformator') html = buildScenarioTransformator(id);
     else if (type.indexOf('tool-') === 0) html = buildTool(id, type);
     else html = (omenBuilders[type] || buildOmenSavings)(id);
 
@@ -770,12 +981,13 @@ $(function () {
     STX.set(stxKey, meta);
 
     // Init API : peuple les selects depuis l'API
-    if (type === 'savings')  initSavingsView($view);
-    if (type === 'brd')      initBrdView($view);
-    if (type === 'tdr')      initTdrView($view);
-    if (type === 'nonlife')  initNonLifeView($view);
-    if (type === 'risklife')   initRiskLifeView($view);
-    if (type === 'risklifekp') initRiskLifeKpView($view);
+    if (type === 'savings')              initSavingsView($view);
+    if (type === 'brd')                  initBrdView($view);
+    if (type === 'tdr')                  initTdrView($view);
+    if (type === 'nonlife')              initNonLifeView($view);
+    if (type === 'risklife')             initRiskLifeView($view);
+    if (type === 'risklifekp')           initRiskLifeKpView($view);
+    if (type === 'scenariotransformator') initScenarioTransformatorView($view);
 
     addTab(id, label, type);
     activateTab(id);
@@ -1214,13 +1426,31 @@ $(function () {
     return errs;
   }
 
+  function validateCustomInput($v, name) {
+    var errs = [];
+    var actions = ($v.find('[name="actionsFolder"]').val() || '').trim();
+    var inputs  = ($v.find('[name="inputsFolder"]').val() || '').trim();
+    if (!actions) errs.push(name + ' : you must select an action folder');
+    if (!inputs)  errs.push(name + ' : you must select an inputs folder');
+    return errs;
+  }
+
+  function validateScenarioTransformator($v, name) {
+    var errs = [];
+    var env = ($v.find('[name="environment"]').val() || '').trim();
+    if (!env) errs.push(name + ' : you must select an environment');
+    return errs;
+  }
+
   var _validators = {
-    savings:    validateSavings,
-    brd:        validateBrd,
-    tdr:        validateTdr,
-    nonlife:    validateNonLife,
-    risklife:   validateRiskLife,
-    risklifekp: validateRiskLifeKp,
+    savings:              validateSavings,
+    brd:                  validateBrd,
+    tdr:                  validateTdr,
+    nonlife:              validateNonLife,
+    risklife:             validateRiskLife,
+    risklifekp:           validateRiskLifeKp,
+    custominput:          validateCustomInput,
+    scenariotransformator: validateScenarioTransformator,
   };
 
   // ─────────────────────────────────────────────
@@ -1243,9 +1473,13 @@ $(function () {
   }
 
   var _CTX_ICONS = {
-    'Refresh':       '<svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7A5 5 0 1 1 9.5 2.8"/><polyline points="12 1 12 4.5 8.5 4.5"/></svg>',
-    'Copy Settings': '<svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="1" width="8" height="9" rx="1.2"/><rect x="1" y="4" width="8" height="9" rx="1.2"/></svg>',
-    'Paste Settings':'<svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="10" height="10" rx="1.2"/><path d="M4 3V2a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><line x1="4" y1="7" x2="8" y2="7"/><line x1="4" y1="9.5" x2="7" y2="9.5"/></svg>',
+    'Refresh':            '<svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7A5 5 0 1 1 9.5 2.8"/><polyline points="12 1 12 4.5 8.5 4.5"/></svg>',
+    'Copy Settings':      '<svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="1" width="8" height="9" rx="1.2"/><rect x="1" y="4" width="8" height="9" rx="1.2"/></svg>',
+    'Paste Settings':     '<svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="10" height="10" rx="1.2"/><path d="M4 3V2a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><line x1="4" y1="7" x2="8" y2="7"/><line x1="4" y1="9.5" x2="7" y2="9.5"/></svg>',
+    'Copy to clipboard':  '<svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 1H3a1 1 0 0 0-1 1v9"/><rect x="4" y="3" width="8" height="10" rx="1.2"/></svg>',
+    'Open folder':        '<svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 3.5A1 1 0 0 1 2 2.5h3l1.5 1.5H12a1 1 0 0 1 1 1V11a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V3.5z"/></svg>',
+    'Cancel job':         '<svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="5.5"/><line x1="4.5" y1="4.5" x2="9.5" y2="9.5"/><line x1="9.5" y1="4.5" x2="4.5" y2="9.5"/></svg>',
+    'Requeue job':        '<svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 1 4 1"/><path d="M1 1l3.5 3.5A5.5 5.5 0 1 1 2.5 9"/></svg>',
   };
 
   function _showCtxMenu(items, x, y) {
@@ -1377,29 +1611,125 @@ $(function () {
   });
 
   // ─────────────────────────────────────────────
+  // CONTEXT MENU — MONITORING ROWS
+  // ─────────────────────────────────────────────
+
+  function _monCtxJobItems($tr, jobId, state, env, jobData) {
+    var items = [];
+
+    // Copy to clipboard — copies the environment path
+    items.push({
+      label: 'Copy to clipboard',
+      action: function () {
+        try { navigator.clipboard.writeText(env); } catch (ex) {}
+      }
+    });
+
+    // Copy Settings — only if job has settings payload
+    if (jobData && jobData.settings) {
+      items.push({
+        label: 'Copy Settings',
+        action: function () {
+          _ctxClipboard = { type: jobData.settings.type, data: jobData.settings };
+          try { navigator.clipboard.writeText(JSON.stringify(jobData.settings, null, 2)); } catch (ex) {}
+        }
+      });
+    }
+
+    // Open folder
+    items.push({
+      label: 'Open folder',
+      action: function () {
+        if (env) window.open('file:///' + env.replace(/\\/g, '/'));
+      }
+    });
+
+    var isTerminal = (state === 'done' || state === 'cancelled' || state === 'error');
+
+    // Cancel job — active states only
+    if (!isTerminal) {
+      items.push({
+        label: 'Cancel job',
+        action: function () {
+          API.post('/api/JobGrid/cancel/' + jobId).then(function () {
+            $tr.find('.state-dot').removeClass().addClass('state-dot cancelled');
+            $tr.attr('data-state', 'cancelled');
+            openConsole();
+            cLog('Job ' + jobId + ' — annulation demandée.', 'warn');
+          });
+        }
+      });
+    }
+
+    // Requeue job — terminal states only (Done / Cancelled / Error)
+    if (isTerminal) {
+      items.push({
+        label: 'Requeue job',
+        action: function () {
+          API.post('/api/JobGrid/requeue/' + jobId).then(function () {
+            $tr.find('.state-dot').removeClass().addClass('state-dot pending');
+            $tr.attr('data-state', 'pending');
+            openConsole();
+            cLog('Job ' + jobId + ' — remis en file d\'attente.', 'warn');
+          });
+        }
+      });
+    }
+
+    return items;
+  }
+
+  // parentJob + childJob : full menu
+  $(document).on('contextmenu', '#monitorBody .job-row, #monitorBody .child-row', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    var $tr = $(this);
+    var jobId  = $tr.data('job-id') || $tr.data('child-id');
+    var state  = ($tr.attr('data-state') || '').toLowerCase();
+    var env    = $tr.attr('data-env') || '';
+    var jobData = _monJobMap[jobId] || _monChildMap[jobId];
+    var items = _monCtxJobItems($tr, jobId, state, env, jobData);
+    if (items.length) _showCtxMenu(items, e.clientX, e.clientY);
+  });
+
+  // group + task : Open folder uniquement
+  $(document).on('contextmenu', '#monitorBody .group-row, #monitorBody .task-row', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    var env = $(this).attr('data-env') || '';
+    _showCtxMenu([{
+      label: 'Open folder',
+      action: function () {
+        if (env) window.open('file:///' + env.replace(/\\/g, '/'));
+      }
+    }], e.clientX, e.clientY);
+  });
+
+  // ─────────────────────────────────────────────
   // SUBMIT
   // ─────────────────────────────────────────────
   $(document).on('click', '.btn-submit-job', function () {
     const $v = $(this).closest('.job-view');
     const $name = $v.find('.field-name');
-    const name = $name.val().trim();
+    const name = ($name.val() || '').trim();
 
-    if (!name) {
+    if ($name.length && !name) {
       $name.addClass('is-invalid').focus();
       openConsole();
       cLog('Validation : le champ Name est requis.', 'error');
       return;
     }
-    $name.removeClass('is-invalid');
+    if ($name.length) $name.removeClass('is-invalid');
 
     var _id = $v.attr('id').replace('view-', '');
     var _jobData = STX.get('job.' + _id) || {};
     var _type = _jobData.type;
+    var _displayName = name || JOB_LABELS[_type] || 'job';
 
     // Validation par type
     var validate = _validators[_type];
     if (validate) {
-      var errors = validate($v, name);
+      var errors = validate($v, _displayName);
       if (errors.length) {
         openConsole();
         errors.forEach(function (e) {
@@ -1423,7 +1753,7 @@ $(function () {
     var jobPayload = STX.get('job.' + _id);
     console.log('[STYX] Job payload:', jobPayload);
     openConsole();
-    cLog('Job soumis : ' + name);
+    cLog('Job soumis : ' + _displayName);
     cLog('Connexion à l\'environnement en cours…', 'warn');
     setTimeout(() => cLog('Job démarré — 0% complété'), 900);
     setTimeout(() => cLog('Progression : 25%'), 2200);
@@ -1465,11 +1795,11 @@ $(function () {
 
   function stateClass(state) {
     var s = String(state).toLowerCase();
-    if (s === 'done' || s === '2') return 'done';
+    if (s === 'done' || s === 'finished' || s === '2') return 'done';
     if (s === 'running' || s === '1') return 'running';
-    if (s === 'error' || s === '3') return 'error';
-    if (s === 'cancelled' || s === '4') return 'cancelled';
-    return 'pending';
+    if (s === 'error' || s === 'failed' || s === '3') return 'error';
+    if (s === 'cancelled' || s === 'canceled' || s === '4') return 'cancelled';
+    return 'pending'; // queued, submitted, pending
   }
 
   function progBar(pct) {
@@ -1481,9 +1811,11 @@ $(function () {
     );
   }
 
-  function buildTasksTable(tasks) {
+  function buildTasksTable(tasks, envPath) {
     if (!tasks || !tasks.length) return '';
     var rows = tasks.map(function (t) {
+      var taskEnv = (t.command || '').replace(/^(.*[\\\/])[^\\\/]*$/, '$1').replace(/[\\\/]$/, '') || envPath || '';
+      taskEnv = taskEnv.replace(/"/g, '&quot;');
       var outputCell = '';
       if (t.output) {
         var oidx = _outputCache.push(t.output) - 1;
@@ -1494,7 +1826,7 @@ $(function () {
         outputCell = '<span class="output-empty">—</span>';
       }
       return (
-        '<tr>' +
+        '<tr class="task-row" data-env="' + taskEnv + '">' +
         '<td><span class="state-dot ' + stateClass(t.state) + '"></span></td>' +
         '<td class="mono">' + t.id + '</td>' +
         '<td class="mono expand-cmd" title="' + (t.command || '').replace(/"/g, '&quot;') + '">' + (t.command || '') + '</td>' +
@@ -1512,11 +1844,14 @@ $(function () {
     );
   }
 
-  function buildChildrenTable(children) {
+  function buildChildrenTable(children, envPath) {
     if (!children || !children.length) return '';
     var rows = children.map(function (c) {
+      var env = (c.environment || envPath || '').replace(/"/g, '&quot;');
+      _monChildMap[c.id] = c;
+      if (!c.environment && envPath) c.environment = envPath;
       return (
-        '<tr class="child-row" data-child-id="' + c.id + '">' +
+        '<tr class="child-row" data-child-id="' + c.id + '" data-state="' + stateClass(c.state) + '" data-env="' + env + '">' +
         '<td><span class="state-dot ' + stateClass(c.state) + '"></span></td>' +
         '<td class="mono">' + c.id + '</td>' +
         '<td class="mono"><span class="expand-icon">▶</span> ' + (c.name || '') + '</td>' +
@@ -1540,11 +1875,13 @@ $(function () {
 
   function buildGroupsTable(groups, jobId) {
     if (!groups || !groups.length) return '';
+    var parentEnv = ((_monJobMap[jobId] || {}).environment || '');
     var rows = groups.map(function (g) {
       var expandId = 'grp-expand-' + jobId + '-' + g.id;
-      var childHtml = buildChildrenTable(g.children);
+      var childHtml = buildChildrenTable(g.children, parentEnv);
+      var env = (g.environment || parentEnv).replace(/"/g, '&quot;');
       return (
-        '<tr class="group-row" data-group-id="' + g.id + '" data-job-id="' + jobId + '">' +
+        '<tr class="group-row" data-group-id="' + g.id + '" data-job-id="' + jobId + '" data-env="' + env + '">' +
         '<td><span class="state-dot ' + stateClass(g.status) + '"></span></td>' +
         '<td class="mono">' + g.id + '</td>' +
         '<td class="mono"><span class="expand-icon">▶</span> ' + (g.name || '') + '</td>' +
@@ -1568,7 +1905,7 @@ $(function () {
 
   function buildJobRow(job) {
     return (
-      '<tr class="job-row" data-job-id="' + job.id + '" data-has-children="' + (job.hasChildrens ? 1 : 0) + '" data-account="' + (job.userName || '').toLowerCase() + '">' +
+      '<tr class="job-row" data-job-id="' + job.id + '" data-has-children="' + (job.hasChildrens ? 1 : 0) + '" data-account="' + (job.userName || '').toLowerCase() + '" data-state="' + stateClass(job.state) + '" data-priority="' + (job.priority || '').toLowerCase() + '" data-name="' + (job.name || '').toLowerCase().replace(/"/g, '&quot;') + '" data-env="' + (job.environment || '').replace(/"/g, '&quot;') + '">' +
       '<td><span class="state-dot ' + stateClass(job.state) + '"></span></td>' +
       '<td class="mono">' + job.id + '</td>' +
       '<td class="mono"><span class="expand-icon">▶</span> ' + (job.name || '') + '</td>' +
@@ -1589,6 +1926,9 @@ $(function () {
   // ─────────────────────────────────────────────
   // MONITORING — Load & Filters
   // ─────────────────────────────────────────────
+  var _monJobMap   = {}; // jobId   → job object  (parentJob / childJob)
+  var _monChildMap = {}; // childId → child object
+
   function loadMonitoringJobs() {
     var $body = $('#monitorBody');
     $body.html('<tr><td colspan="10" style="text-align:center;padding:20px;color:var(--text-faint);font-family:\'DM Mono\';font-size:.65rem">Chargement…</td></tr>');
@@ -1597,6 +1937,8 @@ $(function () {
         $body.html('<tr><td colspan="10" style="text-align:center;padding:20px;color:var(--text-faint);font-family:\'DM Mono\';font-size:.65rem">Aucun job.</td></tr>');
         return;
       }
+      _monJobMap = {};
+      resp.jobs.forEach(function (j) { _monJobMap[j.id] = j; });
       $body.html(resp.jobs.map(buildJobRow).join(''));
       applyMonitorFilters();
     });
@@ -1609,16 +1951,21 @@ $(function () {
     var acc = $('.mf-account').val().toLowerCase();
     var fullView = $('.mf-fullview').is(':checked');
     var connectedUser = $('.user-name').text().trim();
+    var activeStates = [];
+    $('.mf-state-btn.active').each(function () { activeStates.push($(this).data('state')); });
     $('#monitorBody .job-row').each(function () {
       var $tr = $(this);
       var jid = String($tr.data('job-id'));
-      var text = $tr.text().toLowerCase();
+      var nameText = ($tr.attr('data-name') || '').toLowerCase();
       var accountText = ($tr.data('account') || '').toLowerCase();
+      var prioText = ($tr.attr('data-priority') || '').toLowerCase();
+      var rowState = $tr.attr('data-state') || '';
       var show = (fullView || accountText.indexOf(connectedUser.toLowerCase()) !== -1) &&
         (!id || jid.indexOf(id) !== -1) &&
-        (!name || text.indexOf(name) !== -1) &&
-        (!prio || text.indexOf(prio) !== -1) &&
-        (!acc || accountText.indexOf(acc) !== -1);
+        (!name || nameText.indexOf(name) !== -1) &&
+        (!prio || prioText.indexOf(prio) !== -1) &&
+        (!acc || accountText.indexOf(acc) !== -1) &&
+        (!activeStates.length || activeStates.indexOf(rowState) !== -1);
       $tr.toggle(show);
       $('#job-expand-' + $tr.data('job-id')).toggle(show && $tr.hasClass('is-expanded'));
     });
@@ -1634,12 +1981,17 @@ $(function () {
 
   $(document).on('input', '.mf-id, .mf-name, .mf-priority, .mf-account', applyMonitorFilters);
   $(document).on('change', '.mf-fullview', applyMonitorFilters);
+  $(document).on('click', '.mf-state-btn', function () {
+    $(this).toggleClass('active');
+    applyMonitorFilters();
+  });
 
   // ─────────────────────────────────────────────
   // MONITORING — Expand/collapse job row
   // ─────────────────────────────────────────────
   $(document).on('click', '#monitorBody .job-row', function (e) {
     e.stopPropagation();
+    _hideCtxMenu();
     var $tr = $(this);
     var jobId = $tr.data('job-id');
     var hasChildren = +$tr.data('has-children') === 1;
@@ -1679,7 +2031,8 @@ $(function () {
         });
       } else {
         apiGetJobTasks(jobId).then(function (resp) {
-          $cnt.html(buildTasksTable(resp.tasks) || '<div class="expand-empty">Aucune tâche disponible</div>');
+          var env = (_monJobMap[jobId] || {}).environment || '';
+          $cnt.html(buildTasksTable(resp.tasks, env) || '<div class="expand-empty">Aucune tâche disponible</div>');
         }).fail(function () {
           $cnt.html('<div class="expand-empty">Erreur de chargement</div>');
         });
@@ -1714,7 +2067,8 @@ $(function () {
     if (!expanded && !$cnt.data('loaded')) {
       $cnt.data('loaded', true);
       apiGetJobTasks(childId).then(function (resp) {
-        $cnt.html(buildTasksTable(resp.tasks) || '<div class="expand-empty">Aucune tâche disponible</div>');
+        var env = (_monChildMap[childId] || {}).environment || '';
+        $cnt.html(buildTasksTable(resp.tasks, env) || '<div class="expand-empty">Aucune tâche disponible</div>');
       }).fail(function () {
         $cnt.html('<div class="expand-empty">Erreur de chargement</div>');
       });
@@ -1870,23 +2224,112 @@ $(function () {
       '<div class="form-title-sub">Universal Format Exchange</div>' +
       '</div>' +
       '<div class="form-actions-col">' +
+      '<div class="form-actions-row">' +
+      '<button class="btn-secondary btn-help-job" type="button" title="How to use">?</button>' +
       '<button class="btn-submit btn-submit-job">Submit</button>' +
-      '<button class="btn-icon" title="Réinitialiser">' +
-      '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h12"/><path d="M5 4V2h6v2"/><path d="M3 4l1 10h8l1-10"/><path d="M6.5 7.5v4M9.5 7.5v4"/></svg>' +
-      '</button>' +
+      '</div>' +
       '</div>' +
       '</div>' +
       '<div class="form-grid">' +
       '<div class="fg-lbl">Name:</div>' +
       '<div class="fg-ctrl"><input type="text" class="field-name" name="jobName" placeholder="Nom du job UFX"></div>' +
       '<div class="fg-lbl">Path:</div>' +
-      '<div class="fg-ctrl"><input type="text" name="path" placeholder="\\\\srv\\styx\\recette\\..."></div>' +
-      '<div class="fg-lbl nb"></div>' +
-      '<div class="fg-ctrl nb">' +
-      '<label style="display:flex;align-items:center;gap:8px;font-family:\'DM Mono\';font-size:.65rem;color:var(--text-dim);cursor:pointer">' +
+      '<div class="fg-ctrl">' +
+      '<div class="f-row">' +
+      '<input type="text" name="path" style="flex:1;min-width:0" placeholder="\\\\srv\\styx\\recette\\...">' +
+      '<button class="btn-secondary btn-browse btn-browse-ufx" type="button">Browse</button>' +
+      '<label style="display:flex;align-items:center;gap:6px;font-family:\'DM Mono\';font-size:.65rem;color:var(--text-dim);cursor:pointer;white-space:nowrap">' +
       '<input type="checkbox" name="isFolder"> Is Folder' +
       '</label>' +
       '</div>' +
+      '</div>' +
+      '</div>' +
+      '</div>'
+    );
+  }
+
+  function buildCustomInput(id) {
+    return (
+      '<div class="job-view" id="view-' + id + '">' +
+      '<div class="form-header">' +
+      '<div>' +
+      '<div class="form-title">New Custom Input Job</div>' +
+      '<div class="form-title-sub">Input to Custom transformation</div>' +
+      '</div>' +
+      '<div class="form-actions-col">' +
+      '<div class="form-actions-row">' +
+      '<button class="btn-secondary btn-help-job" type="button" title="How to use">?</button>' +
+      '<button class="btn-submit btn-submit-job">Submit</button>' +
+      '</div>' +
+      '</div>' +
+      '</div>' +
+      '<div class="form-grid">' +
+      '<div class="fg-lbl">Input to Custom:</div>' +
+      '<div class="fg-ctrl">' +
+      '<div class="f-row">' +
+      '<input type="text" name="inputsFolder" style="flex:1;min-width:0" placeholder="\\\\srv\\styx\\...">' +
+      '<button class="btn-secondary btn-browse btn-browse-folder" type="button">Browse</button>' +
+      '</div>' +
+      '</div>' +
+      '<div class="fg-lbl">Custom Actions:</div>' +
+      '<div class="fg-ctrl">' +
+      '<div class="f-row">' +
+      '<input type="text" name="actionsFolder" style="flex:1;min-width:0" placeholder="\\\\srv\\styx\\...">' +
+      '<button class="btn-secondary btn-browse btn-browse-folder" type="button">Browse</button>' +
+      '</div>' +
+      '</div>' +
+      '</div>' +
+      '</div>'
+    );
+  }
+
+  function buildScenarioTransformator(id) {
+    var radStyle = 'display:flex;align-items:center;gap:6px;font-family:\'DM Mono\';font-size:.65rem;color:var(--text-dim);cursor:pointer;white-space:nowrap';
+    return (
+      '<div class="job-view" id="view-' + id + '">' +
+      '<div class="form-header">' +
+      '<div>' +
+      '<div class="form-title">Scenario Transformator</div>' +
+      '<div class="form-title-sub">Transformation de scénarios</div>' +
+      '</div>' +
+      '<div class="form-actions-col">' +
+      '<div class="form-actions-row">' +
+      '<button class="btn-secondary btn-help-job" type="button" title="How to use">?</button>' +
+      '<button class="btn-submit btn-submit-job">Transform</button>' +
+      '</div>' +
+      '</div>' +
+      '</div>' +
+      '<div class="form-grid">' +
+
+      '<div class="fg-lbl">Environment:</div>' +
+      '<div class="fg-ctrl">' +
+      '<div class="f-row">' +
+      '<input type="text" name="environment" style="flex:1;min-width:0" placeholder="\\\\srv\\styx\\...">' +
+      '<button class="btn-secondary btn-browse btn-browse-env" disabled style="opacity:.35;cursor:not-allowed">Browse</button>' +
+      '</div>' +
+      '</div>' +
+
+      '<div class="fg-lbl">Model Type:</div>' +
+      '<div class="fg-ctrl">' +
+      '<div class="f-row" style="gap:14px;flex-wrap:wrap" data-radio-group="modelType"></div>' +
+      '</div>' +
+
+      '<div class="fg-lbl">Période:</div>' +
+      '<div class="fg-ctrl">' +
+      '<div class="f-row" style="gap:14px" data-radio-group="periode"></div>' +
+      '</div>' +
+
+      '<div class="fg-lbl">Nb itérations:</div>' +
+      '<div class="fg-ctrl"><select name="iterations"></select></div>' +
+
+      '<div class="fg-lbl">Coupons:</div>' +
+      '<div class="fg-ctrl"><select name="coupons"></select></div>' +
+
+      '<div class="fg-lbl">Split:</div>' +
+      '<div class="fg-ctrl">' +
+      '<label style="' + radStyle + '"><input type="checkbox" name="split"> Split</label>' +
+      '</div>' +
+
       '</div>' +
       '</div>'
     );
@@ -1906,9 +2349,10 @@ $(function () {
       '</div>' +
       '<div class="form-actions-col">' +
       '<div class="form-actions-row">' +
+      '<button class="btn-secondary btn-help-job" type="button" title="How to use">?</button>' +
       '<button class="btn-submit btn-submit-job">Submit</button>' +
-      '<label class="adv-chk-label"><input type="checkbox" class="adv-chk" name="advOptions"> Advanced Options</label>' +
       '</div>' +
+      '<label class="adv-chk-label"><input type="checkbox" class="adv-chk" name="advOptions"> Advanced Options</label>' +
       '</div>' +
       '</div>' +
 
@@ -2235,6 +2679,61 @@ $(function () {
     });
   }
 
+  function getScenarioTransformatorInit() {
+    var cached = STX.get('initCache.scenariotransformator');
+    if (cached && (Date.now() - cached.ts) < 86400000) {
+      return $.Deferred().resolve(cached.data).promise();
+    }
+    return API.get('/api/JobManager/scenarioTransfo/init').then(function (init) {
+      STX.set('initCache.scenariotransformator', { data: init, ts: Date.now() });
+      return init;
+    });
+  }
+
+  function initScenarioTransformatorView($view) {
+    getScenarioTransformatorInit().then(function (init) {
+      var radStyle = 'display:flex;align-items:center;gap:6px;font-family:\'DM Mono\';font-size:.65rem;color:var(--text-dim);cursor:pointer;white-space:nowrap';
+
+      if (init.modelTypes && init.modelTypes.length) {
+        var $mt = $view.find('[data-radio-group="modelType"]');
+        $mt.empty();
+        init.modelTypes.forEach(function (m) {
+          var chk = m.value === init.defaultModelType ? ' checked' : '';
+          $mt.append('<label style="' + radStyle + '"><input type="radio" name="modelType" value="' + m.value + '"' + chk + '> ' + m.label + '</label>');
+        });
+      }
+
+      if (init.periodes && init.periodes.length) {
+        var $p = $view.find('[data-radio-group="periode"]');
+        $p.empty();
+        init.periodes.forEach(function (p) {
+          var chk = p.value === init.defaultPeriode ? ' checked' : '';
+          $p.append('<label style="' + radStyle + '"><input type="radio" name="periode" value="' + p.value + '"' + chk + '> ' + p.label + '</label>');
+        });
+      }
+
+      if (init.iterations && init.iterations.length) {
+        var $iter = $view.find('[name="iterations"]');
+        $iter.empty();
+        init.iterations.forEach(function (v) {
+          var sel = v === init.defaultIterations ? ' selected' : '';
+          $iter.append('<option value="' + v + '"' + sel + '>' + v + '</option>');
+        });
+      }
+
+      if (init.coupons && init.coupons.length) {
+        var $coup = $view.find('[name="coupons"]');
+        $coup.empty();
+        init.coupons.forEach(function (c) {
+          var sel = c === init.defaultCoupon ? ' selected' : '';
+          $coup.append('<option value="' + c + '"' + sel + '>' + c + '</option>');
+        });
+      }
+
+      saveJobView($view);
+    });
+  }
+
   $(document).on('change', '[name="autoIterations"]', function () {
     $(this).closest('.job-view').find('[name="iterations"]').prop('disabled', $(this).is(':checked'));
   });
@@ -2469,6 +2968,14 @@ $(function () {
       '<input type="text" class="mf-account f-input-sm"  placeholder="Account Name" style="width:140px">' +
       '<input type="text" class="mf-priority f-input-sm" placeholder="Priority"     style="width:100px">' +
       '<label><input type="checkbox" class="mf-fullview"> Full View</label>' +
+      '<div class="mf-sep"></div>' +
+      '<div class="mf-states">' +
+        '<button class="mf-state-btn" data-state="running"  type="button"><span class="state-dot running"></span>Running</button>' +
+        '<button class="mf-state-btn" data-state="pending"  type="button"><span class="state-dot pending"></span>Queued</button>' +
+        '<button class="mf-state-btn" data-state="done"     type="button"><span class="state-dot done"></span>Finished</button>' +
+        '<button class="mf-state-btn" data-state="error"    type="button"><span class="state-dot error"></span>Failed</button>' +
+        '<button class="mf-state-btn" data-state="cancelled"type="button"><span class="state-dot cancelled"></span>Canceled</button>' +
+      '</div>' +
       '</div>' +
       '<div class="monitor-wrap">' +
       '<table class="monitor-table">' +
