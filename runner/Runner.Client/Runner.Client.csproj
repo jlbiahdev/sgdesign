@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Runner.Client</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Runner.Core\Runner.Core.csproj" />
+    <ProjectReference Include="..\Runner.Server\Runner.Server.csproj" />
+    <ProjectReference Include="..\Runner.Handlers\Runner.Handlers.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Npgsql" Version="8.0.5" />
+    <PackageReference Include="Dapper" Version="2.1.35" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
+    <!-- Décommenter pour déploiement en Windows Service -->
+    <!-- <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="8.0.1" /> -->
+  </ItemGroup>
+</Project>

@@ -1,0 +1,35 @@
+# =============================================================
+# Template Docker Compose réutilisable
+# Copier dans le projet, renommer en docker-compose.yml
+# Adapter : PROJECT_NAME, ports, variables d'env
+# =============================================================
+
+name: ${PROJECT_NAME:-myproject}
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ${PROJECT_NAME:-myproject}-postgres
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-myproject}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      interval: 5s
+      retries: 5
+
+  # Décommenter si besoin de Redis
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: ${PROJECT_NAME:-myproject}-redis
+  #   ports:
+  #     - "${REDIS_PORT:-6379}:6379"
+
+volumes:
+  pgdata:

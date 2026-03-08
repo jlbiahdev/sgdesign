@@ -1,0 +1,19 @@
+{
+  "name": "devops-agent",
+  "version": "1.0.0",
+  "description": "Agent Claude qui configure l'environnement Docker pour n'importe quel projet",
+  "type": "module",
+  "bin": { "devops-agent": "./bin/devops-agent.js" },
+  "scripts": {
+    "start": "npx tsx src/index.ts",
+    "dev":   "npx tsx --watch src/index.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}
