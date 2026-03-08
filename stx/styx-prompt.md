@@ -274,9 +274,9 @@ Bouton situé **entre le bouton Help (?) et le badge utilisateur** dans le heade
 │ par défaut                           │
 │                                      │
 │ COMPTE                               │
-│ Utilisateur   Pablo RABADAN          │
+│ Utilisateur   John DOE          │
 │ Rôle          Actuaire               │
-│ Équipe        ASSU · Production      │
+│ Équipe        ASSU · MCA      │
 │                                      │
 │                    [Enregistrer]     │
 └──────────────────────────────────────┘
@@ -901,7 +901,7 @@ tr:hover td { background: var(--row-hover); }
 
 ### Footer
 ```
-© Groupe Société Générale | ASSU 2025          [module name]
+© Groupe Société Générale | ASSU 2026          [module name]
 ```
 
 ---

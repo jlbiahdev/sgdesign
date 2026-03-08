@@ -28,9 +28,9 @@
       </div>
       <div class="h-divider"></div>
       <div class="user-badge">
-        <div class="user-avatar">PR</div>
+        <div class="user-avatar">JD</div>
         <div class="user-info">
-          <span class="user-name">Pablo RABADAN</span>
+          <span class="user-name">John DOE</span>
           <span class="user-role">Actuaire · ASSU Production</span>
         </div>
         <button class="user-signout">Sign Out</button>
@@ -84,14 +84,6 @@
         </div>
       </div>
 
-      <!-- Settings -->
-      <button class="nav-icon" id="btnSettings" data-tip="Settings">
-        <svg viewBox="0 0 16 16" fill="currentColor">
-          <path d="M8 10.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z" opacity=".7"/>
-          <path d="M13.6 6.8l-.8-.46a5.9 5.9 0 000-1.68l.8-.46a.6.6 0 00.22-.82L12.98 2a.6.6 0 00-.82-.22l-.8.46A5.9 5.9 0 0010 1.77V.97A.6.6 0 009.4.4H6.6a.6.6 0 00-.6.57v.8A5.9 5.9 0 004.64 2.24l-.8-.46A.6.6 0 003.02 2L2.18 3.38a.6.6 0 00.22.82l.8.46a5.9 5.9 0 000 1.68l-.8.46a.6.6 0 00-.22.82L3.02 9a.6.6 0 00.82.22l.8-.46A5.9 5.9 0 006 9.23v.8a.6.6 0 00.6.57h2.8a.6.6 0 00.6-.57v-.8a5.9 5.9 0 001.36-.47l.8.46a.6.6 0 00.82-.22L13.82 7.6a.6.6 0 00-.22-.82z" transform="translate(0 2.5) scale(.9)"/>
-        </svg>
-      </button>
-
       <!-- Monitoring -->
       <button class="nav-icon" id="btnMonitoring" data-tip="Monitoring">
         <svg viewBox="0 0 16 16" fill="currentColor">
@@ -108,6 +100,14 @@
           <rect x="1" y="2" width="14" height="10" rx="1"/>
           <path d="M5 14h6M8 12v2"/>
           <path d="M4.5 6.5L7 9l-2.5 2.5M8.5 11.5H12"/>
+        </svg>
+      </button>
+
+      <!-- Settings -->
+      <button class="nav-icon" id="btnSettings" data-tip="Settings">
+        <svg viewBox="0 0 16 16" fill="currentColor">
+          <path d="M8 10.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z" opacity=".7"/>
+          <path d="M13.6 6.8l-.8-.46a5.9 5.9 0 000-1.68l.8-.46a.6.6 0 00.22-.82L12.98 2a.6.6 0 00-.82-.22l-.8.46A5.9 5.9 0 0010 1.77V.97A.6.6 0 009.4.4H6.6a.6.6 0 00-.6.57v.8A5.9 5.9 0 004.64 2.24l-.8-.46A.6.6 0 003.02 2L2.18 3.38a.6.6 0 00.22.82l.8.46a5.9 5.9 0 000 1.68l-.8.46a.6.6 0 00-.22.82L3.02 9a.6.6 0 00.82.22l.8-.46A5.9 5.9 0 006 9.23v.8a.6.6 0 00.6.57h2.8a.6.6 0 00.6-.57v-.8a5.9 5.9 0 001.36-.47l.8.46a.6.6 0 00.82-.22L13.82 7.6a.6.6 0 00-.22-.82z" transform="translate(0 2.5) scale(.9)"/>
         </svg>
       </button>
 
@@ -188,12 +188,44 @@
 
   <!-- ===== FOOTER ===== -->
   <footer>
-    <span>© Groupe Société Générale | ASSU 2025</span>
+    <span>© Groupe Société Générale | ASSU 2026</span>
     <span>STYX · v2026.01.00</span>
   </footer>
 
   <!-- ===== SCRIPTS ===== -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-  <script src="app.js"></script>
+
+  <!-- Core: no job knowledge, no UI -->
+  <script src="js/core/storage.js"></script>
+  <script src="js/core/api.js"></script>
+  <script src="js/core/registry.js"></script>
+
+  <!-- Shared helpers -->
+  <script src="js/shared/theme.js"></script>
+  <script src="js/shared/form-helpers.js"></script>
+
+  <!-- Job definitions: each calls JobRegistry.register() at load time -->
+  <script src="js/jobs/savings.js"></script>
+  <script src="js/jobs/nonlife.js"></script>
+  <script src="js/jobs/risklife.js"></script>
+  <script src="js/jobs/risklifekp.js"></script>
+  <script src="js/jobs/tdr.js"></script>
+  <script src="js/jobs/brd.js"></script>
+  <script src="js/jobs/ufx.js"></script>
+  <script src="js/jobs/custominput.js"></script>
+  <script src="js/jobs/scenariotransformator.js"></script>
+  <script src="js/jobs/monitoring.js"></script>
+
+  <!-- UI systems: depend on registry + core -->
+  <script src="js/ui/console.js"></script>
+  <script src="js/ui/tabs.js"></script>
+  <script src="js/ui/modal.js"></script>
+  <script src="js/ui/file-browser.js"></script>
+  <script src="js/ui/side-panel.js"></script>
+  <script src="js/ui/context-menu.js"></script>
+  <script src="js/ui/monitoring-ui.js"></script>
+
+  <!-- Bootstrap: wires everything together -->
+  <script src="js/main.js"></script>
 </body>
 </html>

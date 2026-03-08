@@ -728,9 +728,9 @@ $(function () {
       '</div>' +
       '<div class="panel-section">' +
       '<h4>Compte</h4>' +
-      '<div class="pref-row"><span class="pref-key">Utilisateur</span> <span class="pref-val">Pablo RABADAN</span></div>' +
+      '<div class="pref-row"><span class="pref-key">Utilisateur</span> <span class="pref-val">John DOE</span></div>' +
       '<div class="pref-row"><span class="pref-key">Rôle</span>        <span class="pref-val">Actuaire</span></div>' +
-      '<div class="pref-row"><span class="pref-key">Équipe</span>      <span class="pref-val">ASSU · Production</span></div>' +
+      '<div class="pref-row"><span class="pref-key">Équipe</span>      <span class="pref-val">ASSU · MCA</span></div>' +
       '</div>' +
       '<div class="panel-section">' +
       '<h4>API</h4>' +
