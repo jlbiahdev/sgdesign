@@ -18,10 +18,23 @@ public class ShellExecutor
     /// </summary>
     public async Task RunAsync(string exeName, string? args, CancellationToken ct)
     {
+        // Wrap in shell to support built-ins (echo, dir…) and redirections (>, |, &&)
+        string fileName, arguments;
+        if (OperatingSystem.IsWindows())
+        {
+            fileName  = "cmd.exe";
+            arguments = $"/c {exeName} {args ?? string.Empty}";
+        }
+        else
+        {
+            fileName  = "/bin/sh";
+            arguments = $"-c \"{exeName} {args ?? string.Empty}\"";
+        }
+
         var psi = new ProcessStartInfo
         {
-            FileName               = exeName,
-            Arguments              = args ?? string.Empty,
+            FileName               = fileName,
+            Arguments              = arguments,
             RedirectStandardOutput = true,
             RedirectStandardError  = true,
             UseShellExecute        = false,
@@ -54,6 +67,6 @@ public class ShellExecutor
 
         if (process.ExitCode != 0)
             throw new InvalidOperationException(
-                $"Process '{exeName}' terminated with exit code {process.ExitCode}.");
+                $"Process '{exeName}' terminated with exit code {process.ExitCode}. (wrapped in {fileName})");
     }
 }

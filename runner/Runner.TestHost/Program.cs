@@ -9,7 +9,8 @@ builder.Services.AddTaskFlow(builder.Configuration);
 
 builder.Services.AddCors(o => o.AddDefaultPolicy(p =>
     p.WithOrigins(
-        "http://localhost:5173",   // dashboard React (Vite)
+        "http://localhost:5173",   // dashboard React (Vite dev)
+        "http://localhost:5024",   // self
         "http://localhost:5500",   // dashboard HTML (Live Server)
         "http://localhost:5501",   // dashboard HTML (Live Server alt)
         "http://127.0.0.1:5500",
