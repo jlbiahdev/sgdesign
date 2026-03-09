@@ -1,6 +1,9 @@
 // ── Config ───────────────────────────────────────────────────────
-const API           = '/taskflow';
-const HUB           = '/taskflow/hub';
+// En dev (Live Server) : pointer vers le host de l'API.
+// En prod (servi par l'API elle-même) : utiliser ''.
+const API_HOST      = 'http://localhost:5000';   // ← adapter si besoin
+const API           = API_HOST + '/taskflow';
+const HUB           = API_HOST + '/taskflow/hub';
 const POLL_INTERVAL = 30000;
 
 // ── State ────────────────────────────────────────────────────────
