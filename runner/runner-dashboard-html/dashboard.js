@@ -24,14 +24,24 @@ function toggleTheme() {
 // ── Navigation ───────────────────────────────────────────────────
 function navigate(view, taskId) {
   $('.view').removeClass('active');
-  $('.nav-btn').removeClass('active');
+  $('.mode-tab').removeClass('active');
   $('#view-' + view).addClass('active');
+
+  // Tab actif dans le header
   if (view === 'dashboard' || view === 'submit') {
-    $('#nav-' + view).addClass('active');
+    $('#tab-' + view).addClass('active');
   }
-  if (view === 'detail' && taskId) {
-    loadDetail(taskId);
+
+  // Sous-barre back : visible uniquement en vue détail
+  if (view === 'detail') {
+    $('#header-back').show();
+    $('body').addClass('has-back');
+    if (taskId) loadDetail(taskId);
+  } else {
+    $('#header-back').hide();
+    $('body').removeClass('has-back');
   }
+
   window.scrollTo(0, 0);
 }
 
@@ -46,8 +56,8 @@ updateClock();
 function fmt(iso) {
   if (!iso) return '—';
   return new Date(iso).toLocaleString('fr-FR', {
-    day: '2-digit', month: '2-digit', year: 'numeric',
-    hour: '2-digit', minute: '2-digit', second: '2-digit'
+    day:'2-digit', month:'2-digit', year:'numeric',
+    hour:'2-digit', minute:'2-digit', second:'2-digit'
   });
 }
 
@@ -69,8 +79,7 @@ function sdot(state) {
 }
 
 function typeBadge(type) {
-  const cls = type === 'Shell' ? 'badge-shell' : 'badge-dotnet';
-  return `<span class="${cls}">${type}</span>`;
+  return `<span class="${type === 'Shell' ? 'badge-shell' : 'badge-dotnet'}">${type}</span>`;
 }
 
 function canCancel(state) {
@@ -80,27 +89,24 @@ function canCancel(state) {
 function esc(str) {
   if (str == null) return '';
   return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 // ── API ──────────────────────────────────────────────────────────
-function apiFetch(method, path, body) {
+async function apiFetch(method, path, body) {
   const opts = { method, headers: {} };
   if (body) {
     opts.headers['Content-Type'] = 'application/json';
     opts.body = JSON.stringify(body);
   }
-  return fetch(API + path, opts).then(r => {
-    if (!r.ok) throw new Error(r.status + ' ' + r.statusText);
-    if (r.status === 204) return null;
-    return r.json();
-  });
+  const r = await fetch(API + path, opts);
+  if (!r.ok) throw new Error(r.status + ' ' + r.statusText);
+  if (r.status === 204) return null;
+  return r.json();
 }
 
-// ── Load data ────────────────────────────────────────────────────
+// ── Load ─────────────────────────────────────────────────────────
 function loadAll() {
   return Promise.all([
     apiFetch('GET', '/tasks').then(data => { tasks = data || []; renderTasks(); updateStats(); }),
@@ -110,7 +116,7 @@ function loadAll() {
 
 // ── Stats ────────────────────────────────────────────────────────
 function updateStats() {
-  const counts = { Submitted: 0, Running: 0, Finished: 0, Failed: 0, Canceled: 0 };
+  const counts = { Submitted:0, Running:0, Finished:0, Failed:0, Canceled:0 };
   tasks.forEach(t => { if (counts[t.state] !== undefined) counts[t.state]++; });
   Object.keys(counts).forEach(s => $('#stat-' + s).text(counts[s]));
   $('#total-label').text(tasks.length + ' tâche' + (tasks.length !== 1 ? 's' : ''));
@@ -125,15 +131,14 @@ function renderRunners() {
   }
   const html = runners.map(r => {
     const ok = alive(r.lastHeartbeatAt);
-    return `
-      <div class="runner-row">
-        <div class="runner-dot ${ok ? 'alive' : 'dead'}"></div>
-        <div class="runner-info">
-          <div class="runner-name">${esc(r.friendlyName || r.id)}</div>
-          <div class="runner-id">${esc(r.id)}</div>
-        </div>
-        <div class="runner-hb">${fmt(r.lastHeartbeatAt)}</div>
-      </div>`;
+    return `<div class="runner-row">
+      <div class="runner-dot ${ok ? 'alive' : 'dead'}"></div>
+      <div class="runner-info">
+        <div class="runner-name">${esc(r.friendlyName || r.id)}</div>
+        <div class="runner-id">${esc(r.id)}</div>
+      </div>
+      <div class="runner-hb">${fmt(r.lastHeartbeatAt)}</div>
+    </div>`;
   }).join('');
   $('#runners-list').html(html);
 }
@@ -155,7 +160,7 @@ function renderTasks() {
       <td class="td-date">${fmt(t.createdAt)}</td>
       <td class="td-actions" onclick="event.stopPropagation()">
         ${canCancel(t.state)
-          ? `<button class="btn btn-danger btn-sm" onclick="cancelTask(${t.id})">✕</button>`
+          ? `<button class="btn-table-cancel" onclick="cancelTask(${t.id})">✕</button>`
           : ''}
       </td>
     </tr>`).join('');
@@ -174,7 +179,7 @@ function cancelCurrentTask() {
   if (currentDetailId) cancelTask(currentDetailId);
 }
 
-// ── Detail view ──────────────────────────────────────────────────
+// ── Detail ───────────────────────────────────────────────────────
 function loadDetail(id) {
   currentDetailId = id;
   $('#detail-id').text('#' + id);
@@ -212,20 +217,19 @@ function renderTimeline(history) {
   const sorted = [...history].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
   const html = sorted.map(h => {
     const color = STATE_COLORS[h.name] || 'var(--gray)';
-    return `
-      <div class="timeline-entry">
-        <div class="tl-dot-wrap">
-          <div class="tl-dot" style="background:${color};border-color:${color}"></div>
+    return `<div class="timeline-entry">
+      <div class="tl-dot-wrap">
+        <div class="tl-dot" style="background:${color};border-color:${color}"></div>
+      </div>
+      <div class="tl-body">
+        <div class="tl-head">
+          ${sdot(h.name)}
+          <span class="tl-date">${fmt(h.createdAt)}</span>
         </div>
-        <div class="tl-body">
-          <div class="tl-head">
-            ${sdot(h.name)}
-            <span class="tl-date">${fmt(h.createdAt)}</span>
-          </div>
-          ${h.serverId ? `<div class="tl-meta">Runner : ${esc(h.serverId)}</div>` : ''}
-          ${h.reason   ? `<div class="tl-reason">${esc(h.reason)}</div>`         : ''}
-        </div>
-      </div>`;
+        ${h.serverId ? `<div class="tl-meta">Runner : ${esc(h.serverId)}</div>` : ''}
+        ${h.reason   ? `<div class="tl-reason">${esc(h.reason)}</div>`         : ''}
+      </div>
+    </div>`;
   }).join('');
   $('#timeline-body').html(html);
 }
@@ -252,10 +256,7 @@ function submitTask() {
   const exeName     = $('#f-exeName').val().trim();
   const args        = $('#f-args').val().trim() || null;
 
-  if (!exeName) {
-    showResult('error', 'Le champ "exécutable" est requis.');
-    return;
-  }
+  if (!exeName) { showResult('error', 'Le champ "exécutable" est requis.'); return; }
 
   const payload = { externalId: isNaN(externalId) ? 0 : externalId, commandType, exeName, args };
   $('#btn-submit').prop('disabled', true).text('…');
@@ -281,10 +282,10 @@ function setConnStatus(status) {
   const dot = $('#conn-dot'), label = $('#conn-label');
   dot.removeClass('live offline reconnecting');
   switch (status) {
-    case 'live':         dot.addClass('live');         label.text('En direct');   break;
-    case 'offline':      dot.addClass('offline');      label.text('Déconnecté');  break;
+    case 'live':         dot.addClass('live');         label.text('En direct');    break;
+    case 'offline':      dot.addClass('offline');      label.text('Déconnecté');   break;
     case 'reconnecting': dot.addClass('reconnecting'); label.text('Reconnexion…'); break;
-    default:             label.text('—');
+    default: label.text('—');
   }
 }
 
@@ -297,13 +298,8 @@ function initSignalR() {
 
   conn.on('TaskStateChanged', event => {
     const idx = tasks.findIndex(t => t.id === event.taskId);
-    if (idx >= 0) {
-      tasks[idx].state = event.state;
-      renderTasks();
-      updateStats();
-    } else {
-      loadAll();
-    }
+    if (idx >= 0) { tasks[idx].state = event.state; renderTasks(); updateStats(); }
+    else { loadAll(); }
     if (currentDetailId === event.taskId && $('#view-detail').hasClass('active')) {
       loadDetail(event.taskId);
     }
@@ -313,9 +309,9 @@ function initSignalR() {
     apiFetch('GET', '/runners').then(data => { runners = data || []; renderRunners(); });
   });
 
-  conn.onreconnected(()    => { setConnStatus('live');         loadAll(); });
-  conn.onreconnecting(()   =>   setConnStatus('reconnecting'));
-  conn.onclose(()          =>   setConnStatus('offline'));
+  conn.onreconnected(()  => { setConnStatus('live');         loadAll(); });
+  conn.onreconnecting(() =>   setConnStatus('reconnecting'));
+  conn.onclose(()        =>   setConnStatus('offline'));
 
   conn.start()
     .then(()  => { setConnStatus('live');    loadAll(); })
