@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TaskFlow Runner</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="dashboard.css" />
+
+  <!-- SignalR -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
+  <!-- jQuery -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+</head>
+<body>
+
+<div id="topbar"></div>
+
+<!-- ── Header ── -->
+<header id="header">
+  <div id="logo" onclick="navigate('dashboard')">TASK<span>FLOW</span></div>
+  <nav>
+    <button class="nav-btn active" id="nav-dashboard" onclick="navigate('dashboard')">Dashboard</button>
+    <button class="nav-btn"        id="nav-submit"    onclick="navigate('submit')">Soumettre</button>
+  </nav>
+  <div id="header-right">
+    <div id="conn-status">
+      <div class="conn-dot" id="conn-dot"></div>
+      <span id="conn-label">—</span>
+    </div>
+    <button id="theme-btn" onclick="toggleTheme()" title="Changer le thème">☀</button>
+  </div>
+</header>
+
+<!-- ── App ── -->
+<div id="app">
+
+  <!-- DASHBOARD VIEW -->
+  <div class="view active" id="view-dashboard">
+    <div class="container">
+      <div class="page-header">
+        <div class="page-title">
+          Dashboard
+          <small id="total-label">— tâches</small>
+        </div>
+        <button class="btn btn-ghost" onclick="loadAll()">↻ Actualiser</button>
+      </div>
+
+      <!-- Stat cards -->
+      <div id="stat-grid">
+        <div class="stat-card" data-state="Submitted">
+          <div class="stat-label">Soumises</div>
+          <div class="stat-value" id="stat-Submitted">—</div>
+        </div>
+        <div class="stat-card" data-state="Running">
+          <div class="stat-label">En cours</div>
+          <div class="stat-value" id="stat-Running">—</div>
+        </div>
+        <div class="stat-card" data-state="Finished">
+          <div class="stat-label">Terminées</div>
+          <div class="stat-value" id="stat-Finished">—</div>
+        </div>
+        <div class="stat-card" data-state="Failed">
+          <div class="stat-label">Échouées</div>
+          <div class="stat-value" id="stat-Failed">—</div>
+        </div>
+        <div class="stat-card" data-state="Canceled">
+          <div class="stat-label">Annulées</div>
+          <div class="stat-value" id="stat-Canceled">—</div>
+        </div>
+      </div>
+
+      <!-- Main grid: runners + table -->
+      <div id="main-grid">
+
+        <!-- Runners -->
+        <div class="card">
+          <div class="card-head">
+            <span>Runners</span>
+            <span id="runners-count" style="opacity:0.7">0</span>
+          </div>
+          <div class="card-body" id="runners-list">
+            <div class="empty-row">Chargement…</div>
+          </div>
+        </div>
+
+        <!-- Tasks table -->
+        <div class="card">
+          <div class="card-head">
+            <span>Tâches</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Type</th>
+                  <th>Commande</th>
+                  <th>Arguments</th>
+                  <th>État</th>
+                  <th>Créée le</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="tasks-tbody">
+                <tr class="loading-row"><td colspan="7">Chargement…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- SUBMIT VIEW -->
+  <div class="view" id="view-submit">
+    <div class="container">
+      <div class="page-header">
+        <div class="page-title">Soumettre une tâche</div>
+      </div>
+      <div class="form-card">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="f-externalId">ID externe</label>
+            <input id="f-externalId" class="form-control" type="number" placeholder="12345" />
+            <div class="form-hint">Identifiant de référence dans votre système.</div>
+          </div>
+          <div class="form-group">
+            <label for="f-commandType">Type de commande</label>
+            <select id="f-commandType" class="form-control" onchange="updateFormHints()">
+              <option value="Shell">Shell</option>
+              <option value="DotNet">DotNet</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="f-exeName" id="f-exeName-label">Exécutable</label>
+          <input id="f-exeName" class="form-control" type="text" placeholder="python" />
+          <div class="form-hint" id="f-exeName-hint">Nom de l'exécutable ou du binaire à lancer.</div>
+        </div>
+
+        <div class="form-group">
+          <label for="f-args" id="f-args-label">Arguments</label>
+          <input id="f-args" class="form-control" type="text" placeholder="script.py --arg value" />
+          <div class="form-hint" id="f-args-hint">Arguments passés à l'exécutable.</div>
+        </div>
+
+        <button class="btn btn-red" id="btn-submit" onclick="submitTask()">➤ Soumettre</button>
+
+        <div id="submit-result"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DETAIL VIEW -->
+  <div class="view" id="view-detail">
+    <div class="container">
+      <div style="margin-bottom:16px">
+        <button class="btn btn-ghost btn-sm" onclick="navigate('dashboard')">← Retour</button>
+      </div>
+
+      <div class="detail-header">
+        <div class="detail-id" id="detail-id">#—</div>
+        <div id="detail-status"></div>
+        <div class="detail-actions">
+          <button class="btn btn-danger btn-sm" id="detail-cancel-btn" onclick="cancelCurrentTask()" style="display:none">
+            ✕ Annuler
+          </button>
+        </div>
+      </div>
+
+      <div class="detail-grid">
+        <div class="detail-field">
+          <div class="detail-field-label">ID externe</div>
+          <div class="detail-field-value" id="detail-externalId">—</div>
+        </div>
+        <div class="detail-field">
+          <div class="detail-field-label">Type</div>
+          <div class="detail-field-value" id="detail-type">—</div>
+        </div>
+        <div class="detail-field">
+          <div class="detail-field-label">Commande</div>
+          <div class="detail-field-value" id="detail-exe">—</div>
+        </div>
+        <div class="detail-field">
+          <div class="detail-field-label">Arguments</div>
+          <div class="detail-field-value" id="detail-args">—</div>
+        </div>
+        <div class="detail-field">
+          <div class="detail-field-label">Créée le</div>
+          <div class="detail-field-value" id="detail-created">—</div>
+        </div>
+      </div>
+
+      <div class="timeline">
+        <div class="timeline-title">Historique</div>
+        <div id="timeline-body">
+          <div class="empty-row">Chargement…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── Footer ── -->
+<footer id="footer">
+  <span>TaskFlow Runner · Dashboard</span>
+  <span id="clock"></span>
+</footer>
+
+<!-- Script -->
+<script src="dashboard.js"></script>
+
+</body>
+</html>

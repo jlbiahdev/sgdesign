@@ -13,6 +13,7 @@ Système d'exécution de tâches distribué avec supervision en temps réel. Bas
 - [Configuration](#configuration)
 - [Intégration client](#intégration-client)
   - [API HTTP](#api-http)
+  - [Exemples curl](#exemples-curl)
   - [Temps réel avec SignalR](#temps-réel-avec-signalr)
   - [Intégration dans un host ASP.NET](#intégration-dans-un-host-aspnet)
   - [Handlers .NET personnalisés](#handlers-net-personnalisés)
@@ -211,6 +212,86 @@ DELETE /taskflow/tasks/789
 
 ```http
 GET /taskflow/runners
+```
+
+---
+
+### Exemples curl
+
+```bash
+BASE=http://localhost:5000/taskflow
+```
+
+#### Soumettre une tâche Shell
+
+```bash
+curl -s -X POST "$BASE/tasks" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "externalId": 1,
+    "commandType": "Shell",
+    "exeName": "python",
+    "args": "script.py --input data.csv"
+  }' | jq
+# → { "id": 42 }
+```
+
+#### Soumettre une tâche DotNet
+
+```bash
+curl -s -X POST "$BASE/tasks" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "externalId": 2,
+    "commandType": "DotNet",
+    "exeName": "EchoHandler",
+    "args": "hello world"
+  }' | jq
+```
+
+#### Lister toutes les tâches
+
+```bash
+curl -s "$BASE/tasks" | jq
+```
+
+#### Consulter une tâche
+
+```bash
+curl -s "$BASE/tasks/42" | jq
+```
+
+#### Historique des états d'une tâche
+
+```bash
+curl -s "$BASE/tasks/42/history" | jq
+```
+
+#### Annuler une tâche
+
+```bash
+curl -s -X DELETE "$BASE/tasks/42" -w "%{http_code}"
+# → 204 (succès) ou 404 (tâche introuvable)
+```
+
+#### Lister les runners actifs
+
+```bash
+curl -s "$BASE/runners" | jq
+```
+
+#### Boucle d'attente jusqu'à la fin d'une tâche
+
+```bash
+TASK_ID=42
+while true; do
+  STATE=$(curl -s "$BASE/tasks/$TASK_ID" | jq -r '.state')
+  echo "$(date +%T) → $STATE"
+  case "$STATE" in
+    Finished|Failed|Canceled) break ;;
+  esac
+  sleep 2
+done
 ```
 
 ---
