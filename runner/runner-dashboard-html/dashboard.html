@@ -34,7 +34,11 @@
       <div class="conn-dot" id="conn-dot"></div>
       <span id="conn-label">—</span>
     </div>
-    <button id="theme-btn" onclick="toggleTheme()" title="Changer le thème">☀</button>
+    <div class="theme-toggle" onclick="toggleTheme()" title="Changer le thème">
+      <span class="tgl-label" id="tgl-label-left">Dark</span>
+      <div class="tgl-track"><div class="tgl-knob"></div></div>
+      <span class="tgl-label" id="tgl-label-right">Light</span>
+    </div>
   </div>
 </header>
 
@@ -45,9 +49,9 @@
   <div class="view active" id="view-dashboard">
     <div class="container">
       <div class="page-header">
-        <div class="page-title">
-          Dashboard
-          <small id="total-label">— tâches</small>
+        <div>
+          <div class="page-label">Monitoring</div>
+          <div class="page-title">Dashboard <small id="total-label">— tâches</small></div>
         </div>
         <button class="btn btn-ghost" onclick="loadAll()">↻ Actualiser</button>
       </div>
@@ -123,7 +127,10 @@
   <div class="view" id="view-submit">
     <div class="container">
       <div class="page-header">
-        <div class="page-title">Soumettre une tâche</div>
+        <div>
+          <div class="page-label">Nouvelle tâche</div>
+          <div class="page-title">Soumettre</div>
+        </div>
       </div>
       <div class="form-card">
         <div class="form-row">

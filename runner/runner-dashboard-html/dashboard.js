@@ -12,7 +12,6 @@ let currentDetailId = null;
 (function initTheme() {
   const saved = localStorage.getItem('tf-theme') || 'dark';
   document.documentElement.setAttribute('data-theme', saved);
-  document.getElementById('theme-btn').textContent = saved === 'dark' ? '☀' : '☾';
 })();
 
 function toggleTheme() {
@@ -20,7 +19,6 @@ function toggleTheme() {
   const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
   html.setAttribute('data-theme', next);
   localStorage.setItem('tf-theme', next);
-  document.getElementById('theme-btn').textContent = next === 'dark' ? '☀' : '☾';
 }
 
 // ── Navigation ───────────────────────────────────────────────────
