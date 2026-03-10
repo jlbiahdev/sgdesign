@@ -11,7 +11,7 @@
 .tgl-label.active { color: var(--text); }
 
 /* ── MAIN ── */
-main { flex: 1; padding: 96px 40px 80px; max-width: 1200px; margin: 0 auto; width: 100%; position: relative; z-index: 1; }
+main { padding-top: 96px; padding-bottom: 80px; max-width: 1200px; }
 
 /* ── HERO ── */
 .hero { margin-bottom: 60px; animation: fadeUp .55s ease both; }
