@@ -101,18 +101,6 @@
   <span>FETEAD v2.0 · DEV</span>
 </footer>
 
-<script>
-const KEY = 'fetead-theme';
-function applyTheme(t) {
-  document.documentElement.setAttribute('data-theme', t);
-  localStorage.setItem(KEY, t);
-  document.getElementById('lblDark').style.opacity  = t === 'dark'  ? '1' : '0.35';
-  document.getElementById('lblLight').style.opacity = t === 'light' ? '1' : '0.35';
-}
-function toggleTheme() {
-  applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
-}
-applyTheme(localStorage.getItem(KEY) || 'dark');
-</script>
+<script src="app.js"></script>
 </body>
 </html>

@@ -11,19 +11,6 @@ let tasks           = [];
 let runners         = [];
 let currentDetailId = null;
 
-// ── Theme ────────────────────────────────────────────────────────
-(function initTheme() {
-  const saved = localStorage.getItem('fetead-theme') || 'dark';
-  document.documentElement.setAttribute('data-theme', saved);
-})();
-
-function toggleTheme() {
-  const html = document.documentElement;
-  const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-  html.setAttribute('data-theme', next);
-  localStorage.setItem('fetead-theme', next);
-}
-
 // ── Navigation ───────────────────────────────────────────────────
 function navigate(view, taskId) {
   $('.view').removeClass('active');
