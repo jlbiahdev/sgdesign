@@ -1,0 +1,48 @@
+/* ═══════════════════════════════════════
+   FETEAD — fetead-home.css
+   Styles spécifiques au Portail (page d'accueil)
+═══════════════════════════════════════ */
+
+/* ── TOKENS SPÉCIFIQUES ── */
+[data-theme="dark"]  { --bg-card-hover: #1f1f1f; }
+[data-theme="light"] { --bg-card-hover: #fafafa; }
+
+/* ── HEADER (complément home) ── */
+.tgl-label.active { color: var(--text); }
+
+/* ── MAIN ── */
+main { flex: 1; padding: 96px 40px 80px; max-width: 1200px; margin: 0 auto; width: 100%; position: relative; z-index: 1; }
+
+/* ── HERO ── */
+.hero { margin-bottom: 60px; animation: fadeUp .55s ease both; }
+.hero-eye { font-family: 'DM Mono', monospace; font-size: .66rem; letter-spacing: .24em; color: var(--red); text-transform: uppercase; margin-bottom: 12px; }
+.hero-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(3rem,7vw,5.5rem); line-height: .93; letter-spacing: .04em; color: var(--text); transition: color .28s; }
+.hero-title span { color: var(--red); }
+.hero-desc { margin-top: 16px; font-size: .84rem; color: var(--text-dim); max-width: 420px; line-height: 1.7; transition: color .28s; }
+
+/* ── SECTION LABEL ── */
+.slabel { font-family: 'DM Mono', monospace; font-size: .61rem; letter-spacing: .24em; color: var(--text-faint); text-transform: uppercase; margin-bottom: 18px; display: flex; align-items: center; gap: 12px; transition: color .28s; }
+.slabel::after { content: ''; flex: 1; height: 1px; background: var(--bg-border); transition: background .28s; }
+
+/* ── APPS GRID ── */
+.apps-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 2px; }
+.app-card { position: relative; background: var(--bg-card); border: 1px solid var(--bg-border); padding: 30px 26px 24px; cursor: pointer; overflow: hidden; transition: border-color .25s, background .25s, box-shadow .25s; text-decoration: none; color: inherit; display: flex; flex-direction: column; gap: 9px; animation: fadeUp .5s ease both; }
+.app-card:nth-child(1) { animation-delay: .08s; }
+.app-card:nth-child(2) { animation-delay: .13s; }
+.app-card:nth-child(3) { animation-delay: .18s; }
+.app-card:nth-child(4) { animation-delay: .23s; }
+.app-card:nth-child(5) { animation-delay: .28s; }
+.app-card:nth-child(6) { animation-delay: .33s; }
+.app-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: var(--red); transform: scaleX(0); transform-origin: left; transition: transform .3s ease; }
+.app-card::after { content: ''; position: absolute; inset: 0; background: var(--red-glow); opacity: 0; transition: opacity .3s; }
+.app-card:hover { border-color: var(--bg-border-hover); background: var(--bg-card-hover); box-shadow: var(--shadow); }
+.app-card:hover::before { transform: scaleX(1); }
+.app-card:hover::after { opacity: 1; }
+.app-card.disabled { opacity: .3; cursor: not-allowed; pointer-events: none; }
+.app-num { position: absolute; top: 17px; right: 19px; font-family: 'DM Mono', monospace; font-size: .6rem; color: var(--text-faint); letter-spacing: .08em; }
+.app-icon { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; margin-bottom: 2px; }
+.app-icon svg { width: 25px; height: 25px; stroke: var(--red); fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.app-name { font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem; letter-spacing: .06em; line-height: 1; color: var(--text); transition: color .28s; position: relative; z-index: 1; }
+.app-desc { font-size: .73rem; color: var(--text-dim); line-height: 1.55; flex: 1; position: relative; z-index: 1; transition: color .28s; }
+.app-arrow { margin-top: 6px; font-family: 'DM Mono', monospace; font-size: .6rem; color: var(--red); letter-spacing: .15em; text-transform: uppercase; display: flex; align-items: center; gap: 5px; position: relative; z-index: 1; transition: gap .2s; }
+.app-card:hover .app-arrow { gap: 9px; }

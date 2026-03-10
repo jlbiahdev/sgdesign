@@ -1,0 +1,60 @@
+/* ═══════════════════════════════════════
+   FETEAD — fetead-styx.css
+   Styles spécifiques au module Styx About
+═══════════════════════════════════════ */
+
+/* ── TOKENS SPÉCIFIQUES ── */
+[data-theme="dark"]  { --bg-input: #111111; --row-hover: rgba(255,255,255,0.022); }
+[data-theme="light"] { --bg-input: #f8f8f8;  --row-hover: rgba(0,0,0,0.022); }
+
+/* ── MAIN ── */
+main { flex: 1; padding: 110px 40px 60px; max-width: 1000px; margin: 0 auto; width: 100%; position: relative; z-index: 1; }
+
+/* ── EN-TÊTE DE PAGE ── */
+.page-top { margin-bottom: 32px; animation: fadeUp .5s ease both; }
+.mod-label { font-family: 'DM Mono', monospace; font-size: .63rem; letter-spacing: .24em; color: var(--red); text-transform: uppercase; margin-bottom: 7px; }
+.mod-title { font-family: 'Bebas Neue', sans-serif; font-size: 2.8rem; letter-spacing: .06em; line-height: 1; color: var(--text); transition: color .28s; }
+.mod-desc { font-size: .79rem; color: var(--text-dim); line-height: 1.65; margin-top: 5px; transition: color .28s; }
+
+/* ── CARTE SPRINT ── */
+.sprint-card { background: var(--bg-card); border: 1px solid var(--bg-border); border-top: 2px solid var(--red); padding: 32px; margin-bottom: 20px; animation: fadeUp .5s .05s ease both; transition: background .28s, border-color .28s; }
+.fg { margin-bottom: 0; }
+.flabel { font-family: 'DM Mono', monospace; font-size: .62rem; letter-spacing: .18em; text-transform: uppercase; color: var(--text-dim); display: block; margin-bottom: 9px; transition: color .28s; }
+.sprint-row { display: flex; gap: 10px; align-items: flex-start; }
+input[type="text"] { flex: 1; padding: 12px 14px; background: var(--bg-input); border: 1px solid var(--bg-border); color: var(--text); font-family: 'DM Mono', monospace; font-size: .83rem; outline: none; transition: border-color .2s, box-shadow .2s, background .28s, color .28s; width: 100%; }
+input[type="text"]::placeholder { color: var(--text-faint); }
+input[type="text"]:focus { border-color: var(--red); box-shadow: 0 0 0 3px var(--red-glow); }
+.btn-primary { padding: 12px 22px; background: var(--red); border: none; color: #fff; font-family: 'Bebas Neue', sans-serif; font-size: 1.05rem; letter-spacing: .12em; cursor: pointer; transition: background .2s; white-space: nowrap; display: flex; align-items: center; gap: 7px; flex-shrink: 0; }
+.btn-primary:hover { background: var(--red-dark); }
+.hint { font-size: .66rem; color: var(--text-faint); margin-top: 7px; font-family: 'DM Mono', monospace; transition: color .28s; }
+
+/* ── BANDEAU SPRINT ── */
+.sprint-meta { display: none; align-items: center; justify-content: space-between; padding: 10px 16px; background: rgba(226,0,26,.07); border-left: 3px solid var(--red); margin-bottom: 16px; animation: fadeUp .3s ease both; }
+.sprint-meta.show { display: flex; }
+.sprint-name { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: .06em; color: var(--red); }
+.sprint-count { font-family: 'DM Mono', monospace; font-size: .66rem; color: var(--text-dim); }
+
+/* ── TABLEAU ── */
+.tbl-section { animation: fadeUp .4s .1s ease both; display: none; }
+.tbl-section.show { display: block; }
+.tbl-wrap { border: 1px solid var(--bg-border); overflow: hidden; transition: border-color .28s; }
+table { width: 100%; border-collapse: collapse; }
+thead { background: var(--red); }
+th { padding: 12px 16px; text-align: left; font-family: 'Bebas Neue', sans-serif; font-size: .82rem; letter-spacing: .1em; color: #fff; font-weight: normal; }
+tr { border-bottom: 1px solid var(--bg-border); transition: background .15s, border-color .28s; }
+tr:last-child { border-bottom: none; }
+tr:hover td { background: var(--row-hover); }
+td { padding: 12px 16px; font-size: .78rem; color: var(--text-dim); vertical-align: middle; transition: color .28s; }
+td.jira-num { font-family: 'DM Mono', monospace; font-size: .78rem; }
+.jira-link { color: var(--red); text-decoration: none; font-weight: 500; border-bottom: 1px solid rgba(226,0,26,.3); padding-bottom: 1px; transition: border-color .2s; }
+.jira-link:hover { border-color: var(--red); }
+td.title-cell { color: var(--text); }
+.status-badge { display: inline-block; padding: 3px 8px; font-family: 'DM Mono', monospace; font-size: .6rem; letter-spacing: .08em; border: 1px solid; }
+.s-todo     { color: #888; border-color: #444; background: rgba(128,128,128,.08); }
+.s-progress { color: #f5a623; border-color: rgba(245,166,35,.4); background: rgba(245,166,35,.08); }
+.s-done     { color: #00C875; border-color: rgba(0,200,117,.4); background: rgba(0,200,117,.08); }
+.s-review   { color: var(--cyan,#0EB8C8); border-color: rgba(14,184,200,.4); background: rgba(14,184,200,.08); }
+
+/* ── ÉTAT VIDE ── */
+.empty { text-align: center; padding: 60px 20px; color: var(--text-faint); font-family: 'DM Mono', monospace; font-size: .75rem; }
+.empty svg { margin-bottom: 14px; stroke: var(--bg-border); }
