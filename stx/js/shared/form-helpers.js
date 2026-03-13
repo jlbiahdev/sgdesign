@@ -379,14 +379,16 @@
   }
 
   window._loadEnvData = function ($view) {
-    var envPath = envToApiPath($view.find('[name="environment"]').val());
     _resetEnvData($view);
+    var envPath = envToApiPath($view.find('[name="environment"]').val());
     if (!envPath) return;
 
-    API.exploreDir(envPath + '/input', { isFolder: true }).then(function (node) {
+    API.exploreDir(envPath + '/input').then(function (node) {
       var $sel = $view.find('[name="inputs"]');
+      var cur = $sel.val();
       $sel.find('option:not(:first)').remove();
       (node.folders || []).forEach(function (s) { $sel.append('<option>' + s + '</option>'); });
+      if (cur) $sel.val(cur);
     });
 
     if ($view.find('.scen-table').length) {
