@@ -83,7 +83,7 @@ window.API = (function ($, STX) {
   }
 
   function _realExploreDir(path, opts) {
-    var params = { path: path || '' };
+    var params = { rootFolder: path || '' };
     if (opts && opts.isFolder)  params.isFolder  = true;
     if (opts && opts.extension) params.extension = opts.extension;
     return _ajax('GET', '/api/JobEnvironment/explore?' + $.param(params))

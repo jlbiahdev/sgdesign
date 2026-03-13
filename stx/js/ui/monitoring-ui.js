@@ -6,6 +6,21 @@
   window._monJobMap   = {}; // jobId   → job object
   window._monChildMap = {}; // childId → child object
   var _outputCache    = [];
+  var _refreshTimer   = null;
+
+  window.setMonitorRefreshInterval = function (ms) {
+    if (_refreshTimer) { clearInterval(_refreshTimer); _refreshTimer = null; }
+    if (ms > 0) {
+      _refreshTimer = setInterval(function () {
+        if ($('#view-monitoring').hasClass('active')) loadMonitoringJobs();
+      }, ms);
+    }
+  };
+
+  window.stopMonitorRefresh = function () {
+    if (_refreshTimer) { clearInterval(_refreshTimer); _refreshTimer = null; }
+    $('.mf-refresh').val('0');
+  };
 
   // ── API ─────────────────────────────────────
 
@@ -47,6 +62,7 @@
 
   function buildTasksTable(tasks, envPath) {
     if (!tasks || !tasks.length) return '';
+    tasks = tasks.slice().sort(function (a, b) { return a.id - b.id; });
     var rows = tasks.map(function (t) {
       var taskEnv = (t.command || '').replace(/^(.*[\\\/])[^\\\/]*$/, '$1').replace(/[\\\/]$/, '') || envPath || '';
       taskEnv = taskEnv.replace(/"/g, '&quot;');
@@ -80,6 +96,7 @@
 
   function buildChildrenTable(children, envPath) {
     if (!children || !children.length) return '';
+    children = children.slice().sort(function (a, b) { return a.id - b.id; });
     var rows = children.map(function (c) {
       var env = (c.environment || envPath || '').replace(/"/g, '&quot;');
       window._monChildMap[c.id] = c;
@@ -109,6 +126,7 @@
 
   function buildGroupsTable(groups, jobId) {
     if (!groups || !groups.length) return '';
+    groups = groups.slice().sort(function (a, b) { return a.id - b.id; });
     var parentEnv = ((window._monJobMap[jobId] || {}).environment || '');
     var rows = groups.map(function (g) {
       var expandId = 'grp-expand-' + jobId + '-' + g.id;
@@ -169,6 +187,7 @@
       }
       window._monJobMap = {};
       resp.jobs.forEach(function (j) { window._monJobMap[j.id] = j; });
+      resp.jobs.sort(function (a, b) { return b.id - a.id; });
       $body.html(resp.jobs.map(buildJobRow).join(''));
       applyMonitorFilters();
     });
@@ -216,6 +235,10 @@
       STX.del('monitoring');
       STX.del('monitoring.meta');
     }
+
+    $(document).on('change', '.mf-refresh', function () {
+      setMonitorRefreshInterval(+$(this).val());
+    });
 
     $(document).on('input', '.mf-id, .mf-name, .mf-priority, .mf-account', applyMonitorFilters);
     $(document).on('change', '.mf-fullview', applyMonitorFilters);

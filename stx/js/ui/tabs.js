@@ -17,6 +17,18 @@
     return '<svg class="ti-svg" viewBox="0 0 12 12" fill="none"><rect x="0" y="0" width="12" height="6" fill="#dc2626"/><rect x="0" y="6" width="12" height="6" fill="#111"/><rect x="0" y="5.25" width="12" height="1.5" fill="white"/></svg>';
   };
 
+  function _saveTabSession() {
+    var tabs = [];
+    $('.sidebar-tab').each(function () {
+      var id    = $(this).data('job');
+      var label = $(this).find('.tab-label').text();
+      var type  = id === 'monitoring' ? 'monitoring'
+                : ((STX.get('job.' + id) || {}).type || id.replace(/-\d+$/, ''));
+      tabs.push({ id: id, label: label, type: type });
+    });
+    STX.merge('session', { tabs: tabs });
+  }
+
   window.addTab = function (id, label, type) {
     var $t = $(
       '<div class="sidebar-tab" data-job="' + id + '">' +
@@ -26,6 +38,7 @@
       '</div>'
     );
     $('#sidebarTabs').append($t);
+    _saveTabSession();
   };
 
   window.activateTab = function (id) {
@@ -33,6 +46,7 @@
     $('.sidebar-tab[data-job="' + id + '"]').addClass('active');
     $('.job-view').removeClass('active');
     $('#view-' + id).addClass('active');
+    STX.merge('session', { activeTab: id });
   };
 
   $(function () {
@@ -46,12 +60,16 @@
       e.stopPropagation();
       var $tab = $(this).closest('.sidebar-tab');
       var id = $tab.data('job');
+      if (id === 'monitoring' && typeof window.stopMonitorRefresh === 'function') {
+        window.stopMonitorRefresh();
+      }
       STX.del('job.' + id);
       $tab.remove();
       $('#view-' + id).remove();
       var $rem = $('.sidebar-tab');
       if ($rem.length) activateTab($rem.last().data('job'));
-      else $('#emptyState').show();
+      else { $('#emptyState').show(); STX.merge('session', { activeTab: null }); }
+      _saveTabSession();
     });
   });
 

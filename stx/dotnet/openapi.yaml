@@ -35,19 +35,38 @@ paths:
   /api/JobEnvironment/explore:
     get:
       tags: [JobEnvironment]
-      summary: Explore the remote filesystem tree
+      summary: Explore a single node of the remote filesystem
       description: |
-        Returns the complete UNC filesystem tree in a single call.
-        `_root` is the server UNC root; `_tree` is a flat dictionary keyed by
-        relative path. Nodes under `scenario/` folders include a `scenarios`
-        array. The client navigates the tree locally without further HTTP calls.
+        Returns the sub-folders, files and (for scenario/ nodes) scenarios for
+        the given `rootFolder` path relative to the UNC root.
+        When `isFolder` is true, only sub-folders are returned (files is empty).
+      parameters:
+        - name: rootFolder
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Relative path from the UNC root (forward or back slashes). Empty = root.
+        - name: isFolder
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: When true, suppress the files list (folder-only picker mode).
+        - name: extension
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter files by extension (e.g. "csv"). Ignored when isFolder is true.
       responses:
         "200":
-          description: Full filesystem tree
+          description: Single filesystem node
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ExploreResponse"
+                $ref: "#/components/schemas/TreeNode"
 
   # ── JobManager – init ───────────────────────────────────────────────────────
 

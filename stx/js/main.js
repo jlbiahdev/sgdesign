@@ -24,6 +24,76 @@ $(function () {
   // ── Job counter ─────────────────────────────
   var jobIdx = 0;
 
+  // ── Session restore ──────────────────────────
+  function restoreSession() {
+    var session = STX.get('session') || {};
+    var tabs = session.tabs || [];
+    if (!tabs.length) return;
+
+    tabs.forEach(function (tab) {
+      var type = tab.type;
+      var id   = tab.id;
+
+      if (type === 'monitoring') {
+        if ($('#view-monitoring').length) return;
+        $('#jobArea').append(buildMonitoring());
+        $('#emptyState').hide();
+        var mf = (STX.get('monitoring') || {}).filters || {};
+        if (mf.id)       $('.mf-id').val(mf.id);
+        if (mf.name)     $('.mf-name').val(mf.name);
+        if (mf.priority) $('.mf-priority').val(mf.priority);
+        if (mf.account)  $('.mf-account').val(mf.account);
+        addTab('monitoring', 'Monitoring', 'monitoring');
+        return;
+      }
+
+      var def = JobRegistry.get(type);
+      if (!def) return;
+      var savedMeta = STX.get('job.' + id);
+      if (!savedMeta) return;
+
+      // Ensure jobIdx is above any restored id to prevent collisions
+      var m = id.match(/-(\d+)$/);
+      if (m) jobIdx = Math.max(jobIdx, parseInt(m[1], 10));
+
+      $('#jobArea').append(def.build(id));
+      $('#emptyState').hide();
+
+      var $view = $('#view-' + id);
+      autoNameFields($view);
+      syncBrowseButtons($view);
+      if (typeof def.init === 'function') def.init($view);
+
+      // Restore form data after init (which may be async); delay gives cached init time to run
+      var snap = $.extend({}, savedMeta);
+      setTimeout(function () {
+        if (!$('#view-' + id).length) return;
+        restoreView($view, snap);
+        syncBrowseButtons($view);
+        $view.find('.chk-period').trigger('change');
+        // Reload inputs + scenarios for environment-based jobs
+        var envPath = envToApiPath($view.find('[name="environment"]').val());
+        if (envPath) $view.find('[name="environment"]').trigger('blur');
+      }, 350);
+
+      addTab(id, tab.label, type);
+    });
+
+    // Activate last active tab (deferred so all tabs are in DOM first)
+    var activeId = session.activeTab;
+    if (activeId) {
+      setTimeout(function () {
+        activateTab(activeId);
+        if (activeId === 'monitoring') loadMonitoringJobs();
+      }, 0);
+    } else if (tabs.length) {
+      activateTab(tabs[tabs.length - 1].id);
+      if (tabs[tabs.length - 1].type === 'monitoring') loadMonitoringJobs();
+    }
+
+    $('#emptyState').hide();
+  }
+
   // ── openJob ─────────────────────────────────
   function openJob(type) {
     // Monitoring is singleton
@@ -305,5 +375,8 @@ $(function () {
     setTimeout(function () { cLog('Progression : 60%'); }, 4000);
     setTimeout(function () { cLog('Progression : 100% — Job terminé avec succès.'); }, 6500);
   });
+
+  // ── Restore previous session ─────────────────
+  restoreSession();
 
 });

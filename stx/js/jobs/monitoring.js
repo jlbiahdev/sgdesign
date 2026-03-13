@@ -18,6 +18,13 @@
         '<button class="mf-state-btn" data-state="error"     type="button"><span class="state-dot error"></span>Failed</button>' +
         '<button class="mf-state-btn" data-state="cancelled" type="button"><span class="state-dot cancelled"></span>Canceled</button>' +
       '</div>' +
+      '<select class="mf-refresh f-input-sm" title="Auto-refresh" style="width:86px">' +
+        '<option value="0">Refresh off</option>' +
+        '<option value="5000">5 sec</option>' +
+        '<option value="10000">10 sec</option>' +
+        '<option value="30000">30 sec</option>' +
+        '<option value="60000">1 min</option>' +
+      '</select>' +
       '<button class="btn-secondary btn-help-monitoring" type="button" title="Aide Monitoring" style="margin-left:auto">?</button>' +
       '</div>' +
       '<div class="monitor-wrap">' +
