@@ -9,16 +9,15 @@ namespace Styx.Controllers;
 public class JobEnvironmentController : ControllerBase
 {
     // Fake UNC tree keyed by normalised relative path (forward slashes, no leading slash).
-    private static readonly Dictionary<string, TreeNode> _tree = new()
+    // Paths are relative to \\srvrbxassufp01\HPC (the share root = apiRoot).
+    private static readonly Dictionary<string, TreeNode> _tree = new(StringComparer.OrdinalIgnoreCase)
     {
-        [""] = new TreeNode { Folders = ["hpc"], Files = [] },
+        [""] = new TreeNode { Folders = ["Cas01", "Cas02", "Cas03", "Cas04", "Cas05"], Files = [] },
 
-        ["hpc"] = new TreeNode { Folders = ["Cas01", "Cas02", "Cas03", "Cas04", "Cas05"], Files = [] },
+        ["Cas01"]        = new TreeNode { Folders = ["4-Omen"], Files = [] },
+        ["Cas01/4-Omen"] = new TreeNode { Folders = ["input", "output", "scenario"], Files = [] },
 
-        ["hpc/Cas01"]        = new TreeNode { Folders = ["4-Omen"], Files = [] },
-        ["hpc/Cas01/4-Omen"] = new TreeNode { Folders = ["input", "output", "scenario"], Files = [] },
-
-        ["hpc/Cas01/4-Omen/input"] = new TreeNode
+        ["Cas01/4-Omen/input"] = new TreeNode
         {
             Folders =
             [
@@ -40,44 +39,44 @@ public class JobEnvironmentController : ControllerBase
             ],
             Files = []
         },
-        ["hpc/Cas01/4-Omen/input/Input23.01.00_2022Y_vfinale"] = new TreeNode
+        ["Cas01/4-Omen/input/Input23.01.00_2022Y_vfinale"] = new TreeNode
         {
             Folders = [],
             Files   = ["portfolio.xml", "params_savings.json", "hypotheses.csv", "mapping.xlsx"]
         },
-        ["hpc/Cas01/4-Omen/input/Input23.01.00_2022Y_vfinale_cible"] = new TreeNode
+        ["Cas01/4-Omen/input/Input23.01.00_2022Y_vfinale_cible"] = new TreeNode
         {
             Folders = [],
             Files   = ["portfolio.xml", "params_savings.json", "hypotheses.csv"]
         },
-        ["hpc/Cas01/4-Omen/input/Input23.01.00_2022Y_vfinale_pgg1"] = new TreeNode
+        ["Cas01/4-Omen/input/Input23.01.00_2022Y_vfinale_pgg1"] = new TreeNode
         {
             Folders = [],
             Files   = ["portfolio.xml", "params_savings.json"]
         },
-        ["hpc/Cas01/4-Omen/input/Input23.01.00_2022Y_vfinale_pgg2"] = new TreeNode
+        ["Cas01/4-Omen/input/Input23.01.00_2022Y_vfinale_pgg2"] = new TreeNode
         {
             Folders = [],
             Files   = ["portfolio.xml", "params_savings.json"]
         },
 
-        ["hpc/Cas01/4-Omen/output"] = new TreeNode
+        ["Cas01/4-Omen/output"] = new TreeNode
         {
             Folders = ["2022Y_run01", "2022Y_run02"],
             Files   = []
         },
-        ["hpc/Cas01/4-Omen/output/2022Y_run01"] = new TreeNode
+        ["Cas01/4-Omen/output/2022Y_run01"] = new TreeNode
         {
             Folders = [],
             Files   = ["output_central.csv", "output_stress_up.csv", "output_stress_down.csv", "summary.xlsx"]
         },
-        ["hpc/Cas01/4-Omen/output/2022Y_run02"] = new TreeNode
+        ["Cas01/4-Omen/output/2022Y_run02"] = new TreeNode
         {
             Folders = [],
             Files   = ["output_central.csv", "output_stress_up.csv", "summary.xlsx"]
         },
 
-        ["hpc/Cas01/4-Omen/scenario"] = new TreeNode
+        ["Cas01/4-Omen/scenario"] = new TreeNode
         {
             Folders   = [],
             Files     = [],
@@ -91,15 +90,15 @@ public class JobEnvironmentController : ControllerBase
             ]
         },
 
-        ["hpc/Cas02"]        = new TreeNode { Folders = ["4-Omen"], Files = [] },
-        ["hpc/Cas02/4-Omen"] = new TreeNode { Folders = ["input", "output", "scenario"], Files = [] },
-        ["hpc/Cas02/4-Omen/input"] = new TreeNode
+        ["Cas02"]        = new TreeNode { Folders = ["4-Omen"], Files = [] },
+        ["Cas02/4-Omen"] = new TreeNode { Folders = ["input", "output", "scenario"], Files = [] },
+        ["Cas02/4-Omen/input"] = new TreeNode
         {
             Folders = ["Input23.01.00_2022Y_KP", "Input23.02.00_2023Y_vfinale"],
             Files   = []
         },
-        ["hpc/Cas02/4-Omen/output"]  = new TreeNode { Folders = ["2023Y_run01"], Files = [] },
-        ["hpc/Cas02/4-Omen/scenario"] = new TreeNode
+        ["Cas02/4-Omen/output"]  = new TreeNode { Folders = ["2023Y_run01"], Files = [] },
+        ["Cas02/4-Omen/scenario"] = new TreeNode
         {
             Folders = [], Files = [],
             Scenarios =
@@ -108,23 +107,23 @@ public class JobEnvironmentController : ControllerBase
             ]
         },
 
-        ["hpc/Cas03"]        = new TreeNode { Folders = ["4-Omen"], Files = [] },
-        ["hpc/Cas03/4-Omen"] = new TreeNode { Folders = ["input", "output", "scenario"], Files = [] },
-        ["hpc/Cas03/4-Omen/input"]   = new TreeNode { Folders = ["Input_NonLife_2022Y", "Input_NonLife_2023Y"], Files = [] },
-        ["hpc/Cas03/4-Omen/output"]  = new TreeNode { Folders = [], Files = [] },
-        ["hpc/Cas03/4-Omen/scenario"] = new TreeNode { Folders = [], Files = [], Scenarios = [] },
+        ["Cas03"]        = new TreeNode { Folders = ["4-Omen"], Files = [] },
+        ["Cas03/4-Omen"] = new TreeNode { Folders = ["input", "output", "scenario"], Files = [] },
+        ["Cas03/4-Omen/input"]   = new TreeNode { Folders = ["Input_NonLife_2022Y", "Input_NonLife_2023Y"], Files = [] },
+        ["Cas03/4-Omen/output"]  = new TreeNode { Folders = [], Files = [] },
+        ["Cas03/4-Omen/scenario"] = new TreeNode { Folders = [], Files = [], Scenarios = [] },
 
-        ["hpc/Cas04"]        = new TreeNode { Folders = ["4-Omen"], Files = [] },
-        ["hpc/Cas04/4-Omen"] = new TreeNode { Folders = ["input", "output", "scenario"], Files = [] },
-        ["hpc/Cas04/4-Omen/input"]   = new TreeNode { Folders = ["Input_RiskLife_2022Y"], Files = [] },
-        ["hpc/Cas04/4-Omen/output"]  = new TreeNode { Folders = [], Files = [] },
-        ["hpc/Cas04/4-Omen/scenario"] = new TreeNode { Folders = [], Files = [], Scenarios = [] },
+        ["Cas04"]        = new TreeNode { Folders = ["4-Omen"], Files = [] },
+        ["Cas04/4-Omen"] = new TreeNode { Folders = ["input", "output", "scenario"], Files = [] },
+        ["Cas04/4-Omen/input"]   = new TreeNode { Folders = ["Input_RiskLife_2022Y"], Files = [] },
+        ["Cas04/4-Omen/output"]  = new TreeNode { Folders = [], Files = [] },
+        ["Cas04/4-Omen/scenario"] = new TreeNode { Folders = [], Files = [], Scenarios = [] },
 
-        ["hpc/Cas05"]        = new TreeNode { Folders = ["4-Omen"], Files = [] },
-        ["hpc/Cas05/4-Omen"] = new TreeNode { Folders = ["input", "output", "scenario"], Files = [] },
-        ["hpc/Cas05/4-Omen/input"]   = new TreeNode { Folders = ["Input_TdR_2022Y"], Files = [] },
-        ["hpc/Cas05/4-Omen/output"]  = new TreeNode { Folders = [], Files = [] },
-        ["hpc/Cas05/4-Omen/scenario"] = new TreeNode { Folders = [], Files = [], Scenarios = [] }
+        ["Cas05"]        = new TreeNode { Folders = ["4-Omen"], Files = [] },
+        ["Cas05/4-Omen"] = new TreeNode { Folders = ["input", "output", "scenario"], Files = [] },
+        ["Cas05/4-Omen/input"]   = new TreeNode { Folders = ["Input_TdR_2022Y"], Files = [] },
+        ["Cas05/4-Omen/output"]  = new TreeNode { Folders = [], Files = [] },
+        ["Cas05/4-Omen/scenario"] = new TreeNode { Folders = [], Files = [], Scenarios = [] }
     };
 
     /// <summary>

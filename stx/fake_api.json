@@ -2,22 +2,17 @@
   "_comment": "Fake API responses for Styx REST API (OpenAPI 3.0.4). Keyed by 'METHOD /path'.",
 
   "GET /api/JobEnvironment/explore": {
-    "_root": "\\\\srvrbxassufp01",
+    "_root": "\\\\srvrbxassufp01\\HPC",
     "_tree": {
       "": {
-        "folders": ["hpc"],
-        "files":   []
-      },
-
-      "hpc": {
         "folders": ["Cas01", "Cas02", "Cas03", "Cas04", "Cas05"],
         "files":   []
       },
 
-      "hpc/Cas01":          { "folders": ["4-Omen"], "files": [] },
-      "hpc/Cas01/4-Omen":   { "folders": ["input", "output", "scenario"], "files": [] },
+      "Cas01":          { "folders": ["4-Omen"], "files": [] },
+      "Cas01/4-Omen":   { "folders": ["input", "output", "scenario"], "files": [] },
 
-      "hpc/Cas01/4-Omen/input": {
+      "Cas01/4-Omen/input": {
         "folders": [
           "04_Dividendes_v2",
           "Input23.01.00_2022Y_vfinale",
@@ -37,37 +32,37 @@
         ],
         "files": []
       },
-      "hpc/Cas01/4-Omen/input/Input23.01.00_2022Y_vfinale": {
+      "Cas01/4-Omen/input/Input23.01.00_2022Y_vfinale": {
         "folders": [],
         "files": ["portfolio.xml", "params_savings.json", "hypotheses.csv", "mapping.xlsx"]
       },
-      "hpc/Cas01/4-Omen/input/Input23.01.00_2022Y_vfinale_cible": {
+      "Cas01/4-Omen/input/Input23.01.00_2022Y_vfinale_cible": {
         "folders": [],
         "files": ["portfolio.xml", "params_savings.json", "hypotheses.csv"]
       },
-      "hpc/Cas01/4-Omen/input/Input23.01.00_2022Y_vfinale_pgg1": {
+      "Cas01/4-Omen/input/Input23.01.00_2022Y_vfinale_pgg1": {
         "folders": [],
         "files": ["portfolio.xml", "params_savings.json"]
       },
-      "hpc/Cas01/4-Omen/input/Input23.01.00_2022Y_vfinale_pgg2": {
+      "Cas01/4-Omen/input/Input23.01.00_2022Y_vfinale_pgg2": {
         "folders": [],
         "files": ["portfolio.xml", "params_savings.json"]
       },
 
-      "hpc/Cas01/4-Omen/output": {
+      "Cas01/4-Omen/output": {
         "folders": ["2022Y_run01", "2022Y_run02"],
         "files":   []
       },
-      "hpc/Cas01/4-Omen/output/2022Y_run01": {
+      "Cas01/4-Omen/output/2022Y_run01": {
         "folders": [],
         "files": ["output_central.csv", "output_stress_up.csv", "output_stress_down.csv", "summary.xlsx"]
       },
-      "hpc/Cas01/4-Omen/output/2022Y_run02": {
+      "Cas01/4-Omen/output/2022Y_run02": {
         "folders": [],
         "files": ["output_central.csv", "output_stress_up.csv", "summary.xlsx"]
       },
 
-      "hpc/Cas01/4-Omen/scenario": {
+      "Cas01/4-Omen/scenario": {
         "folders": [],
         "files":   [],
         "scenarios": [
@@ -109,10 +104,10 @@
         ]
       },
 
-      "hpc/Cas02":          { "folders": ["4-Omen"], "files": [] },
-      "hpc/Cas02/4-Omen":   { "folders": ["case", "input", "output", "scenario"], "files": [] },
-      "hpc/Cas02/4-Omen/case": { "folders": [], "files": [] },
-      "hpc/Cas02/4-Omen/input": {
+      "Cas02":          { "folders": ["4-Omen"], "files": [] },
+      "Cas02/4-Omen":   { "folders": ["case", "input", "output", "scenario"], "files": [] },
+      "Cas02/4-Omen/case": { "folders": [], "files": [] },
+      "Cas02/4-Omen/input": {
         "folders": [
           "Input23.01.00_2022Y_vfinale",
           "Input23.01.00_2022Y_vfinale_cible",
@@ -120,8 +115,8 @@
         ],
         "files": []
       },
-      "hpc/Cas02/4-Omen/output":   { "folders": [], "files": [] },
-      "hpc/Cas02/4-Omen/scenario": {
+      "Cas02/4-Omen/output":   { "folders": [], "files": [] },
+      "Cas02/4-Omen/scenario": {
         "folders": [],
         "files":   [],
         "scenarios": [
@@ -163,9 +158,9 @@
         ]
       },
 
-      "hpc/Cas03":          { "folders": ["4-Omen"], "files": [] },
-      "hpc/Cas03/4-Omen":   { "folders": ["input", "output", "scenario"], "files": [] },
-      "hpc/Cas03/4-Omen/input": {
+      "Cas03":          { "folders": ["4-Omen"], "files": [] },
+      "Cas03/4-Omen":   { "folders": ["input", "output", "scenario"], "files": [] },
+      "Cas03/4-Omen/input": {
         "folders": [
           "Input23.01.00_2022Y_vfinale",
           "Input23.01.00_2022Y_vfinale_cible",
@@ -176,8 +171,8 @@
         ],
         "files": []
       },
-      "hpc/Cas03/4-Omen/output":   { "folders": [], "files": [] },
-      "hpc/Cas03/4-Omen/scenario": {
+      "Cas03/4-Omen/output":   { "folders": [], "files": [] },
+      "Cas03/4-Omen/scenario": {
         "folders": [],
         "files":   [],
         "scenarios": [
@@ -219,9 +214,9 @@
         ]
       },
 
-      "hpc/Cas04":          { "folders": ["4-Omen"], "files": [] },
-      "hpc/Cas04/4-Omen":   { "folders": ["input", "output", "scenario"], "files": [] },
-      "hpc/Cas04/4-Omen/input": {
+      "Cas04":          { "folders": ["4-Omen"], "files": [] },
+      "Cas04/4-Omen":   { "folders": ["input", "output", "scenario"], "files": [] },
+      "Cas04/4-Omen/input": {
         "folders": [
           "04_Dividendes_v2",
           "Input23.01.00_2022Y_vfinale",
@@ -234,8 +229,8 @@
         ],
         "files": []
       },
-      "hpc/Cas04/4-Omen/output":   { "folders": [], "files": [] },
-      "hpc/Cas04/4-Omen/scenario": {
+      "Cas04/4-Omen/output":   { "folders": [], "files": [] },
+      "Cas04/4-Omen/scenario": {
         "folders": [],
         "files":   [],
         "scenarios": [
@@ -277,17 +272,17 @@
         ]
       },
 
-      "hpc/Cas05":          { "folders": ["4-Omen"], "files": [] },
-      "hpc/Cas05/4-Omen":   { "folders": ["input", "output", "scenario"], "files": [] },
-      "hpc/Cas05/4-Omen/input": {
+      "Cas05":          { "folders": ["4-Omen"], "files": [] },
+      "Cas05/4-Omen":   { "folders": ["input", "output", "scenario"], "files": [] },
+      "Cas05/4-Omen/input": {
         "folders": [
           "Input23.01.00_2022Y_vfinale",
           "Input23.01.00_2022Y_vfinale_cible"
         ],
         "files": []
       },
-      "hpc/Cas05/4-Omen/output":   { "folders": [], "files": [] },
-      "hpc/Cas05/4-Omen/scenario": {
+      "Cas05/4-Omen/output":   { "folders": [], "files": [] },
+      "Cas05/4-Omen/scenario": {
         "folders": [],
         "files":   [],
         "scenarios": [
