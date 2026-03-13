@@ -175,6 +175,55 @@
     );
   }
 
+  // ── Expand state persistence ─────────────────
+
+  var _isRestoring = false;
+
+  function _saveExpandState() {
+    if (_isRestoring) return;
+    var state = { jobId: null, groups: [], children: [] };
+    var $expJob = $('#monitorBody .job-row.is-expanded');
+    if ($expJob.length) {
+      state.jobId = +$expJob.data('job-id');
+      $('#monitorBody .group-row.is-expanded').each(function () {
+        state.groups.push(+$(this).data('group-id'));
+      });
+      $('#monitorBody .child-row.is-expanded').each(function () {
+        state.children.push(+$(this).data('child-id'));
+      });
+    }
+    STX.merge('monitoring', { expand: state });
+  }
+
+  function _restoreExpandState() {
+    var expand = (STX.get('monitoring') || {}).expand;
+    if (!expand || !expand.jobId) return;
+    var $jobRow = $('#monitorBody .job-row[data-job-id="' + expand.jobId + '"]');
+    if (!$jobRow.length || !$jobRow.is(':visible')) return;
+
+    _isRestoring = true;
+    $jobRow.trigger('click');
+
+    var groups   = expand.groups   || [];
+    var children = expand.children || [];
+
+    setTimeout(function () {
+      groups.forEach(function (gid) {
+        var $r = $('#monitorBody .group-row[data-group-id="' + gid + '"]');
+        if ($r.length) $r.trigger('click');
+      });
+      if (!children.length) { _isRestoring = false; return; }
+      setTimeout(function () {
+        children.forEach(function (cid) {
+          var $r = $('#monitorBody .child-row[data-child-id="' + cid + '"]');
+          if ($r.length) $r.trigger('click');
+        });
+        _isRestoring = false;
+      }, 500);
+      if (!groups.length) _isRestoring = false;
+    }, 500);
+  }
+
   // ── Load & Filters ───────────────────────────
 
   window.loadMonitoringJobs = function () {
@@ -190,6 +239,7 @@
       resp.jobs.sort(function (a, b) { return b.id - a.id; });
       $body.html(resp.jobs.map(buildJobRow).join(''));
       applyMonitorFilters();
+      _restoreExpandState();
     });
   };
 
@@ -262,6 +312,7 @@
         $tr.removeClass('is-expanded');
         $tr.find('> td .expand-icon').text('▶');
         $expandRow.hide();
+        _saveExpandState();
         return;
       }
 
@@ -275,6 +326,7 @@
       $tr.addClass('is-expanded');
       $tr.find('> td .expand-icon').text('▼');
       $expandRow.show();
+      _saveExpandState();
 
       if (!$cnt.data('loaded')) {
         $cnt.data('loaded', true);
@@ -309,6 +361,7 @@
       $tr.toggleClass('is-expanded', !expanded);
       $tr.find('.expand-icon').text(expanded ? '▶' : '▼');
       $expRow.toggle(!expanded);
+      _saveExpandState();
     });
 
     // Expand/collapse child row → load tasks
@@ -322,6 +375,7 @@
       $tr.toggleClass('is-expanded', !expanded);
       $tr.find('.expand-icon').text(expanded ? '▶' : '▼');
       $expRow.toggle(!expanded);
+      _saveExpandState();
       if (!expanded && !$cnt.data('loaded')) {
         $cnt.data('loaded', true);
         apiGetJobTasks(childId).then(function (resp) {

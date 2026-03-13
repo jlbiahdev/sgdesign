@@ -76,7 +76,8 @@
         _browseRoot = API.getRoot();
         _browseBase = '';
         _browseTarget = $btn.closest('.f-row').find('[name="environment"]');
-        startPath = '';
+        var envVal = (_browseTarget.val() || '').trim();
+        startPath = envVal ? envToApiPath(envVal) : '';
       }
       if ($btn.hasClass('btn-browse-ufx')) {
         _browseRoot = API.getRoot();
