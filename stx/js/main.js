@@ -298,7 +298,7 @@ $(function () {
   $(document).on('input', '.job-view [name="environment"]', function () {
     syncBrowseButtons($(this).closest('.job-view'));
   });
-  $(document).on('blur', '.job-view [name="environment"]', function () {
+  $(document).on('change blur', '.job-view [name="environment"]', function () {
     var $view = $(this).closest('.job-view');
     syncBrowseButtons($view);
     _loadEnvData($view);

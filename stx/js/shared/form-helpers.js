@@ -379,22 +379,21 @@
   }
 
   window._loadEnvData = function ($view) {
-    var envPath = envToApiPath($view.find('[name="environment"]').val());
-    if (!envPath) { _resetEnvData($view); return; }
+    var envVal = ($view.find('[name="environment"]').val() || '').trim();
+    _resetEnvData($view);
+    if (!envVal) return;
 
-    API.exploreDir(envPath + '/input').then(function (node) {
+    API.exploreDir(envVal + '\\input', { isFolder: true }).then(function (node) {
       var $sel = $view.find('[name="inputs"]');
-      var cur = $sel.val();
       $sel.find('option:not(:first)').remove();
       (node.folders || []).forEach(function (s) { $sel.append('<option>' + s + '</option>'); });
-      if (cur) $sel.val(cur);
     });
 
     if ($view.find('.scen-table').length) {
       var _id2 = $view.attr('id').replace('view-', '');
       var _type2 = (STX.get('job.' + _id2) || {}).type;
       var _isRL = (_type2 === 'risklife' || _type2 === 'risklifekp' || _type2 === 'brd');
-      API.exploreDir(envPath + '/scenario').then(function (node) {
+      API.exploreDir(envVal + '\\scenario').then(function (node) {
         if (!node.scenarios) return;
         if (_isRL) rebuildRLScenarios($view, node.scenarios);
         else       rebuildScenarios($view, node.scenarios);
