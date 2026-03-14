@@ -1,0 +1,2077 @@
+{
+  "openapi": "3.0.4",
+  "info": {
+    "title": "Styx Job Manager API",
+    "version": "1.0.0",
+    "description": "REST API for the Styx actuarial job management platform.\n\nThree controllers:\n- **JobManager** — job initialisation data and submission\n- **JobGrid**    — job monitoring, children hierarchy, task logs, cancel/requeue\n- **JobEnvironment** — UNC filesystem exploration\n- **TaskFlow**   — task state notifications\n"
+  },
+  "servers": [
+    {
+      "url": "{baseUrl}",
+      "description": "Configurable base URL (set in Settings)",
+      "variables": {
+        "baseUrl": {
+          "default": "http://localhost:5000"
+        }
+      }
+    }
+  ],
+  "tags": [
+    {
+      "name": "JobManager",
+      "description": "Job initialisation and submission"
+    },
+    {
+      "name": "JobGrid",
+      "description": "Job monitoring and control"
+    },
+    {
+      "name": "JobEnvironment",
+      "description": "Remote filesystem exploration"
+    },
+    {
+      "name": "TaskFlow",
+      "description": "Task state notifications"
+    }
+  ],
+  "paths": {
+    "/api/JobEnvironment/explore": {
+      "get": {
+        "tags": [
+          "JobEnvironment"
+        ],
+        "summary": "Explore a single node of the remote filesystem",
+        "description": "Returns the sub-folders, files and (for scenario/ nodes) scenarios for the given `rootFolder` path relative to the UNC root. When `isFolder` is true, only sub-folders are returned.",
+        "parameters": [
+          {
+            "name": "rootFolder",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" },
+            "description": "Relative path from the UNC root (forward or back slashes). Empty = root."
+          },
+          {
+            "name": "isFolder",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "boolean", "default": false },
+            "description": "When true, suppress the files list (folder-only picker mode)."
+          },
+          {
+            "name": "extension",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" },
+            "description": "Filter files by extension (e.g. \"csv\"). Ignored when isFolder is true."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Single filesystem node",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TreeNode"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/JobManager/savings/init": {
+      "get": {
+        "tags": [
+          "JobManager"
+        ],
+        "summary": "Savings (Omen Épargne) — initialisation data",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavingsInit"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/JobManager/nonlife/init": {
+      "get": {
+        "tags": [
+          "JobManager"
+        ],
+        "summary": "NonLife (Omen Non-Vie) — initialisation data",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimpleInit"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/JobManager/tdr/init": {
+      "get": {
+        "tags": [
+          "JobManager"
+        ],
+        "summary": "TdR (Taux de Rendement) — initialisation data",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimpleInit"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/JobManager/brd/init": {
+      "get": {
+        "tags": [
+          "JobManager"
+        ],
+        "summary": "BRD (Best Estimate Savings) — initialisation data",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrdInit"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/JobManager/risklife/init": {
+      "get": {
+        "tags": [
+          "JobManager"
+        ],
+        "summary": "RiskLife — initialisation data",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RiskLifeInit"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/JobManager/risklifekp/init": {
+      "get": {
+        "tags": [
+          "JobManager"
+        ],
+        "summary": "RiskLifeKP — initialisation data",
+        "description": "Same shape as RiskLifeInit; `defaultAutoIterations` defaults to `true`.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RiskLifeInit"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/JobManager/scenarioTransfo/init": {
+      "get": {
+        "tags": [
+          "JobManager"
+        ],
+        "summary": "Scenario Transformator — initialisation data",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScenarioTransfoInit"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/JobManager/inputs": {
+      "get": {
+        "tags": [
+          "JobManager"
+        ],
+        "summary": "List reference input folder names (static catalogue)",
+        "responses": {
+          "200": {
+            "description": "Array of input folder names",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "example": [
+                    "Input24.01.00_2024Y_vfinale",
+                    "Input23.01.00_2022Y_vfinale"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/JobManager/refreshinputs": {
+      "get": {
+        "tags": [
+          "JobManager"
+        ],
+        "summary": "Refresh input folders for an environment path",
+        "parameters": [
+          {
+            "name": "environment",
+            "in": "query",
+            "required": false,
+            "description": "UNC path to the environment root",
+            "schema": {
+              "type": "string",
+              "example": "\\\\srvrbxassufp01\\hpc\\Cas01\\4-Omen"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "inputs": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/JobManager/savings/models/versions": {
+      "get": {
+        "tags": [
+          "JobManager"
+        ],
+        "summary": "Savings — model/version catalogue",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelVersions"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/JobManager/savings/models/scenarios": {
+      "get": {
+        "tags": [
+          "JobManager"
+        ],
+        "summary": "Savings — scenario library",
+        "responses": {
+          "200": {
+            "description": "Array of scenario descriptors",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ScenarioDescriptor"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/JobManager/submit/savings": {
+      "post": {
+        "tags": [
+          "JobManager"
+        ],
+        "summary": "Submit a Savings (Omen Épargne) job",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SavingsSubmitRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Job submitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmitResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/JobManager/submit/nonlife": {
+      "post": {
+        "tags": [
+          "JobManager"
+        ],
+        "summary": "Submit a NonLife job",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NonLifeSubmitRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Job submitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmitResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/JobManager/submit/risklife": {
+      "post": {
+        "tags": [
+          "JobManager"
+        ],
+        "summary": "Submit a RiskLife job",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RiskLifeSubmitRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Job submitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmitResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/JobManager/submit/risklifekp": {
+      "post": {
+        "tags": [
+          "JobManager"
+        ],
+        "summary": "Submit a RiskLifeKP job",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RiskLifeSubmitRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Job submitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmitResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/JobManager/submit/tdr": {
+      "post": {
+        "tags": [
+          "JobManager"
+        ],
+        "summary": "Submit a TdR job",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TdrSubmitRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Job submitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmitResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/JobManager/submit/brd": {
+      "post": {
+        "tags": [
+          "JobManager"
+        ],
+        "summary": "Submit a BRD job",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BrdSubmitRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Job submitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmitResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/JobManager/submit/ufx": {
+      "post": {
+        "tags": [
+          "JobManager"
+        ],
+        "summary": "Submit a UFX (Universal Format Exchange) job",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UfxSubmitRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Job submitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmitResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/JobManager/submit/custominput": {
+      "post": {
+        "tags": [
+          "JobManager"
+        ],
+        "summary": "Submit a Custom Input job",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomInputSubmitRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Job submitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmitResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/JobManager/submit/scenarioTransfo": {
+      "post": {
+        "tags": [
+          "JobManager"
+        ],
+        "summary": "Submit a Scenario Transformator job",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScenarioTransfoSubmitRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Job submitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmitResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/JobGrid/jobs": {
+      "get": {
+        "tags": [
+          "JobGrid"
+        ],
+        "summary": "List all jobs (monitoring grid)",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/JobGrid/jobs/children": {
+      "get": {
+        "tags": [
+          "JobGrid"
+        ],
+        "summary": "Get child job groups for a parent job",
+        "parameters": [
+          {
+            "name": "jobId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "example": 1134535
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobChildrenResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/JobGrid/jobs/{jobId}/tasks": {
+      "get": {
+        "tags": [
+          "JobGrid"
+        ],
+        "summary": "Get task-level log for a leaf job",
+        "parameters": [
+          {
+            "name": "jobId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "example": 1134538
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobTasksResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/JobGrid/cancel": {
+      "post": {
+        "tags": [
+          "JobGrid"
+        ],
+        "summary": "Cancel a job",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "jobId"
+                ],
+                "properties": {
+                  "jobId": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/JobGrid/requeue": {
+      "post": {
+        "tags": [
+          "JobGrid"
+        ],
+        "summary": "Requeue a failed or cancelled job",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "jobId"
+                ],
+                "properties": {
+                  "jobId": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/TaskFlow/taskState": {
+      "post": {
+        "tags": [
+          "TaskFlow"
+        ],
+        "summary": "Notify a task-state change",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Acknowledged (empty object)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "JobState": {
+        "type": "string",
+        "enum": [
+          "Running",
+          "Queued",
+          "Finished",
+          "Failed",
+          "Canceled"
+        ],
+        "description": "State of a parent job (string form used in JobGrid.jobs)"
+      },
+      "ChildJobStateCode": {
+        "type": "integer",
+        "enum": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "description": "Numeric state used in child jobs / job groups.\n0 = Queued, 1 = Running, 2 = Finished, 3 = Failed, 4 = Canceled\n"
+      },
+      "JobPriority": {
+        "type": "string",
+        "enum": [
+          "Normal",
+          "High",
+          "BelowNormal",
+          "AboveNormal",
+          "Automatic"
+        ]
+      },
+      "StatusMessage": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "OK"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "ModelEntry": {
+        "type": "object",
+        "required": [
+          "model",
+          "versions"
+        ],
+        "properties": {
+          "model": {
+            "type": "string",
+            "example": "2026.01.00"
+          },
+          "versions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "2026.01.00_dev",
+              "2026.01.00_rec",
+              "2026.01.00_hom",
+              "2026.01.00_prod"
+            ]
+          }
+        }
+      },
+      "ModelVersions": {
+        "type": "object",
+        "required": [
+          "model",
+          "versions"
+        ],
+        "properties": {
+          "model": {
+            "type": "string",
+            "example": "OMEN_Savings"
+          },
+          "versions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "2026.01.00",
+              "2025.04.00",
+              "2025.01.00"
+            ]
+          }
+        }
+      },
+      "ScenarioDescriptor": {
+        "description": "Scenario entry returned by the scenario library and explore tree.",
+        "type": "object",
+        "required": [
+          "scenarioNum",
+          "calVif",
+          "filename",
+          "isScenarioSelected",
+          "isEnabled",
+          "depth"
+        ],
+        "properties": {
+          "scenarioNum": {
+            "type": "integer",
+            "example": 1
+          },
+          "calVif": {
+            "type": "string",
+            "example": "central"
+          },
+          "filename": {
+            "type": "string",
+            "nullable": true,
+            "example": "scenario_central.csv"
+          },
+          "filenameDot": {
+            "type": "string",
+            "nullable": true
+          },
+          "filenameSp": {
+            "type": "string",
+            "nullable": true
+          },
+          "filenameL": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "filenameDotL": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "filenameSpL": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "dollFilenameL": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "dollFilenameDotD": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "dollFilenameSpL": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "listDollarFiles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "example": "Central scenario"
+          },
+          "isScenarioSelected": {
+            "type": "boolean"
+          },
+          "isEnabled": {
+            "type": "boolean"
+          },
+          "depth": {
+            "type": "integer"
+          }
+        }
+      },
+      "RLScenarioEntry": {
+        "description": "Scenario entry used in RiskLife / RiskLifeKP init.",
+        "type": "object",
+        "required": [
+          "num",
+          "name",
+          "selected"
+        ],
+        "properties": {
+          "num": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string",
+            "example": "Base_run"
+          },
+          "selected": {
+            "type": "boolean"
+          }
+        }
+      },
+      "TaskIdEntry": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "gridId": {
+            "type": "integer"
+          }
+        }
+      },
+      "ExternalIdEntry": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "bpcId": {
+            "type": "integer"
+          },
+          "xGridId": {
+            "type": "integer"
+          }
+        }
+      },
+      "LightGridResult": {
+        "type": "object",
+        "properties": {
+          "jobId": {
+            "type": "integer"
+          },
+          "tasksIds": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaskIdEntry"
+            }
+          }
+        }
+      },
+      "ExternalApiResult": {
+        "type": "object",
+        "properties": {
+          "ids": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExternalIdEntry"
+            }
+          },
+          "status": {
+            "type": "string",
+            "example": "Submitted"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "ApiResults": {
+        "type": "object",
+        "properties": {
+          "lightGridSubmissionResult": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LightGridResult"
+            }
+          },
+          "externalApiSubmissionResult": {
+            "$ref": "#/components/schemas/ExternalApiResult"
+          }
+        }
+      },
+      "SubmitResponse": {
+        "type": "object",
+        "properties": {
+          "parentId": {
+            "type": "integer",
+            "example": 1001
+          },
+          "launchedJobCount": {
+            "type": "integer",
+            "example": 1
+          },
+          "apiResults": {
+            "$ref": "#/components/schemas/ApiResults"
+          }
+        }
+      },
+      "SavingsInit": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "OK"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "defaultName": {
+            "type": "string",
+            "example": "X_Omen Savings"
+          },
+          "detChecked": {
+            "type": "boolean"
+          },
+          "stoChecked": {
+            "type": "boolean"
+          },
+          "defaultDetPeriodSim": {
+            "type": "integer",
+            "description": "Default deterministic simulation period in months"
+          },
+          "defaultDetIterations": {
+            "type": "string",
+            "description": "Iteration range string",
+            "example": "1-2000"
+          },
+          "defaultStoPeriodSim": {
+            "type": "integer"
+          },
+          "defaultStoIterations": {
+            "type": "string",
+            "example": "1-3000"
+          },
+          "defaultPricerPeriodSim": {
+            "type": "integer"
+          },
+          "defaultPricerIterations": {
+            "type": "string",
+            "example": "1-4000"
+          },
+          "models": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ModelEntry"
+            }
+          },
+          "taskTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "Full",
+              "Deterministic",
+              "Stochastic",
+              "InputOnly"
+            ]
+          },
+          "defaultTaskType": {
+            "type": "string",
+            "example": "Full"
+          },
+          "priorities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "Normal",
+              "High",
+              "Automatic"
+            ]
+          },
+          "jobOmenTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "S2",
+              "S1",
+              "FR_GAAP",
+              "Solvency_II"
+            ]
+          },
+          "defaultJobPriority": {
+            "type": "string",
+            "example": "Normal"
+          },
+          "defaultJobType": {
+            "type": "string",
+            "example": "S2"
+          },
+          "defaultIsGuaranteedFloorChecked": {
+            "type": "boolean"
+          },
+          "defaultIsTrdPricerEnabled": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SimpleInit": {
+        "description": "Shared init shape for NonLife and TdR (no scenarios, no jobOmenTypes).",
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "OK"
+          },
+          "defaultName": {
+            "type": "string",
+            "example": "Omen NonLife"
+          },
+          "defaultPeriod": {
+            "type": "integer",
+            "description": "Default simulation period in months",
+            "example": 80
+          },
+          "models": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ModelEntry"
+            }
+          }
+        }
+      },
+      "BrdInit": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "OK"
+          },
+          "defaultName": {
+            "type": "string",
+            "example": "Omen BRD Savings"
+          },
+          "defaultProjectionDuration": {
+            "type": "integer",
+            "description": "Default projection duration in years",
+            "example": 30
+          },
+          "models": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ModelEntry"
+            }
+          }
+        }
+      },
+      "RiskLifeInit": {
+        "description": "Init shape for RiskLife and RiskLifeKP (same structure).",
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "OK"
+          },
+          "defaultName": {
+            "type": "string",
+            "example": "Omen RiskLife"
+          },
+          "defaultIterations": {
+            "type": "string",
+            "description": "Iteration range string",
+            "example": "1-1"
+          },
+          "defaultAutoIterations": {
+            "type": "boolean"
+          },
+          "defaultPeriod": {
+            "type": "integer",
+            "description": "Default projection period in months",
+            "example": 360
+          },
+          "models": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ModelEntry"
+            }
+          },
+          "jobOmenTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "S2",
+              "S1",
+              "FR_GAAP"
+            ]
+          },
+          "defaultJobType": {
+            "type": "string",
+            "example": "S2"
+          },
+          "scenarios": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RLScenarioEntry"
+            }
+          }
+        }
+      },
+      "ScenarioTransfoInit": {
+        "type": "object",
+        "properties": {
+          "modelTypes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "value",
+                "label"
+              ],
+              "properties": {
+                "value": {
+                  "type": "string",
+                  "example": "2020v2"
+                },
+                "label": {
+                  "type": "string",
+                  "example": "Model 2020 V2"
+                }
+              }
+            }
+          },
+          "defaultModelType": {
+            "type": "string",
+            "example": "2020v2"
+          },
+          "periodes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "value",
+                "label"
+              ],
+              "properties": {
+                "value": {
+                  "type": "string",
+                  "example": "mois"
+                },
+                "label": {
+                  "type": "string",
+                  "example": "Mois"
+                }
+              }
+            }
+          },
+          "defaultPeriode": {
+            "type": "string",
+            "example": "mois"
+          },
+          "iterations": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "example": [
+              100,
+              500,
+              1000,
+              2000,
+              5000,
+              10000
+            ]
+          },
+          "defaultIterations": {
+            "type": "integer",
+            "example": 1000
+          },
+          "coupons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "ZC",
+              "TC"
+            ]
+          },
+          "defaultCoupon": {
+            "type": "string",
+            "example": "ZC"
+          }
+        }
+      },
+      "OmenSubmitBase": {
+        "description": "Fields common to all Omen (savings / risklife / nonlife / tdr / brd) submissions.",
+        "type": "object",
+        "required": [
+          "environment",
+          "inputs",
+          "refModelSelected",
+          "model",
+          "version"
+        ],
+        "properties": {
+          "jobName": {
+            "type": "string"
+          },
+          "environment": {
+            "type": "string",
+            "description": "UNC path to the environment root",
+            "example": "\\\\srvrbxassufp01\\hpc\\Cas01\\4-Omen"
+          },
+          "inputs": {
+            "type": "string",
+            "description": "Input folder name relative to environment/input",
+            "example": "Input23.01.00_2022Y_vfinale"
+          },
+          "refModelSelected": {
+            "type": "boolean",
+            "description": "true = reference model; false = custom version path"
+          },
+          "model": {
+            "type": "string",
+            "example": "2026.01.00"
+          },
+          "version": {
+            "type": "string",
+            "example": "2026.01.00_prod"
+          },
+          "advOptions": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SavingsSubmitRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/OmenSubmitBase"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "detEnabled": {
+                "type": "boolean"
+              },
+              "detRange": {
+                "type": "string",
+                "example": "1-2000"
+              },
+              "detPeriod": {
+                "type": "string",
+                "example": "1y"
+              },
+              "detMonths": {
+                "type": "integer",
+                "example": 12
+              },
+              "stoEnabled": {
+                "type": "boolean"
+              },
+              "stoRange": {
+                "type": "string",
+                "example": "1-3000"
+              },
+              "stoPeriod": {
+                "type": "string",
+                "example": "5y"
+              },
+              "stoMonths": {
+                "type": "integer",
+                "example": 60
+              },
+              "pricerEnabled": {
+                "type": "boolean"
+              },
+              "pricerRange": {
+                "type": "string",
+                "example": "1-4000"
+              },
+              "pricerPeriod": {
+                "type": "string",
+                "example": "30y"
+              },
+              "pricerMonths": {
+                "type": "integer",
+                "example": 360
+              },
+              "guaranteedFloor": {
+                "type": "boolean"
+              },
+              "omenType": {
+                "type": "string",
+                "enum": [
+                  "S2",
+                  "S1",
+                  "FR_GAAP",
+                  "Solvency_II"
+                ]
+              },
+              "scenarios": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Selected scenario numbers (as strings)",
+                "example": [
+                  "1",
+                  "2"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "NonLifeSubmitRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/OmenSubmitBase"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "period": {
+                "type": "integer",
+                "description": "Projection period in months",
+                "example": 80
+              }
+            }
+          }
+        ]
+      },
+      "RiskLifeSubmitRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/OmenSubmitBase"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "period": {
+                "type": "integer",
+                "description": "Projection period in months",
+                "example": 360
+              },
+              "scenarios": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Selected scenario numbers (as strings)",
+                "example": [
+                  "1",
+                  "2",
+                  "3"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "TdrSubmitRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/OmenSubmitBase"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "period": {
+                "type": "integer",
+                "description": "Period in months",
+                "example": 9
+              }
+            }
+          }
+        ]
+      },
+      "BrdSubmitRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/OmenSubmitBase"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "projectionDuration": {
+                "type": "integer",
+                "description": "Projection duration in years",
+                "example": 30
+              },
+              "scenarios": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "example": [
+                  "1",
+                  "2",
+                  "3",
+                  "4"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "UfxSubmitRequest": {
+        "type": "object",
+        "required": [
+          "path"
+        ],
+        "properties": {
+          "jobName": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string",
+            "description": "UNC path to the UFX file or folder"
+          },
+          "isFolder": {
+            "type": "boolean",
+            "description": "true if path points to a folder (batch UFX)"
+          }
+        }
+      },
+      "CustomInputSubmitRequest": {
+        "type": "object",
+        "required": [
+          "inputsFolder",
+          "actionsFolder"
+        ],
+        "properties": {
+          "inputsFolder": {
+            "type": "string",
+            "description": "UNC path to the inputs folder"
+          },
+          "actionsFolder": {
+            "type": "string",
+            "description": "UNC path to the custom actions folder"
+          }
+        }
+      },
+      "ScenarioTransfoSubmitRequest": {
+        "type": "object",
+        "required": [
+          "environment",
+          "modelType",
+          "periode",
+          "iterations",
+          "coupons"
+        ],
+        "properties": {
+          "environment": {
+            "type": "string",
+            "description": "UNC path to the data folder to transform"
+          },
+          "modelType": {
+            "type": "string",
+            "enum": [
+              "2017",
+              "2018",
+              "2020",
+              "2020v2"
+            ]
+          },
+          "periode": {
+            "type": "string",
+            "enum": [
+              "mois",
+              "annee"
+            ]
+          },
+          "iterations": {
+            "type": "integer",
+            "example": 1000
+          },
+          "coupons": {
+            "type": "string",
+            "enum": [
+              "ZC",
+              "TC"
+            ]
+          },
+          "split": {
+            "type": "boolean",
+            "description": "Split output into per-scenario files"
+          }
+        }
+      },
+      "JobSettings": {
+        "description": "Job-type-specific fields stored with a parent job. Shape varies by type:\n- **savings** — includes detEnabled/stoEnabled/pricerEnabled, omenType, scenarios[]\n- **nonlife / tdr** — includes period\n- **brd** — includes projectionDuration, scenarios[]\n- **risklife / risklifekp** — includes period, scenarios[]\n- **ufx / custominput / scenarioTransfo** — type-specific fields\n",
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "example": "savings"
+          },
+          "jobName": {
+            "type": "string"
+          },
+          "environment": {
+            "type": "string"
+          },
+          "inputs": {
+            "type": "string"
+          },
+          "refModelSelected": {
+            "type": "boolean"
+          },
+          "model": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "advOptions": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": true
+      },
+      "JobItem": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "state"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 1134535
+          },
+          "name": {
+            "type": "string",
+            "example": "[Omen] Savings Cas01 - 2026.01.00_prod - 2022Y_vfinale - Det+Sto"
+          },
+          "userAccountId": {
+            "type": "string",
+            "example": "MOS_WORK"
+          },
+          "userName": {
+            "type": "string",
+            "example": "MOSES WORKER"
+          },
+          "progress": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "submitTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "changeTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "state": {
+            "$ref": "#/components/schemas/JobState"
+          },
+          "priority": {
+            "$ref": "#/components/schemas/JobPriority"
+          },
+          "hasChildrens": {
+            "type": "boolean"
+          },
+          "workFolder": {
+            "type": "string",
+            "nullable": true
+          },
+          "gridCost": {
+            "type": "integer"
+          },
+          "isFastPass": {
+            "type": "boolean"
+          },
+          "environment": {
+            "type": "string"
+          },
+          "settings": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/JobSettings"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "JobListResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "OK"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "warnings": {
+            "type": "string",
+            "nullable": true
+          },
+          "jobs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JobItem"
+            }
+          }
+        }
+      },
+      "ChildJob": {
+        "description": "Leaf job inside a JobGroup.",
+        "type": "object",
+        "required": [
+          "id",
+          "state",
+          "name",
+          "progress"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "state": {
+            "$ref": "#/components/schemas/ChildJobStateCode"
+          },
+          "name": {
+            "type": "string"
+          },
+          "progress": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "priority": {
+            "$ref": "#/components/schemas/JobPriority"
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "submitted": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "environment": {
+            "type": "string"
+          }
+        }
+      },
+      "JobGroup": {
+        "description": "A sequential execution phase within a parent job.",
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "name",
+          "progress"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ChildJobStateCode"
+          },
+          "name": {
+            "type": "string",
+            "example": "Run sto_alm_16"
+          },
+          "progress": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "updated": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "parentId": {
+            "type": "integer"
+          },
+          "launchedJobCount": {
+            "type": "integer"
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChildJob"
+            }
+          }
+        }
+      },
+      "JobChildrenResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "OK"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "warnings": {
+            "type": "string",
+            "nullable": true
+          },
+          "jobId": {
+            "type": "integer"
+          },
+          "jobGroups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JobGroup"
+            }
+          }
+        }
+      },
+      "Task": {
+        "description": "Individual command within a leaf job.",
+        "type": "object",
+        "required": [
+          "id",
+          "state",
+          "command"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "state": {
+            "$ref": "#/components/schemas/JobState"
+          },
+          "command": {
+            "type": "string",
+            "example": "StyxLauncher.Cmd.exe -runScenario sto_alm_16_batch_1 1-500"
+          },
+          "output": {
+            "type": "string",
+            "nullable": true
+          },
+          "startTime": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "endTime": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "JobTasksResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "OK"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "warnings": {
+            "type": "string",
+            "nullable": true
+          },
+          "jobId": {
+            "type": "integer"
+          },
+          "tasks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Task"
+            }
+          }
+        }
+      },
+      "TreeNode": {
+        "description": "A single node in the filesystem tree.\n`scenarios` is only present on nodes corresponding to a `scenario/` folder.\n",
+        "type": "object",
+        "properties": {
+          "folders": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "scenarios": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScenarioDescriptor"
+            }
+          }
+        }
+      },
+      "ExploreResponse": {
+        "type": "object",
+        "required": [
+          "_root",
+          "_tree"
+        ],
+        "properties": {
+          "_root": {
+            "type": "string",
+            "description": "UNC root path of the server",
+            "example": "\\\\srvrbxassufp01"
+          },
+          "_tree": {
+            "type": "object",
+            "description": "Flat dictionary. Key = relative path from root (empty string = root).\nValue = TreeNode.\n",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/TreeNode"
+            },
+            "example": {
+              "": {
+                "folders": [
+                  "hpc"
+                ],
+                "files": []
+              },
+              "hpc": {
+                "folders": [
+                  "Cas01",
+                  "Cas02"
+                ],
+                "files": []
+              },
+              "hpc/Cas01/4-Omen/input": {
+                "folders": [
+                  "Input23.01.00_2022Y_vfinale"
+                ],
+                "files": []
+              },
+              "hpc/Cas01/4-Omen/scenario": {
+                "folders": [],
+                "files": [],
+                "scenarios": [
+                  {
+                    "scenarioNum": 1,
+                    "calVif": "central",
+                    "filename": "scenario_central.csv",
+                    "filenameDot": "scenario_central.dot",
+                    "filenameSp": "scenario_central.sp",
+                    "filenameL": [
+                      "scenario_central_l1.csv"
+                    ],
+                    "filenameDotL": [],
+                    "filenameSpL": [],
+                    "dollFilenameL": [],
+                    "dollFilenameDotD": [],
+                    "dollFilenameSpL": [],
+                    "listDollarFiles": [],
+                    "description": "Central scenario",
+                    "isScenarioSelected": true,
+                    "isEnabled": true,
+                    "depth": 0
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

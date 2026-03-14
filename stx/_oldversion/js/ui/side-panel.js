@@ -52,7 +52,8 @@
       '<h4>Configuration</h4>' +
       '<ul>' +
       '<li><strong>Thème</strong> Dark / Light : bouton ☽/☀ en haut à droite</li>' +
-      '<li><strong>Mode API</strong> : requêtes envoyées au backend ASP.NET Core</li>' +
+      '<li><strong>Mode API</strong> Fake : réponses simulées localement (fake_api.json)</li>' +
+      '<li><strong>Mode API</strong> Real : requêtes envoyées au backend ASP.NET Core</li>' +
       '<li><strong>Base URL</strong> : adresse du serveur (ex. http://srv:5000)</li>' +
       '<li><strong>Racine réseau</strong> : préfixe UNC du serveur de fichiers (ex. \\\\\\\\srv)</li>' +
       '</ul>' +
@@ -173,12 +174,21 @@
       '<div class="panel-section">' +
       '<h4>API</h4>' +
       '<div class="pref-row">' +
+      '<span class="pref-key">Mode</span>' +
+      '<div class="toggle-group">' +
+      '<button class="btn-toggle" id="prefApiFake">Fake</button>' +
+      '<button class="btn-toggle" id="prefApiReal">Real</button>' +
+      '</div>' +
+      '</div>' +
+      '<div id="apiRealSettings" style="display:none">' +
+      '<div class="pref-row">' +
       '<span class="pref-key">Base URL</span>' +
       '<input type="text" name="apiBaseUrl" style="width:140px;font-size:.6rem" placeholder="http://srv:5000">' +
       '</div>' +
       '<div class="pref-row">' +
       '<span class="pref-key">Racine réseau</span>' +
       '<input type="text" name="apiRoot" style="width:140px;font-size:.6rem" placeholder="\\\\\\\\srv">' +
+      '</div>' +
       '</div>' +
       '</div>' +
       '<div class="panel-section">' +
@@ -253,6 +263,10 @@
         var t = $('html').attr('data-theme');
         $('#prefDark').toggleClass('active', t === 'dark');
         $('#prefLight').toggleClass('active', t !== 'dark');
+        var apiMode = API.getMode();
+        $('#prefApiFake').toggleClass('active', apiMode === 'fake');
+        $('#prefApiReal').toggleClass('active', apiMode === 'real');
+        $('#apiRealSettings').toggle(apiMode === 'real');
       }
     });
 

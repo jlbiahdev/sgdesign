@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────
-// THEME
+// THEME & API MODE
 // ─────────────────────────────────────────────
-(function ($, STX) {
+(function ($, STX, API) {
   var THEME_KEY = 'styx-theme';
 
   window.applyTheme = function (t) {
@@ -13,13 +13,24 @@
     $('#prefLight').toggleClass('active', t === 'light');
   };
 
+  window._applyApiMode = function (mode) {
+    API.setMode(mode);
+    STX.merge('settings', { apiMode: mode });
+    $('#prefApiFake').toggleClass('active', mode === 'fake');
+    $('#prefApiReal').toggleClass('active', mode === 'real');
+    $('#apiRealSettings').toggle(mode === 'real');
+  };
+
   $(function () {
     applyTheme(localStorage.getItem(THEME_KEY) || 'dark');
 
     $('#themeToggle').on('click', function () {
       applyTheme($('html').attr('data-theme') === 'dark' ? 'light' : 'dark');
     });
-    $(document).on('click', '#prefDark',  function () { applyTheme('dark'); });
-    $(document).on('click', '#prefLight', function () { applyTheme('light'); });
+    // Delegated: ces boutons vivent dans le side panel (injecté dynamiquement)
+    $(document).on('click', '#prefDark',    function () { applyTheme('dark'); });
+    $(document).on('click', '#prefLight',   function () { applyTheme('light'); });
+    $(document).on('click', '#prefApiFake', function () { _applyApiMode('fake'); });
+    $(document).on('click', '#prefApiReal', function () { _applyApiMode('real'); });
   });
-}(jQuery, window.STX));
+}(jQuery, window.STX, window.API));
