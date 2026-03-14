@@ -208,28 +208,32 @@ $(function () {
     $view.find('.ref-content [name="model"]').trigger('change');
     if (last.version) $view.find('.ref-content [name="version"]').val(last.version);
 
-    var envPath = envToApiPath($view.find('[name="environment"]').val());
-    if (envPath) {
-      API.exploreDir(envPath + '/input').then(function (node) {
-        var $sel = $view.find('[name="inputs"]');
-        $sel.find('option:not(:first)').remove();
-        (node.folders || []).forEach(function (s) { $sel.append('<option>' + s + '</option>'); });
-        if (last.inputs) $sel.val(last.inputs);
-      });
-      var _isRLType = (type === 'risklife' || type === 'risklifekp' || type === 'brd');
+    var envVal = ($view.find('[name="environment"]').val() || '').trim();
+    if (envVal) {
+      API.get('/api/JobManager/inputs?' + $.param({ source: envVal }))
+        .then(function (resp) {
+          var $sel = $view.find('[name="inputs"]');
+          $sel.find('option:not(:first)').remove();
+          (resp.folders || []).forEach(function (s) { $sel.append('<option>' + s + '</option>'); });
+          if (last.inputs) $sel.val(last.inputs);
+        });
       if ($view.find('.scen-table').length) {
-        API.exploreDir(envPath + '/scenario').then(function (node) {
-          if (node.scenarios) {
-            if (_isRLType) rebuildRLScenarios($view, node.scenarios);
-            else           rebuildScenarios($view, node.scenarios);
+        var _isRLType = (type === 'risklife' || type === 'risklifekp' || type === 'brd');
+        var scenParams = { source: envVal, input: last.inputs || '' };
+        if (last.omenType) scenParams.jobType = last.omenType;
+        API.get('/api/JobManager/' + type + '/models/scenarios?' + $.param(scenParams))
+          .then(function (response) {
+            var scenarios = (response && response.scenarios) ? response.scenarios : [];
+            if (!scenarios.length) return;
+            if (_isRLType) rebuildRLScenarios($view, scenarios);
+            else           rebuildScenarios($view, scenarios);
             if (last.scenarios && last.scenarios.length) {
               $view.find('.scen-table tbody tr').each(function () {
                 var num = $(this).find('td').eq(1).text().trim();
                 $(this).find('input[type=checkbox]').prop('checked', last.scenarios.indexOf(num) !== -1);
               });
             }
-          }
-        });
+          });
       }
     }
 
@@ -304,6 +308,10 @@ $(function () {
     _loadEnvData($view);
   });
 
+  $(document).on('change blur', '.job-view [name="inputs"]', function () {
+    _loadScenarios($(this).closest('.job-view'));
+  });
+
   // ── Version model change → reload versions ───
   $(document).on('change', '.job-view .ref-content [name="model"]', function () {
     var $view = $(this).closest('.job-view');
@@ -365,15 +373,74 @@ $(function () {
 
     if (_type) STX.set('lastSubmit.' + _type, $.extend({}, serializeView($v), { adv: _adv }));
 
-    var jobPayload = STX.get('job.' + _id);
-    console.log('[STYX] Job payload:', jobPayload);
+    var d = serializeView($v);
+    var payload;
+
+    if (_type === 'ufx') {
+      payload = { jobName: d.jobName, path: d.path, isFolder: !!d.isFolder };
+
+    } else if (_type === 'custominput') {
+      payload = { inputsFolder: d.inputsFolder, actionsFolder: d.actionsFolder };
+
+    } else if (_type === 'scenariotransformator') {
+      payload = {
+        environment: d.environment,
+        modelType:   d.modelType,
+        periode:     d.periode,
+        iterations:  d.iterations,
+        coupons:     d.coupons,
+        split:       !!d.split,
+      };
+
+    } else {
+      var isRef = $v.find('.ver-ref').hasClass('active');
+      payload = {
+        jobName:          d.jobName,
+        environment:      d.environment,
+        inputs:           d.inputs,
+        refModelSelected: !!isRef,
+        model:            d.model,
+        version:          isRef ? d.version : d.customVersion,
+        advOptions:       _adv,
+      };
+      if (_type === 'savings') {
+        $.extend(payload, {
+          detEnabled:      !!d.detEnabled,
+          detRange:        d.detRange,
+          detPeriod:       d.detPeriod,
+          detMonths:       d.detMonths ? parseInt(d.detMonths, 10) : null,
+          stoEnabled:      !!d.stoEnabled,
+          stoRange:        d.stoRange,
+          stoPeriod:       d.stoPeriod,
+          stoMonths:       d.stoMonths ? parseInt(d.stoMonths, 10) : null,
+          pricerEnabled:   !!d.pricerEnabled,
+          pricerRange:     d.pricerRange,
+          pricerPeriod:    d.pricerPeriod,
+          pricerMonths:    d.pricerMonths ? parseInt(d.pricerMonths, 10) : null,
+          guaranteedFloor: !!d.guaranteedFloor,
+          omenType:        d.omenType,
+          scenarios:       d.scenarios || [],
+        });
+      } else if (_type === 'nonlife' || _type === 'tdr') {
+        payload.period = d.period ? parseInt(d.period, 10) : null;
+      } else if (_type === 'risklife' || _type === 'risklifekp') {
+        payload.period    = d.period ? parseInt(d.period, 10) : null;
+        payload.scenarios = d.scenarios || [];
+      } else if (_type === 'brd') {
+        payload.projectionDuration = d.projectionDuration ? parseInt(d.projectionDuration, 10) : null;
+        payload.scenarios          = d.scenarios || [];
+      }
+    }
+
     openConsole();
-    cLog('Job soumis : ' + _displayName);
-    cLog('Connexion à l\'environnement en cours…', 'warn');
-    setTimeout(function () { cLog('Job démarré — 0% complété'); }, 900);
-    setTimeout(function () { cLog('Progression : 25%'); }, 2200);
-    setTimeout(function () { cLog('Progression : 60%'); }, 4000);
-    setTimeout(function () { cLog('Progression : 100% — Job terminé avec succès.'); }, 6500);
+    cLog('Soumission du job ' + _displayName + '…');
+    API.post('/api/JobManager/submit/' + _type, payload)
+      .then(function (resp) {
+        cLog('Job soumis — parentId: ' + (resp.parentId || '?') + ', ' + (resp.launchedJobCount || 0) + ' job(s) lancé(s).');
+      }, function (err) {
+        console.error('[STYX] Submit failed', err);
+        cLog('Erreur lors de la soumission : ' + (err.message || 'erreur inconnue'), 'error');
+      });
   });
 
   // ── Restore previous session ─────────────────

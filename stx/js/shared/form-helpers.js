@@ -329,11 +329,11 @@
       $tbody.append(
         '<tr>' +
         '<td><input type="checkbox"></td>' +
-        '<td>' + sc.scenarioNum + '</td>' +
-        '<td>' + (sc.calVif || '') + '</td>' +
-        '<td>' + (sc.filename || '') + '</td>' +
-        '<td>' + (sc.filenameDot || '') + '</td>' +
-        '<td>' + (sc.filenameSp || '') + '</td>' +
+        '<td>' + sc.num + '</td>' +
+        '<td>' + (sc.name || '') + '</td>' +
+        '<td>' + (sc.fileRN || '') + '</td>' +
+        '<td>' + (sc.fileDet || '') + '</td>' +
+        '<td>' + (sc.fileSto || '') + '</td>' +
         '</tr>'
       );
     });
@@ -348,7 +348,7 @@
       $tbody.append(
         '<tr>' +
         '<td><input type="checkbox"></td>' +
-        '<td>' + sc.scenarioNum + '</td>' +
+        '<td>' + sc.num + '</td>' +
         '<td>' + (sc.calVif || '') + '</td>' +
         '</tr>'
       );
@@ -383,25 +383,33 @@
     var envVal = ($view.find('[name="environment"]').val() || '').trim();
     if (!envVal) return;
 
-    API.get('/api/JobManager/refreshinputs?' + $.param({ environment: envVal }))
+    API.get('/api/JobManager/inputs?' + $.param({ source: envVal }))
       .then(function (resp) {
         var $sel = $view.find('[name="inputs"]');
         $sel.find('option:not(:first)').remove();
-        (resp.inputs || []).forEach(function (s) { $sel.append('<option>' + s + '</option>'); });
+        (resp.folders || []).forEach(function (s) { $sel.append('<option>' + s + '</option>'); });
       });
+  };
 
-    if ($view.find('.scen-table').length) {
-      var _id2 = $view.attr('id').replace('view-', '');
-      var _type2 = (STX.get('job.' + _id2) || {}).type;
-      if (!_type2) return;
-      var _isRL = (_type2 === 'risklife' || _type2 === 'risklifekp' || _type2 === 'brd');
-      API.get('/api/JobManager/' + _type2 + '/models/scenarios')
-        .then(function (scenarios) {
-          if (!scenarios || !scenarios.length) return;
-          if (_isRL) rebuildRLScenarios($view, scenarios);
-          else       rebuildScenarios($view, scenarios);
-        });
-    }
+  window._loadScenarios = function ($view) {
+    if (!$view.find('.scen-table').length) return;
+    var id   = $view.attr('id').replace('view-', '');
+    var type = (STX.get('job.' + id) || {}).type;
+    if (!type) return;
+    var envVal   = ($view.find('[name="environment"]').val() || '').trim();
+    var input    = ($view.find('[name="inputs"]').val() || '').trim();
+    if (!envVal || !input) return;
+    var params = { source: envVal, input: input };
+    var omenType = ($view.find('[name="omenType"]').val() || '').trim();
+    if (omenType) params.jobType = omenType;
+    var isRL = (type === 'risklife' || type === 'risklifekp' || type === 'brd');
+    API.get('/api/JobManager/' + type + '/models/scenarios?' + $.param(params))
+      .then(function (response) {
+        var scenarios = (response && response.scenarios) ? response.scenarios : [];
+        if (!scenarios.length) return;
+        if (isRL) rebuildRLScenarios($view, scenarios);
+        else      rebuildScenarios($view, scenarios);
+      });
   };
 
   // ── Live-save ────────────────────────────────
