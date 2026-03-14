@@ -1203,6 +1203,41 @@
     }
   ],
 
+  "GET /api/JobManager/risklife/models/scenarios": [
+    { "scenarioNum": 1,  "calVif": "Base_run" },
+    { "scenarioNum": 2,  "calVif": "Cat_Mortality_vie" },
+    { "scenarioNum": 3,  "calVif": "Mortality_santé_SLT" },
+    { "scenarioNum": 4,  "calVif": "Disability_morbidity_santé_SLT" },
+    { "scenarioNum": 5,  "calVif": "Lapse_up_santé_SLT" },
+    { "scenarioNum": 6,  "calVif": "Lapse_down_santé_SLT" },
+    { "scenarioNum": 7,  "calVif": "Lapse_massif_santé_SLT" },
+    { "scenarioNum": 8,  "calVif": "Expense_up_santé_SLT" },
+    { "scenarioNum": 9,  "calVif": "Yield_down" },
+    { "scenarioNum": 10, "calVif": "Yield_up" },
+    { "scenarioNum": 11, "calVif": "Spread_up" },
+    { "scenarioNum": 12, "calVif": "Spread_down" }
+  ],
+
+  "GET /api/JobManager/risklifekp/models/scenarios": [
+    { "scenarioNum": 1, "calVif": "Base_run" },
+    { "scenarioNum": 2, "calVif": "mortality" },
+    { "scenarioNum": 3, "calVif": "longetivite" },
+    { "scenarioNum": 4, "calVif": "morbidity" },
+    { "scenarioNum": 5, "calVif": "lapse_up" },
+    { "scenarioNum": 6, "calVif": "lapse_down" },
+    { "scenarioNum": 7, "calVif": "massif_lapse" },
+    { "scenarioNum": 8, "calVif": "exp" },
+    { "scenarioNum": 9, "calVif": "cat_risk" }
+  ],
+
+  "GET /api/JobManager/brd/models/scenarios": [
+    { "scenarioNum": 1, "calVif": "central" },
+    { "scenarioNum": 2, "calVif": "stress_up" },
+    { "scenarioNum": 3, "calVif": "stress_down" },
+    { "scenarioNum": 4, "calVif": "lapse_mass" },
+    { "scenarioNum": 5, "calVif": "mortality_up" }
+  ],
+
   "POST /api/JobManager/submit/savings": {
     "parentId": 1001,
     "launchedJobCount": 1,

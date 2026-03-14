@@ -380,26 +380,27 @@
 
   window._loadEnvData = function ($view) {
     _resetEnvData($view);
-    var envPath = envToApiPath($view.find('[name="environment"]').val());
-    if (!envPath) return;
+    var envVal = ($view.find('[name="environment"]').val() || '').trim();
+    if (!envVal) return;
 
-    API.exploreDir(envPath + '/input').then(function (node) {
-      var $sel = $view.find('[name="inputs"]');
-      var cur = $sel.val();
-      $sel.find('option:not(:first)').remove();
-      (node.folders || []).forEach(function (s) { $sel.append('<option>' + s + '</option>'); });
-      if (cur) $sel.val(cur);
-    });
+    API.get('/api/JobManager/refreshinputs?' + $.param({ environment: envVal }))
+      .then(function (resp) {
+        var $sel = $view.find('[name="inputs"]');
+        $sel.find('option:not(:first)').remove();
+        (resp.inputs || []).forEach(function (s) { $sel.append('<option>' + s + '</option>'); });
+      });
 
     if ($view.find('.scen-table').length) {
       var _id2 = $view.attr('id').replace('view-', '');
       var _type2 = (STX.get('job.' + _id2) || {}).type;
+      if (!_type2) return;
       var _isRL = (_type2 === 'risklife' || _type2 === 'risklifekp' || _type2 === 'brd');
-      API.exploreDir(envPath + '/scenario').then(function (node) {
-        if (!node.scenarios) return;
-        if (_isRL) rebuildRLScenarios($view, node.scenarios);
-        else       rebuildScenarios($view, node.scenarios);
-      });
+      API.get('/api/JobManager/' + _type2 + '/models/scenarios')
+        .then(function (scenarios) {
+          if (!scenarios || !scenarios.length) return;
+          if (_isRL) rebuildRLScenarios($view, scenarios);
+          else       rebuildScenarios($view, scenarios);
+        });
     }
   };
 
