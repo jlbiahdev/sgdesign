@@ -340,6 +340,7 @@ $(function () {
 
   // ── Submit ───────────────────────────────────
   $(document).on('click', '.btn-submit-job', function () {
+    var $btn = $(this);
     var $v = $(this).closest('.job-view');
     var $name = $v.find('.field-name');
     var name = ($name.val() || '').trim();
@@ -432,12 +433,15 @@ $(function () {
       }
     }
 
+    $btn.addClass('loading').prop('disabled', true);
     openConsole();
     cLog('Soumission du job ' + _displayName + '…');
     API.post('/api/JobManager/submit/' + _type, payload)
       .then(function (resp) {
+        $btn.removeClass('loading').prop('disabled', false);
         cLog('Job soumis — parentId: ' + (resp.parentId || '?') + ', ' + (resp.launchedJobCount || 0) + ' job(s) lancé(s).');
       }, function (err) {
+        $btn.removeClass('loading').prop('disabled', false);
         console.error('[STYX] Submit failed', err);
         cLog('Erreur lors de la soumission : ' + (err.message || 'erreur inconnue'), 'error');
       });
