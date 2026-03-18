@@ -155,6 +155,28 @@
     );
   }
 
+  function _updateJobRow($tr, job) {
+    $tr.attr({
+      'data-state':    stateClass(job.state),
+      'data-name':     (job.name || '').toLowerCase(),
+      'data-priority': (job.priority || '').toLowerCase(),
+      'data-account':  (job.userName || '').toLowerCase(),
+      'data-env':      (job.environment || '').replace(/"/g, '&quot;'),
+    });
+    var $tds = $tr.find('> td');
+    $tds.eq(0).html('<span class="state-dot ' + stateClass(job.state) + '"></span>');
+    // td[1] = id: immutable
+    var iconText = $tds.eq(2).find('.expand-icon').text() || '▶';
+    $tds.eq(2).html('<span class="expand-icon">' + iconText + '</span> ' + (job.name || ''));
+    $tds.eq(3).html(progBar(job.progress || 0));
+    $tds.eq(4).text(job.gridCost || '');
+    $tds.eq(5).text(job.priority || '');
+    $tds.eq(6).text(job.userName || '');
+    $tds.eq(7).text(fmtDate(job.createTime));
+    $tds.eq(8).text(fmtDate(job.submitTime));
+    $tds.eq(9).text(fmtDate(job.changeTime));
+  }
+
   function buildJobRow(job) {
     return (
       '<tr class="job-row" data-job-id="' + job.id + '" data-has-children="' + (job.hasChildrens ? 1 : 0) + '" data-account="' + (job.userName || '').toLowerCase() + '" data-state="' + stateClass(job.state) + '" data-priority="' + (job.priority || '').toLowerCase() + '" data-name="' + (job.name || '').toLowerCase().replace(/"/g, '&quot;') + '" data-env="' + (job.environment || '').replace(/"/g, '&quot;') + '">' +
@@ -228,18 +250,57 @@
 
   window.loadMonitoringJobs = function () {
     var $body = $('#monitorBody');
-    $body.html('<tr><td colspan="10" style="text-align:center;padding:20px;color:var(--text-faint);font-family:\'DM Mono\';font-size:.65rem">Chargement…</td></tr>');
+    var isFirstLoad = !$body.find('.job-row').length;
+
+    if (isFirstLoad) {
+      $body.html('<tr><td colspan="10" style="text-align:center;padding:20px;color:var(--text-faint);font-family:\'DM Mono\';font-size:.65rem">Chargement…</td></tr>');
+    }
+
     apiGetJobs().then(function (resp) {
       if (!resp.jobs || !resp.jobs.length) {
         $body.html('<tr><td colspan="10" style="text-align:center;padding:20px;color:var(--text-faint);font-family:\'DM Mono\';font-size:.65rem">Aucun job.</td></tr>');
         return;
       }
+
       window._monJobMap = {};
       resp.jobs.forEach(function (j) { window._monJobMap[j.id] = j; });
       resp.jobs.sort(function (a, b) { return b.id - a.id; });
-      $body.html(resp.jobs.map(buildJobRow).join(''));
+
+      // Supprimer les lignes qui ne sont plus dans la réponse
+      var incomingIds = {};
+      resp.jobs.forEach(function (j) { incomingIds[j.id] = true; });
+      $body.find('.job-row').each(function () {
+        var jid = +$(this).data('job-id');
+        if (!incomingIds[jid]) {
+          $('#job-expand-' + jid).remove();
+          $(this).remove();
+        }
+      });
+
+      // Mettre à jour ou insérer chaque ligne
+      resp.jobs.forEach(function (job) {
+        var $existing = $body.find('.job-row[data-job-id="' + job.id + '"]');
+        if ($existing.length) {
+          _updateJobRow($existing, job);
+        } else {
+          var $newRows = $(buildJobRow(job));
+          var inserted = false;
+          $body.find('.job-row').each(function () {
+            if (+$(this).data('job-id') < job.id) {
+              $(this).before($newRows);
+              inserted = true;
+              return false;
+            }
+          });
+          if (!inserted) $body.append($newRows);
+        }
+      });
+
+      // Supprimer la ligne "Chargement…" si elle est encore là
+      $body.find('tr:not(.job-row):not(.job-expand-row)').remove();
+
       applyMonitorFilters();
-      _restoreExpandState();
+      if (isFirstLoad) _restoreExpandState();
     });
   };
 
