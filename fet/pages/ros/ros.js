@@ -1,5 +1,7 @@
 $(function(){
 
+  const API = '';  // même origine — URL relatives
+
   /* ── SUBNAV ── */
   $('.snb').on('click',function(){
     $('.snb').removeClass('active');
@@ -9,12 +11,11 @@ $(function(){
   });
 
   /* ── OVERLAYS ── */
-  $('#btnOpenRos').on('click',()=>$('#mRos').addClass('open'));
+  $('#btnOpenRos').on('click',()=>{ populateRosSelects(); $('#mRos').addClass('open'); });
   $('#btnOpenHost').on('click',()=>{ resetHost(); $('#mHost').addClass('open'); });
   $('#btnOpenCfg').on('click', ()=>{ resetCfg();  $('#mCfg').addClass('open');  });
   $('[data-close]').on('click',function(){ $('#'+$(this).data('close')).removeClass('open'); });
   $('.overlay').on('click',function(e){ if(e.target===this) $(this).removeClass('open'); });
-  $(document).on('click','.js-del',function(){ $(this).closest('tr').remove(); });
 
   /* ── VALIDATORS ── */
   const RE_IP   = /^((25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)\.){3}(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)$/;
@@ -72,7 +73,6 @@ $(function(){
   /* ── HOST MODAL ── */
   initTags('ipWrap','ipInput','ipErr',validIP);
 
-  // Subnet: clear error state while typing, validate only on save
   $('#hostSubnet').on('input', function(){
     $(this).removeClass('is-invalid is-valid');
     $('#subnetErr').removeClass('show');
@@ -85,8 +85,6 @@ $(function(){
     $('#hostEnv,#hostType').val('').removeClass('is-invalid');
     $('#ipWrap').find('.tag').remove();
     $('#ipWrap').removeClass('wrap-invalid'); $('#ipErr').removeClass('show');
-    $('#subnetErr').removeClass('show');
-    // reset custom selects
     $('#envSelect .cs-value').text('-- Selectionner --').removeClass('selected');
     $('#envSelect .cs-option').removeClass('active');
     $('#envSelect input[type=hidden]').val('');
@@ -100,37 +98,38 @@ $(function(){
 
   $('#saveHost').on('click',function(){
     let ok=true;
-    // Nom
     const nom=$('#hostNom').val().trim();
     if(!nom){ $('#hostNom').addClass('is-invalid'); ok=false; } else $('#hostNom').removeClass('is-invalid');
-    // IPs
     const ips=getValidTags('ipWrap');
     if(!ips.length){ $('#ipWrap').addClass('wrap-invalid'); $('#ipErr').addClass('show'); ok=false; }
-    // Subnet
     const sn=$('#hostSubnet').val().trim();
     if(sn&&!validCIDR(sn)){ $('#hostSubnet').addClass('is-invalid'); $('#subnetErr').addClass('show'); ok=false; }
     else { $('#hostSubnet').removeClass('is-invalid'); $('#subnetErr').removeClass('show'); }
-    // Env
     const env=$('#hostEnv').val();
     if(!env){ $('#envSelect .cs-trigger').addClass('is-invalid'); $('#envErr').addClass('show'); ok=false; }
     else { $('#envSelect .cs-trigger').removeClass('is-invalid'); $('#envErr').removeClass('show'); }
-    // Type
     const typ=$('#hostType').val();
     if(!typ){ $('#typeSelect .cs-trigger').addClass('is-invalid'); $('#typeErr').addClass('show'); ok=false; }
     else { $('#typeSelect .cs-trigger').removeClass('is-invalid'); $('#typeErr').removeClass('show'); }
     if(!ok) return;
 
-    const desc=$('#hostDesc').val().trim();
-    $('#hostsBody').append(`<tr>
-      <td class="bold" style="font-family:'DM Mono',monospace;font-size:.67rem">${nom}</td>
-      <td>${desc||'&mdash;'}</td>
-      <td>${ips.map(ip=>'<span class="ip-tag">'+ip+'</span>').join('')}</td>
-      <td>${sn?'<span class="sn-tag">'+sn+'</span>':'&mdash;'}</td>
-      <td><span class="badge${env==='Development'?' dev':''}">${env}</span></td>
-      <td class="mono">${typ}</td>
-      <td><div class="actions-cell">${ACT}</div></td>
-    </tr>`);
-    $('#mHost').removeClass('open');
+    const payload = {
+      name: nom,
+      description: $('#hostDesc').val().trim(),
+      ipAddresses: ips.join(','),
+      subnet: sn,
+      environment: env,
+      type: parseInt(typ)
+    };
+
+    $.ajax({ url: API+'/api/ros/Host', method:'POST', contentType:'application/json', data: JSON.stringify(payload) })
+      .done(function(id){
+        hostsData.push(Object.assign({ id }, payload));
+        renderHosts();
+        updateKpis();
+        $('#mHost').removeClass('open');
+      })
+      .fail(function(){ alert('Erreur lors de la création du host.'); });
   });
 
   /* ── CONFIG MODAL ── */
@@ -159,68 +158,209 @@ $(function(){
     if(!apps||!apps.length){ $('#cfgApp').addClass('is-invalid'); ok=false; } else $('#cfgApp').removeClass('is-invalid');
     if(!ok) return;
 
-    const desc=$('#cfgDesc').val().trim();
-    $('#cfgsBody').append(`<tr>
-      <td class="bold">${nom}</td>
-      <td style="font-size:.73rem">${desc||'&mdash;'}</td>
-      <td class="small">${ports.join(', ')}</td>
-      <td>${nets.map(n=>'<span class="pill">'+n+'</span>').join(' ')}</td>
-      <td class="mono" style="font-size:.67rem">${apps.join(', ')}</td>
-      <td class="small">${plages.join(', ')}</td>
-      <td><div class="actions-cell">${ACT}</div></td>
-    </tr>`);
-    $('#mCfg').removeClass('open');
+    const payload = {
+      name: nom,
+      description: $('#cfgDesc').val().trim(),
+      ports: ports.join(','),
+      networkProtocol: nets.join(','),
+      applicativeProtocols: apps.join(','),
+      bands: plages.join(',')
+    };
+
+    $.ajax({ url: API+'/api/ros/Config', method:'POST', contentType:'application/json', data: JSON.stringify(payload) })
+      .done(function(id){
+        cfgsData.push(Object.assign({ id }, payload));
+        renderConfigs();
+        updateKpis();
+        $('#mCfg').removeClass('open');
+      })
+      .fail(function(){ alert('Erreur lors de la création de la config.'); });
   });
 
-  /* ── STATIC DATA ── */
+  /* ── ROS MODAL ── */
+  $('#saveRos').on('click',function(){
+    const nom=$('#rosNom').val().trim();
+    const desc=$('#rosDesc').val().trim();
+    const date=$('#rosDate').val();
+    if(!nom){ $('#rosNom').addClass('is-invalid'); return; } else $('#rosNom').removeClass('is-invalid');
+    if(!date){ $('#rosDate').addClass('is-invalid'); return; } else $('#rosDate').removeClass('is-invalid');
+
+    const [year,month,day]=date.split('-').map(Number);
+    const srcIds=$('#selSrc').val()||[];
+    const tgtIds=$('#selTgt').val()||[];
+    const cfgIds=$('#selCfg').val()||[];
+
+    const mapping=[];
+    srcIds.forEach(function(src){
+      tgtIds.forEach(function(tgt){
+        cfgIds.forEach(function(cfg){
+          mapping.push({ sourceId:parseInt(src), targetId:parseInt(tgt), configId:parseInt(cfg) });
+        });
+      });
+    });
+
+    const payload = {
+      infosRos: { name:nom, description:desc, creationDateYear:year, creationDateMonth:month, creationDateDay:day },
+      mapping: mapping
+    };
+
+    $.ajax({ url: API+'/api/Ros', method:'POST', contentType:'application/json', data: JSON.stringify(payload) })
+      .done(function(){
+        loadRos();
+        $('#mRos').removeClass('open');
+        $('#rosNom,#rosDesc').val('');
+        $('#rosDate').val('');
+      })
+      .fail(function(){ alert('Erreur lors de la création de la ROS.'); });
+  });
+
+  /* ── STATIC TEMPLATE ── */
   const ACT=`
     <button class="icon-btn" title="Editer"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
     <button class="icon-btn del js-del" title="Supprimer"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></button>`;
 
-  const hosts=[
-    {n:'assuprdhpe01.fr.world.socgen',d:'HPE Headnode 1',ips:['184.122.82.130'],sn:'',e:'Production',t:'1'},
-    {n:'assuprdhpe02.fr.world.socgen',d:'HPE Headnode 2',ips:['184.122.86.249'],sn:'',e:'Production',t:'1'},
-    {n:'assuprdlen01.fr.world.socgen',d:'LENOVO Headnode 1',ips:['184.123.7.54'],sn:'',e:'Production',t:'1'},
-    {n:'assuprdlen02.fr.world.socgen',d:'LENOVO Headnode 2',ips:['184.123.7.86'],sn:'',e:'Production',t:'1'},
-    {n:'cvspardc2asu101-data.fr.world.socgen',d:'Stockage 1',ips:['184.122.5.22','184.122.5.60','184.122.5.43'],sn:'',e:'Production',t:'1'},
-    {n:'cvspardc2asu102-data.fr.world.socgen',d:'Stockage 2',ips:['184.122.5.58','184.122.5.54','184.122.5.12'],sn:'',e:'Production',t:'1'},
-    {n:'cvspar1noasu101-data.fr.world.socgen',d:'Archive 1',ips:['184.123.19.195','184.123.19.169'],sn:'',e:'Production',t:'1'},
-    {n:'cvspar1noasu102-data.fr.world.socgen',d:'Archive 2',ips:['184.123.19.33','184.123.19.181'],sn:'',e:'Production',t:'1'},
-    {n:'vp1dysx000dev.compute.eu-fr-paris.cloud.socgen',d:'VCS DEV',ips:['171.72.42.214'],sn:'184.122.130.0/21',e:'Development',t:'2'},
-  ];
-  $('#hostsBody').html(hosts.map(h=>`<tr>
-    <td class="bold" style="font-family:'DM Mono',monospace;font-size:.67rem">${h.n}</td>
-    <td>${h.d}</td>
-    <td>${h.ips.map(ip=>'<span class="ip-tag">'+ip+'</span>').join('')}</td>
-    <td>${h.sn?'<span class="sn-tag">'+h.sn+'</span>':'&mdash;'}</td>
-    <td><span class="badge${h.e==='Development'?' dev':''}">${h.e}</span></td>
-    <td class="mono">${h.t}</td>
-    <td><div class="actions-cell">${ACT}</div></td>
-  </tr>`).join(''));
+  const ACT_ROS=`
+    <button class="icon-btn" title="Editer"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+    <button class="icon-btn js-csv" title="Exporter CSV"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+    <button class="icon-btn del js-del" title="Supprimer"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></button>`;
 
-  const cfgs=[
-    {n:'HPC',d:'',p:'59999,443,9090,59901,59910,49152,65535',net:'TCP',app:'RDP,TELNET,HTTP,HTTPS',pl:'59999,443,9090,59901-59910,49152-65535'},
-    {n:'SMB',d:'File access',p:'445',net:'TCP',app:'HTTP',pl:'&mdash;'},
-    {n:'VM TCP',d:'Ports TCP VM',p:'80,139,443,445,1856,2049,3343,3389,5974,5985,5999,7997,8677,9053,9087,9090,9794,20482',net:'TCP',app:'TELNET,RDP',pl:'5022-5026,5800-5802,5969-5999,6729-6730,9090-9096,9100-9163'},
-    {n:'VM TCP/UDP',d:'Ports TCP/UDP VM',p:'111,1947',net:'TCP,UDP',app:'TELNET,RDP',pl:'137-138,9892-9894'},
-    {n:'VM UDP',d:'Ports UDP VM',p:'635,2048',net:'UDP',app:'HTTP,HTTPS,TELNET,RDP',pl:'&mdash;'},
-  ];
-  $('#cfgsBody').html(cfgs.map(c=>`<tr>
-    <td class="bold">${c.n}</td>
-    <td style="font-size:.73rem">${c.d||'&mdash;'}</td>
-    <td class="small">${c.p}</td>
-    <td><span class="pill">${c.net}</span></td>
-    <td class="mono" style="font-size:.67rem">${c.app}</td>
-    <td class="small">${c.pl}</td>
-    <td><div class="actions-cell">${ACT}</div></td>
-  </tr>`).join(''));
+  /* ── STATE ── */
+  let hostsData=[], cfgsData=[], rosData=[];
+
+  /* ── RENDER ── */
+  function renderHosts(){
+    if(!hostsData.length){
+      $('#hostsBody').html('<tr><td colspan="7" style="text-align:center;color:var(--text-faint)">Aucun host</td></tr>');
+      return;
+    }
+    $('#hostsBody').html(hostsData.map(function(h){
+      const ips=(h.ipAddresses||'').split(',').filter(Boolean);
+      const isDev=h.environment==='Development';
+      return `<tr data-id="${h.id}">
+        <td class="bold" style="font-family:'DM Mono',monospace;font-size:.67rem">${h.name}</td>
+        <td>${h.description||'&mdash;'}</td>
+        <td>${ips.map(function(ip){ return '<span class="ip-tag">'+ip.trim()+'</span>'; }).join('')}</td>
+        <td>${h.subnet?'<span class="sn-tag">'+h.subnet+'</span>':'&mdash;'}</td>
+        <td><span class="badge${isDev?' dev':''}">${h.environment}</span></td>
+        <td class="mono">${h.type}</td>
+        <td><div class="actions-cell">${ACT}</div></td>
+      </tr>`;
+    }).join(''));
+  }
+
+  function renderConfigs(){
+    if(!cfgsData.length){
+      $('#cfgsBody').html('<tr><td colspan="7" style="text-align:center;color:var(--text-faint)">Aucune config</td></tr>');
+      return;
+    }
+    $('#cfgsBody').html(cfgsData.map(function(c){
+      const nets=(c.networkProtocol||'').split(',').filter(Boolean);
+      return `<tr data-id="${c.id}">
+        <td class="bold">${c.name}</td>
+        <td style="font-size:.73rem">${c.description||'&mdash;'}</td>
+        <td class="small">${c.ports||'&mdash;'}</td>
+        <td>${nets.map(function(n){ return '<span class="pill">'+n.trim()+'</span>'; }).join(' ')}</td>
+        <td class="mono" style="font-size:.67rem">${c.applicativeProtocols||'&mdash;'}</td>
+        <td class="small">${c.bands||'&mdash;'}</td>
+        <td><div class="actions-cell">${ACT}</div></td>
+      </tr>`;
+    }).join(''));
+  }
+
+  function renderRos(){
+    if(!rosData.length){
+      $('#rosBody').html('<tr><td colspan="5" style="text-align:center;color:var(--text-faint)">Aucune ROS</td></tr>');
+      return;
+    }
+    $('#rosBody').html(rosData.map(function(r){
+      const d=String(r.creationDateDay).padStart(2,'0')+'/'+String(r.creationDateMonth).padStart(2,'0')+'/'+r.creationDateYear;
+      return `<tr data-id="${r.id}">
+        <td class="bold">${r.name}</td>
+        <td class="mono">${r.description||'&mdash;'}</td>
+        <td class="mono">${d}</td>
+        <td><span style="font-family:'DM Mono',monospace;color:var(--red);font-size:.9rem;font-weight:600">&mdash;</span></td>
+        <td><div class="actions-cell">${ACT_ROS}</div></td>
+      </tr>`;
+    }).join(''));
+  }
+
+  function populateRosSelects(){
+    if(hostsData.length){
+      const opts=hostsData.map(function(h){ return '<option value="'+h.id+'">'+h.name+'</option>'; }).join('');
+      $('#selSrc,#selTgt').html(opts);
+    }
+    if(cfgsData.length){
+      const opts=cfgsData.map(function(c){ return '<option value="'+c.id+'">'+c.name+'</option>'; }).join('');
+      $('#selCfg').html(opts);
+    }
+  }
+
+  function updateKpis(){
+    $('.kpi-v').eq(0).text(rosData.length);
+    $('.kpi-v').eq(1).text(hostsData.length);
+    $('.kpi-v').eq(2).text(cfgsData.length);
+  }
+
+  /* ── LOAD ── */
+  function loadHosts(){
+    return $.get(API+'/api/ros/Host')
+      .done(function(data){ hostsData=data; renderHosts(); updateKpis(); })
+      .fail(function(){ $('#hostsBody').html('<tr><td colspan="7" style="text-align:center;color:var(--red)">Erreur de chargement</td></tr>'); });
+  }
+
+  function loadConfigs(){
+    return $.get(API+'/api/ros/Config')
+      .done(function(data){ cfgsData=data; renderConfigs(); updateKpis(); })
+      .fail(function(){ $('#cfgsBody').html('<tr><td colspan="7" style="text-align:center;color:var(--red)">Erreur de chargement</td></tr>'); });
+  }
+
+  function loadRos(){
+    return $.get(API+'/api/Ros')
+      .done(function(data){ rosData=data; renderRos(); updateKpis(); })
+      .fail(function(){ $('#rosBody').html('<tr><td colspan="5" style="text-align:center;color:var(--red)">Erreur de chargement</td></tr>'); });
+  }
+
+  $.when(loadHosts(), loadConfigs(), loadRos()).done(function(){
+    populateRosSelects();
+    $.get(API+'/api/ros/DashBoard').done(function(dash){
+      if(dash && dash.routesCount !== undefined) $('.kpi-v').eq(3).text(dash.routesCount);
+    });
+  });
+
+  /* ── DELETE ── */
+  $(document).on('click','.js-del',function(){
+    const $tr=$(this).closest('tr');
+    const id=$tr.data('id');
+    const tbodyId=$tr.closest('tbody').attr('id');
+
+    let url='';
+    if(tbodyId==='hostsBody') url='/api/ros/Host/'+id;
+    else if(tbodyId==='cfgsBody') url='/api/ros/Config/'+id;
+    else if(tbodyId==='rosBody') url='/api/Ros/'+id;
+
+    if(!url||!id){ $tr.remove(); return; }
+
+    $.ajax({ url:API+url, method:'DELETE' })
+      .done(function(){
+        if(tbodyId==='hostsBody'){ hostsData=hostsData.filter(function(h){ return h.id!==id; }); renderHosts(); }
+        if(tbodyId==='cfgsBody'){ cfgsData=cfgsData.filter(function(c){ return c.id!==id; }); renderConfigs(); }
+        if(tbodyId==='rosBody'){ rosData=rosData.filter(function(r){ return r.id!==id; }); renderRos(); }
+        updateKpis();
+      })
+      .fail(function(){ alert('Erreur lors de la suppression.'); });
+  });
+
+  /* ── EXPORT CSV ── */
+  $(document).on('click','.js-csv',function(){
+    const id=$(this).closest('tr').data('id');
+    window.open(API+'/api/Ros/csv?rosId='+id);
+  });
 
   /* ── CUSTOM SELECT ── */
   $(document).on('click', '.cs-trigger', function(e) {
     e.stopPropagation();
     const $wrap = $(this).closest('.custom-select');
     const isOpen = $(this).hasClass('open');
-    // close all others
     $('.cs-trigger').removeClass('open');
     $('.cs-dropdown').removeClass('open');
     if (!isOpen) {
@@ -240,7 +380,6 @@ $(function(){
     $wrap.find('input[type=hidden]').val(val);
     $wrap.find('.cs-trigger').removeClass('open is-invalid');
     $wrap.find('.cs-dropdown').removeClass('open');
-    // clear error
     $wrap.next('.field-err').removeClass('show');
   });
 
@@ -248,20 +387,5 @@ $(function(){
     $('.cs-trigger').removeClass('open');
     $('.cs-dropdown').removeClass('open');
   });
-
-  // Reset custom selects in resetHost
-  const _origResetHost = resetHost;
-  // patch resetHost to also reset custom selects
-  window._resetCustomSelects = function() {
-    $('#envSelect .cs-value').text('-- Selectionner --').removeClass('selected');
-    $('#envSelect .cs-option').removeClass('active');
-    $('#envSelect input').val('');
-    $('#envSelect .cs-trigger').removeClass('is-invalid open');
-    $('#typeSelect .cs-value').text('-- Selectionner --').removeClass('selected');
-    $('#typeSelect .cs-option').removeClass('active');
-    $('#typeSelect input').val('');
-    $('#typeSelect .cs-trigger').removeClass('is-invalid open');
-    $('#envErr,#typeErr').removeClass('show');
-  };
 
 });
