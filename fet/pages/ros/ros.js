@@ -480,6 +480,27 @@ $(function(){
   });
 
   /* ── ROS EXPAND ── */
+  const CMD_COLS=[
+    {h:'#',         f:'row'},
+    {h:'IRT Src',   f:'srcIrt'},
+    {h:'Zone Src',  f:'srcZone'},
+    {h:'Env Src',   f:'srcEnvironment'},
+    {h:'Hostname Src', f:'srcHostname'},
+    {h:'Real IP Src',  f:'srcRealIp'},
+    {h:'Nat IP Src',   f:'srcNatIp'},
+    {h:'IRT Dst',   f:'destIrt'},
+    {h:'Zone Dst',  f:'destZone'},
+    {h:'Env Dst',   f:'destEnvironment'},
+    {h:'Hostname Dst', f:'destHostname'},
+    {h:'Real IP Dst',  f:'destRealIp'},
+    {h:'Nat IP Dst',   f:'destNatIp'},
+    {h:'Port',             f:'port'},
+    {h:'Network Protocol', f:'networkProtocol1'},
+    {h:'Applicative Protocol', f:'applicativeProtocol'}
+  ];
+
+  function val(v){ return (v!==null&&v!==undefined&&v!=='') ? v : '&mdash;'; }
+
   $(document).on('click','#rosBody tr[data-id]',function(e){
     if($(e.target).closest('.icon-btn').length) return;
     const $tr=$(this);
@@ -489,34 +510,32 @@ $(function(){
     $('#rosBody tr.ros-detail').remove();
     $('#rosBody tr.ros-row-open').removeClass('ros-row-open');
     $tr.addClass('ros-row-open');
-    const $detail=$('<tr class="ros-detail" data-for="'+id+'"><td colspan="5"><div class="ros-detail-inner"><div class="ros-detail-label">Commandes</div><div class="ros-detail-empty">Chargement...</div></div></td></tr>');
+    const $detail=$('<tr class="ros-detail" data-for="'+id+'"><td colspan="5"><div class="ros-detail-inner"><div class="ros-detail-label">Chargement...</div></div></td></tr>');
     $detail.insertAfter($tr);
     fetch(API_BASE+'/api/Ros/commands?rosId='+id)
       .then(function(r){ return r.json(); })
       .then(function(cmds){
         const arr=Array.isArray(cmds)?cmds:[];
         const $inner=$detail.find('.ros-detail-inner');
-        if(!arr.length){ $inner.find('.ros-detail-empty').text('Aucune commande'); return; }
-        if(typeof arr[0]==='string'){
-          $inner.html('<div class="ros-detail-label">Commandes</div><table class="ros-detail-table"><thead><tr><th>Commande</th></tr></thead><tbody>'+
-            arr.map(function(c){ return '<tr><td class="mono">'+c+'</td></tr>'; }).join('')+
-          '</tbody></table>');
-        } else {
-          const keys=Object.keys(arr[0]);
-          $inner.html('<div class="ros-detail-label">Commandes ('+arr.length+')</div><table class="ros-detail-table"><thead><tr>'+
-            keys.map(function(k){ return '<th>'+k+'</th>'; }).join('')+
+        if(!arr.length){ $inner.html('<div class="ros-detail-label">Routes</div><div class="ros-detail-empty">Aucune route</div>'); return; }
+        // mettre à jour la colonne NB ROUTES dans la ligne parente
+        $tr.find('td').eq(3).html('<span style="font-family:\'DM Mono\',monospace;color:var(--red);font-size:.9rem;font-weight:600">'+arr.length+'</span>');
+        $inner.html(
+          '<div class="ros-detail-label">Routes ('+arr.length+')</div>'+
+          '<div style="overflow-x:auto">'+
+          '<table class="ros-detail-table"><thead><tr>'+
+            CMD_COLS.map(function(c){ return '<th>'+c.h+'</th>'; }).join('')+
           '</tr></thead><tbody>'+
-            arr.map(function(c){
-              return '<tr>'+keys.map(function(k){
-                const v=c[k];
-                return '<td class="mono">'+(v!==null&&v!==undefined?v:'&mdash;')+'</td>';
+            arr.map(function(r){
+              return '<tr>'+CMD_COLS.map(function(c){
+                return '<td class="mono">'+val(r[c.f])+'</td>';
               }).join('')+'</tr>';
             }).join('')+
-          '</tbody></table>');
-        }
+          '</tbody></table></div>'
+        );
       })
       .catch(function(){
-        $detail.find('.ros-detail-empty').text('Erreur de chargement').css('color','var(--red)');
+        $detail.find('.ros-detail-inner').html('<div class="ros-detail-label" style="color:var(--red)">Erreur de chargement</div>');
       });
   });
 
