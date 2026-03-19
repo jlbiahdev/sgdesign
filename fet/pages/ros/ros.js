@@ -8,6 +8,7 @@ $(function(){
   const ACT_ROS=`
     <button class="icon-btn js-edit" title="Editer"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
     <button class="icon-btn js-detail" title="Afficher le détail"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="1"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="9" x2="9" y2="21"/></svg></button>
+    <button class="icon-btn js-cmd" title="Commandes de diagnostic"><svg viewBox="0 0 24 24"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg></button>
     <button class="icon-btn js-csv" title="Télécharger CSV"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
     <button class="icon-btn del js-del" title="Supprimer"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></button>`;
 
@@ -543,6 +544,76 @@ $(function(){
       .catch(function(){
         $detail.find('.ros-detail-inner').html('<span class="ros-detail-empty" style="color:var(--red)">Erreur de chargement</span>');
       });
+  });
+
+  /* ── DIAG COMMANDES ── */
+  $(document).on('click','.js-cmd',function(){
+    const $btn=$(this);
+    const $tr=$btn.closest('tr');
+    const id=$tr.data('id');
+    const $existing=$('#rosBody tr.ros-cmd[data-for="'+id+'"]');
+    const $wrap=$tr.closest('.tbl-wrap');
+    if($existing.length){ $existing.remove(); $tr.removeClass('ros-row-open'); $btn.removeClass('active'); $wrap.removeClass('detail-open'); return; }
+    // fermer tout ce qui est ouvert
+    $('#rosBody tr.ros-detail, #rosBody tr.ros-cmd').remove();
+    $('#rosBody tr.ros-row-open').removeClass('ros-row-open');
+    $('#rosBody .js-detail, #rosBody .js-cmd').removeClass('active');
+    $tr.addClass('ros-row-open');
+    $btn.addClass('active');
+    $wrap.addClass('detail-open');
+    const $panel=$('<tr class="ros-cmd" data-for="'+id+'"><td colspan="5"><div class="ros-cmd-inner"><span class="ros-detail-empty">Chargement...</span></div></td></tr>');
+    $panel.insertAfter($tr);
+    fetch(API_BASE+'/api/Ros/commands?rosId='+id)
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        const arr=Array.isArray(data)?data:[];
+        const $inner=$panel.find('.ros-cmd-inner');
+        if(!arr.length){ $inner.html('<span class="ros-detail-empty">Aucune commande</span>'); return; }
+        const groups=[{key:'netstats',label:'netstat'},{key:'telnets',label:'telnet'},{key:'tracerts',label:'tracert'}];
+        $inner.html(
+          '<span class="ros-detail-label">Diag Commandes</span>'+
+          arr.map(function(item){
+            const src=item.source||'';
+            const tgt=item.target||'';
+            const blocks=groups.map(function(g){
+              const cmds=Array.isArray(item[g.key])&&item[g.key].length?item[g.key]:null;
+              if(!cmds) return '';
+              return '<div class="cmd-group">'+
+                '<span class="cmd-type-label">'+g.label+'</span>'+
+                '<div class="cmd-chips">'+
+                  cmds.map(function(c){
+                    const escaped=c.replace(/"/g,'&quot;');
+                    return '<div class="cmd-chip">'+
+                      '<span class="cmd-text">'+c+'</span>'+
+                      '<button class="cmd-copy" title="Copier" data-cmd="'+escaped+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>'+
+                    '</div>';
+                  }).join('')+
+                '</div>'+
+              '</div>';
+            }).join('');
+            return '<div class="cmd-pair">'+
+              '<div class="cmd-pair-header">'+
+                '<span class="cmd-host">'+src+'</span>'+
+                '<svg class="cmd-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>'+
+                '<span class="cmd-host">'+tgt+'</span>'+
+              '</div>'+
+              blocks+
+            '</div>';
+          }).join('')
+        );
+      })
+      .catch(function(){
+        $panel.find('.ros-cmd-inner').html('<span class="ros-detail-empty" style="color:var(--red)">Erreur de chargement</span>');
+      });
+  });
+
+  /* ── COPY COMMANDE ── */
+  $(document).on('click','.cmd-copy',function(){
+    const cmd=$(this).data('cmd');
+    navigator.clipboard.writeText(cmd);
+    $(this).addClass('copied');
+    const self=this;
+    setTimeout(function(){ $(self).removeClass('copied'); },1500);
   });
 
   /* ── EXPORT CSV ── */
