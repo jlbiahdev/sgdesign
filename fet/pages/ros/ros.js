@@ -1,7 +1,5 @@
 $(function(){
 
-  const API = '';  // même origine — URL relatives
-
   /* ── TEMPLATES ACTIONS ── */
   const ACT=`
     <button class="icon-btn js-edit" title="Editer"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
@@ -162,7 +160,7 @@ $(function(){
     };
 
     if(editingHostId!==null){
-      $.ajax({ url:API+'/api/ros/Host/'+editingHostId, method:'PUT', contentType:'application/json', data:JSON.stringify(payload) })
+      $.ajax({ url:API_BASE + '/api/ros/Host/'+editingHostId, method:'PUT', contentType:'application/json', data:JSON.stringify(payload) })
         .done(function(){
           const idx=hostsData.findIndex(function(h){ return h.id==editingHostId; });
           if(idx!==-1) hostsData[idx]=Object.assign({},hostsData[idx],payload);
@@ -171,7 +169,7 @@ $(function(){
         })
         .fail(function(){ alert('Erreur lors de la modification du host.'); });
     } else {
-      $.ajax({ url:API+'/api/ros/Host', method:'POST', contentType:'application/json', data:JSON.stringify(payload) })
+      $.ajax({ url:API_BASE + '/api/ros/Host', method:'POST', contentType:'application/json', data:JSON.stringify(payload) })
         .done(function(id){
           hostsData.push(Object.assign({ id },payload));
           renderHosts();
@@ -223,7 +221,7 @@ $(function(){
     };
 
     if(editingCfgId!==null){
-      $.ajax({ url:API+'/api/ros/Config/'+editingCfgId, method:'PUT', contentType:'application/json', data:JSON.stringify(payload) })
+      $.ajax({ url:API_BASE + '/api/ros/Config/'+editingCfgId, method:'PUT', contentType:'application/json', data:JSON.stringify(payload) })
         .done(function(){
           const idx=cfgsData.findIndex(function(c){ return c.id==editingCfgId; });
           if(idx!==-1) cfgsData[idx]=Object.assign({},cfgsData[idx],payload);
@@ -232,7 +230,7 @@ $(function(){
         })
         .fail(function(){ alert('Erreur lors de la modification de la config.'); });
     } else {
-      $.ajax({ url:API+'/api/ros/Config', method:'POST', contentType:'application/json', data:JSON.stringify(payload) })
+      $.ajax({ url:API_BASE + '/api/ros/Config', method:'POST', contentType:'application/json', data:JSON.stringify(payload) })
         .done(function(id){
           cfgsData.push(Object.assign({ id },payload));
           renderConfigs();
@@ -266,7 +264,7 @@ $(function(){
 
     if(editingRosId!==null){
       const payload={ id:editingRosId, name:nom, description:desc, creationDateYear:year, creationDateMonth:month, creationDateDay:day };
-      $.ajax({ url:API+'/api/Ros/'+editingRosId, method:'PUT', contentType:'application/json', data:JSON.stringify(payload) })
+      $.ajax({ url:API_BASE + '/api/Ros/'+editingRosId, method:'PUT', contentType:'application/json', data:JSON.stringify(payload) })
         .done(function(){
           const idx=rosData.findIndex(function(r){ return r.id==editingRosId; });
           if(idx!==-1) rosData[idx]=Object.assign({},rosData[idx],payload);
@@ -289,7 +287,7 @@ $(function(){
       });
 
       const payload={ infosRos:{ name:nom, description:desc, creationDateYear:year, creationDateMonth:month, creationDateDay:day }, mapping:mapping };
-      $.ajax({ url:API+'/api/Ros', method:'POST', contentType:'application/json', data:JSON.stringify(payload) })
+      $.ajax({ url:API_BASE + '/api/Ros', method:'POST', contentType:'application/json', data:JSON.stringify(payload) })
         .done(function(){
           loadRos();
           closeModal('mRos');
@@ -431,27 +429,29 @@ $(function(){
   }
 
   /* ── LOAD ── */
+  function toArray(data){ return Array.isArray(data) ? data : []; }
+
   function loadHosts(){
-    return $.get(API+'/api/ros/Host')
-      .done(function(data){ hostsData=data; renderHosts(); updateKpis(); })
+    return $.get(API_BASE + '/api/ros/Host')
+      .done(function(data){ hostsData=toArray(data); renderHosts(); updateKpis(); })
       .fail(function(){ $('#hostsBody').html('<tr><td colspan="7" style="text-align:center;color:var(--red)">Erreur de chargement</td></tr>'); });
   }
 
   function loadConfigs(){
-    return $.get(API+'/api/ros/Config')
-      .done(function(data){ cfgsData=data; renderConfigs(); updateKpis(); })
+    return $.get(API_BASE + '/api/ros/Config')
+      .done(function(data){ cfgsData=toArray(data); renderConfigs(); updateKpis(); })
       .fail(function(){ $('#cfgsBody').html('<tr><td colspan="7" style="text-align:center;color:var(--red)">Erreur de chargement</td></tr>'); });
   }
 
   function loadRos(){
-    return $.get(API+'/api/Ros')
-      .done(function(data){ rosData=data; renderRos(); updateKpis(); })
+    return $.get(API_BASE + '/api/Ros')
+      .done(function(data){ rosData=toArray(data); renderRos(); updateKpis(); })
       .fail(function(){ $('#rosBody').html('<tr><td colspan="5" style="text-align:center;color:var(--red)">Erreur de chargement</td></tr>'); });
   }
 
   $.when(loadHosts(), loadConfigs(), loadRos()).done(function(){
     populateRosSelects();
-    $.get(API+'/api/ros/DashBoard').done(function(dash){
+    $.get(API_BASE + '/api/ros/DashBoard').done(function(dash){
       if(dash && dash.routesCount !== undefined) $('.kpi-v').eq(3).text(dash.routesCount);
     });
   });
@@ -469,7 +469,7 @@ $(function(){
 
     if(!url||!id){ $tr.remove(); return; }
 
-    $.ajax({ url:API+url, method:'DELETE' })
+    $.ajax({ url:API_BASE + url, method:'DELETE' })
       .done(function(){
         if(tbodyId==='hostsBody'){ hostsData=hostsData.filter(function(h){ return h.id!==id; }); renderHosts(); }
         if(tbodyId==='cfgsBody'){ cfgsData=cfgsData.filter(function(c){ return c.id!==id; }); renderConfigs(); }
@@ -482,9 +482,16 @@ $(function(){
   /* ── EXPORT CSV ── */
   $(document).on('click','.js-csv',function(){
     const id=$(this).closest('tr').data('id');
-    const $a=$('<a>').attr('href',API+'/api/Ros/csv?rosId='+id).attr('download','').appendTo('body');
-    $a[0].click();
-    $a.remove();
+    const nom=$(this).closest('tr').find('td').first().text().trim()||('ros-'+id);
+    fetch(API_BASE + '/api/Ros/csv?rosId='+id)
+      .then(function(r){ return r.blob(); })
+      .then(function(blob){
+        const url=URL.createObjectURL(blob);
+        const $a=$('<a>').attr('href',url).attr('download',nom+'.csv').appendTo('body');
+        $a[0].click();
+        $a.remove();
+        setTimeout(function(){ URL.revokeObjectURL(url); },1000);
+      });
   });
 
   /* ── CUSTOM SELECT ── */
