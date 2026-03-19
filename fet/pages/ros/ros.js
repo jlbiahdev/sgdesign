@@ -7,7 +7,8 @@ $(function(){
 
   const ACT_ROS=`
     <button class="icon-btn js-edit" title="Editer"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-    <button class="icon-btn js-csv" title="Exporter CSV"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+    <button class="icon-btn js-detail" title="Afficher le détail"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="1"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="9" x2="9" y2="21"/></svg></button>
+    <button class="icon-btn js-csv" title="Télécharger CSV"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
     <button class="icon-btn del js-del" title="Supprimer"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></button>`;
 
   /* ── SUBNAV ── */
@@ -480,62 +481,50 @@ $(function(){
   });
 
   /* ── ROS EXPAND ── */
-  const CMD_COLS=[
-    {h:'#',         f:'row'},
-    {h:'IRT Src',   f:'srcIrt'},
-    {h:'Zone Src',  f:'srcZone'},
-    {h:'Env Src',   f:'srcEnvironment'},
-    {h:'Hostname Src', f:'srcHostname'},
-    {h:'Real IP Src',  f:'srcRealIp'},
-    {h:'Nat IP Src',   f:'srcNatIp'},
-    {h:'IRT Dst',   f:'destIrt'},
-    {h:'Zone Dst',  f:'destZone'},
-    {h:'Env Dst',   f:'destEnvironment'},
-    {h:'Hostname Dst', f:'destHostname'},
-    {h:'Real IP Dst',  f:'destRealIp'},
-    {h:'Nat IP Dst',   f:'destNatIp'},
-    {h:'Port',             f:'port'},
-    {h:'Network Protocol', f:'networkProtocol1'},
-    {h:'Applicative Protocol', f:'applicativeProtocol'}
-  ];
+  /* ── ROS DETAIL ── */
+  function parseCSV(text){
+    const lines=text.trim().split(/\r?\n/);
+    if(!lines.length) return { headers:[], rows:[] };
+    const sep=lines[0].includes(';')?';':',';
+    function splitLine(l){ return l.split(sep).map(function(s){ return s.trim().replace(/^"|"$/g,''); }); }
+    return { headers:splitLine(lines[0]), rows:lines.slice(1).map(splitLine) };
+  }
 
-  function val(v){ return (v!==null&&v!==undefined&&v!=='') ? v : '&mdash;'; }
-
-  $(document).on('click','#rosBody tr[data-id]',function(e){
-    if($(e.target).closest('.icon-btn').length) return;
-    const $tr=$(this);
+  $(document).on('click','.js-detail',function(){
+    const $tr=$(this).closest('tr');
     const id=$tr.data('id');
     const $existing=$('#rosBody tr.ros-detail[data-for="'+id+'"]');
-    if($existing.length){ $existing.remove(); $tr.removeClass('ros-row-open'); return; }
+    if($existing.length){ $existing.remove(); $tr.removeClass('ros-row-open'); $(this).removeClass('active'); return; }
     $('#rosBody tr.ros-detail').remove();
     $('#rosBody tr.ros-row-open').removeClass('ros-row-open');
+    $('#rosBody .js-detail').removeClass('active');
     $tr.addClass('ros-row-open');
-    const $detail=$('<tr class="ros-detail" data-for="'+id+'"><td colspan="5"><div class="ros-detail-inner"><div class="ros-detail-label">Chargement...</div></div></td></tr>');
+    $(this).addClass('active');
+    const $detail=$('<tr class="ros-detail" data-for="'+id+'"><td colspan="5"><div class="ros-detail-inner"><div class="ros-detail-empty">Chargement...</div></div></td></tr>');
     $detail.insertAfter($tr);
-    fetch(API_BASE+'/api/Ros/commands?rosId='+id)
-      .then(function(r){ return r.json(); })
-      .then(function(cmds){
-        const arr=Array.isArray(cmds)?cmds:[];
+    fetch(API_BASE+'/api/Ros/csv?rosId='+id)
+      .then(function(r){ return r.text(); })
+      .then(function(text){
+        const csv=parseCSV(text);
         const $inner=$detail.find('.ros-detail-inner');
-        if(!arr.length){ $inner.html('<div class="ros-detail-label">Routes</div><div class="ros-detail-empty">Aucune route</div>'); return; }
-        // mettre à jour la colonne NB ROUTES dans la ligne parente
-        $tr.find('td').eq(3).html('<span style="font-family:\'DM Mono\',monospace;color:var(--red);font-size:.9rem;font-weight:600">'+arr.length+'</span>');
+        if(!csv.rows.length){ $inner.html('<div class="ros-detail-empty">Aucune route</div>'); return; }
+        $tr.find('td').eq(3).html('<span style="font-family:\'DM Mono\',monospace;color:var(--red);font-size:.9rem;font-weight:600">'+csv.rows.length+'</span>');
         $inner.html(
-          '<div class="ros-detail-label">Routes ('+arr.length+')</div>'+
+          '<div class="ros-detail-label">Routes ('+csv.rows.length+')</div>'+
           '<div style="overflow-x:auto">'+
           '<table class="ros-detail-table"><thead><tr>'+
-            CMD_COLS.map(function(c){ return '<th>'+c.h+'</th>'; }).join('')+
+            csv.headers.map(function(h){ return '<th>'+h+'</th>'; }).join('')+
           '</tr></thead><tbody>'+
-            arr.map(function(r){
-              return '<tr>'+CMD_COLS.map(function(c){
-                return '<td class="mono">'+val(r[c.f])+'</td>';
+            csv.rows.map(function(row){
+              return '<tr>'+row.map(function(cell){
+                return '<td class="mono">'+(cell||'&mdash;')+'</td>';
               }).join('')+'</tr>';
             }).join('')+
           '</tbody></table></div>'
         );
       })
       .catch(function(){
-        $detail.find('.ros-detail-inner').html('<div class="ros-detail-label" style="color:var(--red)">Erreur de chargement</div>');
+        $detail.find('.ros-detail-inner').html('<div class="ros-detail-empty" style="color:var(--red)">Erreur de chargement</div>');
       });
   });
 

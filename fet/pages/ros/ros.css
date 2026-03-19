@@ -81,6 +81,7 @@ tr.ros-detail > td { padding: 0 !important; border-bottom: none; }
 .ros-detail-table tr:last-child td { border-bottom: none; }
 .icon-btn { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; background: transparent; border: 1px solid var(--bg-border); color: var(--text-dim); cursor: pointer; transition: border-color .2s, color .2s; flex-shrink: 0; }
 .icon-btn:hover { border-color: var(--red); color: var(--red); }
+.icon-btn.active { border-color: var(--red); color: var(--red); background: rgba(226,0,26,.08); }
 .icon-btn.del:hover { border-color: #c44; color: #c44; }
 .icon-btn svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
