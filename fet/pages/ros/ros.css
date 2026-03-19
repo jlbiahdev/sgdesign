@@ -93,17 +93,26 @@ tr.ros-detail > td { padding: 0 !important; border-top: none; border-bottom: 2px
 tr.ros-cmd > td { padding: 0 !important; border-top: none; border-bottom: 2px solid var(--bg-border); }
 .ros-cmd-inner { padding: 8px 0 16px; background: var(--bg-sub, rgba(0,0,0,.14)); }
 [data-theme="light"] .ros-cmd-inner { background: rgba(0,0,0,.03); }
-.cmd-pair { padding: 10px 16px 4px; border-bottom: 1px solid var(--bg-border); }
+.cmd-pair { border-bottom: 2px solid var(--bg-border); }
 .cmd-pair:last-child { border-bottom: none; }
-.cmd-pair-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.cmd-pair-header { display: flex; align-items: center; gap: 10px; padding: 10px 16px; cursor: pointer; user-select: none; transition: background .15s; }
+.cmd-pair-header:hover { background: var(--row-hover); }
 .cmd-host { font-family: 'DM Mono', monospace; font-size: .7rem; color: var(--text); background: var(--bg-card); border: 1px solid var(--bg-border); padding: 4px 10px; }
 .cmd-arrow { color: var(--text-faint); flex-shrink: 0; }
-.cmd-group { margin-bottom: 8px; }
-.cmd-type-label { display: inline-block; font-family: 'DM Mono', monospace; font-size: .58rem; letter-spacing: .15em; text-transform: uppercase; color: #fff; background: var(--text-dim); padding: 2px 8px; margin-bottom: 6px; }
+.cmd-chevron { color: var(--text-faint); flex-shrink: 0; margin-left: auto; transition: transform .2s; }
+.cmd-pair.collapsed .cmd-chevron { transform: rotate(-90deg); }
+.cmd-pair-body { padding: 0 16px 12px; }
+.cmd-pair.collapsed .cmd-pair-body { display: none; }
+.cmd-group { margin-bottom: 14px; padding-top: 10px; border-top: 1px solid var(--bg-border); }
+.cmd-group:first-child { border-top: none; padding-top: 0; }
+.cmd-type-label { display: inline-block; font-family: 'DM Mono', monospace; font-size: .58rem; letter-spacing: .15em; text-transform: uppercase; color: #fff; padding: 2px 8px; margin-bottom: 8px; }
+.cmd-type-label.cmd-ns  { background: var(--cyan); }
+.cmd-type-label.cmd-tel { background: var(--red); }
+.cmd-type-label.cmd-tr  { background: var(--green); }
 .cmd-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.cmd-chip { display: flex; align-items: center; gap: 0; background: var(--bg-card); border: 1px solid var(--bg-border); }
+.cmd-chip { display: flex; align-items: center; background: var(--bg-card); border: 1px solid var(--bg-border); }
 .cmd-text { font-family: 'DM Mono', monospace; font-size: .68rem; color: var(--text-dim); padding: 5px 10px; white-space: nowrap; }
-.cmd-copy { display: flex; align-items: center; justify-content: center; width: 28px; height: 100%; background: transparent; border: none; border-left: 1px solid var(--bg-border); color: var(--text-faint); cursor: pointer; padding: 0; transition: color .15s, background .15s; flex-shrink: 0; align-self: stretch; }
+.cmd-copy { display: flex; align-items: center; justify-content: center; width: 28px; align-self: stretch; background: transparent; border: none; border-left: 1px solid var(--bg-border); color: var(--text-faint); cursor: pointer; padding: 0; transition: color .15s, background .15s; flex-shrink: 0; }
 .cmd-copy:hover { color: var(--red); background: rgba(226,0,26,.07); }
 .cmd-copy.copied { color: var(--green); background: rgba(0,200,117,.07); }
 

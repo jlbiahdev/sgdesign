@@ -569,7 +569,8 @@ $(function(){
         const arr=Array.isArray(data)?data:[];
         const $inner=$panel.find('.ros-cmd-inner');
         if(!arr.length){ $inner.html('<span class="ros-detail-empty">Aucune commande</span>'); return; }
-        const groups=[{key:'netstats',label:'netstat'},{key:'telnets',label:'telnet'},{key:'tracerts',label:'tracert'}];
+        const groups=[{key:'netstats',label:'netstat',cls:'cmd-ns'},{key:'telnets',label:'telnet',cls:'cmd-tel'},{key:'tracerts',label:'tracert',cls:'cmd-tr'}];
+        const chevron='<svg class="cmd-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><polyline points="6 9 12 15 18 9"/></svg>';
         $inner.html(
           '<span class="ros-detail-label">Diag Commandes</span>'+
           arr.map(function(item){
@@ -579,7 +580,7 @@ $(function(){
               const cmds=Array.isArray(item[g.key])&&item[g.key].length?item[g.key]:null;
               if(!cmds) return '';
               return '<div class="cmd-group">'+
-                '<span class="cmd-type-label">'+g.label+'</span>'+
+                '<span class="cmd-type-label '+g.cls+'">'+g.label+'</span>'+
                 '<div class="cmd-chips">'+
                   cmds.map(function(c){
                     const escaped=c.replace(/"/g,'&quot;');
@@ -596,8 +597,9 @@ $(function(){
                 '<span class="cmd-host">'+src+'</span>'+
                 '<svg class="cmd-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>'+
                 '<span class="cmd-host">'+tgt+'</span>'+
+                chevron+
               '</div>'+
-              blocks+
+              '<div class="cmd-pair-body">'+blocks+'</div>'+
             '</div>';
           }).join('')
         );
@@ -605,6 +607,11 @@ $(function(){
       .catch(function(){
         $panel.find('.ros-cmd-inner').html('<span class="ros-detail-empty" style="color:var(--red)">Erreur de chargement</span>');
       });
+  });
+
+  /* ── COLLAPSE PAIR ── */
+  $(document).on('click','.cmd-pair-header',function(){
+    $(this).closest('.cmd-pair').toggleClass('collapsed');
   });
 
   /* ── COPY COMMANDE ── */
