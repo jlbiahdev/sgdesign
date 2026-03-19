@@ -2,6 +2,16 @@ $(function(){
 
   const API = '';  // même origine — URL relatives
 
+  /* ── TEMPLATES ACTIONS ── */
+  const ACT=`
+    <button class="icon-btn js-edit" title="Editer"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+    <button class="icon-btn del js-del" title="Supprimer"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></button>`;
+
+  const ACT_ROS=`
+    <button class="icon-btn js-edit" title="Editer"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+    <button class="icon-btn js-csv" title="Exporter CSV"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+    <button class="icon-btn del js-del" title="Supprimer"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></button>`;
+
   /* ── SUBNAV ── */
   $('.snb').on('click',function(){
     $('.snb').removeClass('active');
@@ -343,16 +353,6 @@ $(function(){
     }
   });
 
-  /* ── STATIC TEMPLATES ── */
-  const ACT=`
-    <button class="icon-btn js-edit" title="Editer"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-    <button class="icon-btn del js-del" title="Supprimer"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></button>`;
-
-  const ACT_ROS=`
-    <button class="icon-btn js-edit" title="Editer"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-    <button class="icon-btn js-csv" title="Exporter CSV"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
-    <button class="icon-btn del js-del" title="Supprimer"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></button>`;
-
   /* ── STATE ── */
   let hostsData=[], cfgsData=[], rosData=[];
 
@@ -482,7 +482,9 @@ $(function(){
   /* ── EXPORT CSV ── */
   $(document).on('click','.js-csv',function(){
     const id=$(this).closest('tr').data('id');
-    window.open(API+'/api/Ros/csv?rosId='+id);
+    const $a=$('<a>').attr('href',API+'/api/Ros/csv?rosId='+id).attr('download','').appendTo('body');
+    $a[0].click();
+    $a.remove();
   });
 
   /* ── CUSTOM SELECT ── */
