@@ -11,11 +11,24 @@ $(function(){
   });
 
   /* ── OVERLAYS ── */
-  $('#btnOpenRos').on('click',()=>{ populateRosSelects(); $('#mRos').addClass('open'); });
-  $('#btnOpenHost').on('click',()=>{ resetHost(); $('#mHost').addClass('open'); });
-  $('#btnOpenCfg').on('click', ()=>{ resetCfg();  $('#mCfg').addClass('open');  });
-  $('[data-close]').on('click',function(){ $('#'+$(this).data('close')).removeClass('open'); });
-  $('.overlay').on('click',function(e){ if(e.target===this) $(this).removeClass('open'); });
+  $('#btnOpenRos').on('click',function(){ resetRosModal(); populateRosSelects(); $('#mRos').addClass('open'); });
+  $('#btnOpenHost').on('click',function(){ resetHost(); $('#mHost').addClass('open'); });
+  $('#btnOpenCfg').on('click',function(){ resetCfg(); $('#mCfg').addClass('open'); });
+
+  $('[data-close]').on('click',function(){
+    const id=$(this).data('close');
+    closeModal(id);
+  });
+  $('.overlay').on('click',function(e){
+    if(e.target===this) closeModal($(this).attr('id'));
+  });
+
+  function closeModal(id){
+    $('#'+id).removeClass('open');
+    if(id==='mHost'){ editingHostId=null; $('#mHost .modal-title').text('Creer un Host'); $('#saveHost').text('Creer'); }
+    if(id==='mCfg') { editingCfgId=null;  $('#mCfg .modal-title').text('Creer une Config'); $('#saveCfg').text('Enregistrer'); }
+    if(id==='mRos') { resetRosModal(); }
+  }
 
   /* ── VALIDATORS ── */
   const RE_IP   = /^((25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)\.){3}(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)$/;
@@ -70,15 +83,29 @@ $(function(){
     }).get();
   }
 
+  /* ── CUSTOM SELECT HELPER ── */
+  function setCustomSelect(selectId, value){
+    const $opt=$('#'+selectId+' .cs-option[data-value="'+value+'"]');
+    if(!$opt.length) return;
+    $('#'+selectId+' .cs-value').text($opt.text()).addClass('selected');
+    $('#'+selectId+' .cs-option').removeClass('active');
+    $opt.addClass('active');
+    $('#'+selectId+' input[type=hidden]').val(value);
+    $('#'+selectId+' .cs-trigger').removeClass('is-invalid');
+  }
+
   /* ── HOST MODAL ── */
   initTags('ipWrap','ipInput','ipErr',validIP);
 
-  $('#hostSubnet').on('input', function(){
+  $('#hostSubnet').on('input',function(){
     $(this).removeClass('is-invalid is-valid');
     $('#subnetErr').removeClass('show');
   });
 
   function resetHost(){
+    editingHostId=null;
+    $('#mHost .modal-title').text('Creer un Host');
+    $('#saveHost').text('Creer');
     $('#hostNom,#hostDesc').val('').removeClass('is-invalid is-valid');
     $('#hostSubnet').val('').removeClass('is-invalid is-valid');
     $('#subnetErr').removeClass('show');
@@ -95,6 +122,8 @@ $(function(){
     $('#typeSelect .cs-trigger').removeClass('is-invalid open');
     $('#envErr,#typeErr').removeClass('show');
   }
+
+  let editingHostId=null;
 
   $('#saveHost').on('click',function(){
     let ok=true;
@@ -113,7 +142,7 @@ $(function(){
     else { $('#typeSelect .cs-trigger').removeClass('is-invalid'); $('#typeErr').removeClass('show'); }
     if(!ok) return;
 
-    const payload = {
+    const payload={
       name: nom,
       description: $('#hostDesc').val().trim(),
       ipAddresses: ips.join(','),
@@ -122,14 +151,25 @@ $(function(){
       type: parseInt(typ)
     };
 
-    $.ajax({ url: API+'/api/ros/Host', method:'POST', contentType:'application/json', data: JSON.stringify(payload) })
-      .done(function(id){
-        hostsData.push(Object.assign({ id }, payload));
-        renderHosts();
-        updateKpis();
-        $('#mHost').removeClass('open');
-      })
-      .fail(function(){ alert('Erreur lors de la création du host.'); });
+    if(editingHostId!==null){
+      $.ajax({ url:API+'/api/ros/Host/'+editingHostId, method:'PUT', contentType:'application/json', data:JSON.stringify(payload) })
+        .done(function(){
+          const idx=hostsData.findIndex(function(h){ return h.id==editingHostId; });
+          if(idx!==-1) hostsData[idx]=Object.assign({},hostsData[idx],payload);
+          renderHosts();
+          closeModal('mHost');
+        })
+        .fail(function(){ alert('Erreur lors de la modification du host.'); });
+    } else {
+      $.ajax({ url:API+'/api/ros/Host', method:'POST', contentType:'application/json', data:JSON.stringify(payload) })
+        .done(function(id){
+          hostsData.push(Object.assign({ id },payload));
+          renderHosts();
+          updateKpis();
+          closeModal('mHost');
+        })
+        .fail(function(){ alert('Erreur lors de la création du host.'); });
+    }
   });
 
   /* ── CONFIG MODAL ── */
@@ -137,12 +177,17 @@ $(function(){
   initTags('plageWrap','plageInput','plageErr',validRange);
 
   function resetCfg(){
+    editingCfgId=null;
+    $('#mCfg .modal-title').text('Creer une Config');
+    $('#saveCfg').text('Enregistrer');
     $('#cfgNom,#cfgDesc').val('').removeClass('is-invalid');
     $('#portWrap,#plageWrap').find('.tag').remove();
     $('#portWrap,#plageWrap').removeClass('wrap-invalid');
     $('#portErr,#plageErr').removeClass('show');
     $('#cfgNet,#cfgApp').val([]).removeClass('is-invalid');
   }
+
+  let editingCfgId=null;
 
   $('#saveCfg').on('click',function(){
     let ok=true;
@@ -158,7 +203,7 @@ $(function(){
     if(!apps||!apps.length){ $('#cfgApp').addClass('is-invalid'); ok=false; } else $('#cfgApp').removeClass('is-invalid');
     if(!ok) return;
 
-    const payload = {
+    const payload={
       name: nom,
       description: $('#cfgDesc').val().trim(),
       ports: ports.join(','),
@@ -167,17 +212,39 @@ $(function(){
       bands: plages.join(',')
     };
 
-    $.ajax({ url: API+'/api/ros/Config', method:'POST', contentType:'application/json', data: JSON.stringify(payload) })
-      .done(function(id){
-        cfgsData.push(Object.assign({ id }, payload));
-        renderConfigs();
-        updateKpis();
-        $('#mCfg').removeClass('open');
-      })
-      .fail(function(){ alert('Erreur lors de la création de la config.'); });
+    if(editingCfgId!==null){
+      $.ajax({ url:API+'/api/ros/Config/'+editingCfgId, method:'PUT', contentType:'application/json', data:JSON.stringify(payload) })
+        .done(function(){
+          const idx=cfgsData.findIndex(function(c){ return c.id==editingCfgId; });
+          if(idx!==-1) cfgsData[idx]=Object.assign({},cfgsData[idx],payload);
+          renderConfigs();
+          closeModal('mCfg');
+        })
+        .fail(function(){ alert('Erreur lors de la modification de la config.'); });
+    } else {
+      $.ajax({ url:API+'/api/ros/Config', method:'POST', contentType:'application/json', data:JSON.stringify(payload) })
+        .done(function(id){
+          cfgsData.push(Object.assign({ id },payload));
+          renderConfigs();
+          updateKpis();
+          closeModal('mCfg');
+        })
+        .fail(function(){ alert('Erreur lors de la création de la config.'); });
+    }
   });
 
   /* ── ROS MODAL ── */
+  let editingRosId=null;
+
+  function resetRosModal(){
+    editingRosId=null;
+    $('#mRos .modal-title').text('Creer une ROS');
+    $('#saveRos').text('Creer');
+    $('#rosNom,#rosDesc').val('').removeClass('is-invalid');
+    $('#rosDate').val('').removeClass('is-invalid');
+    $('#selSrc,#selTgt,#selCfg').closest('.fg').show();
+  }
+
   $('#saveRos').on('click',function(){
     const nom=$('#rosNom').val().trim();
     const desc=$('#rosDesc').val().trim();
@@ -186,41 +253,103 @@ $(function(){
     if(!date){ $('#rosDate').addClass('is-invalid'); return; } else $('#rosDate').removeClass('is-invalid');
 
     const [year,month,day]=date.split('-').map(Number);
-    const srcIds=$('#selSrc').val()||[];
-    const tgtIds=$('#selTgt').val()||[];
-    const cfgIds=$('#selCfg').val()||[];
 
-    const mapping=[];
-    srcIds.forEach(function(src){
-      tgtIds.forEach(function(tgt){
-        cfgIds.forEach(function(cfg){
-          mapping.push({ sourceId:parseInt(src), targetId:parseInt(tgt), configId:parseInt(cfg) });
+    if(editingRosId!==null){
+      const payload={ id:editingRosId, name:nom, description:desc, creationDateYear:year, creationDateMonth:month, creationDateDay:day };
+      $.ajax({ url:API+'/api/Ros/'+editingRosId, method:'PUT', contentType:'application/json', data:JSON.stringify(payload) })
+        .done(function(){
+          const idx=rosData.findIndex(function(r){ return r.id==editingRosId; });
+          if(idx!==-1) rosData[idx]=Object.assign({},rosData[idx],payload);
+          renderRos();
+          closeModal('mRos');
+        })
+        .fail(function(){ alert('Erreur lors de la modification de la ROS.'); });
+    } else {
+      const srcIds=$('#selSrc').val()||[];
+      const tgtIds=$('#selTgt').val()||[];
+      const cfgIds=$('#selCfg').val()||[];
+
+      const mapping=[];
+      srcIds.forEach(function(src){
+        tgtIds.forEach(function(tgt){
+          cfgIds.forEach(function(cfg){
+            mapping.push({ sourceId:parseInt(src), targetId:parseInt(tgt), configId:parseInt(cfg) });
+          });
         });
       });
-    });
 
-    const payload = {
-      infosRos: { name:nom, description:desc, creationDateYear:year, creationDateMonth:month, creationDateDay:day },
-      mapping: mapping
-    };
-
-    $.ajax({ url: API+'/api/Ros', method:'POST', contentType:'application/json', data: JSON.stringify(payload) })
-      .done(function(){
-        loadRos();
-        $('#mRos').removeClass('open');
-        $('#rosNom,#rosDesc').val('');
-        $('#rosDate').val('');
-      })
-      .fail(function(){ alert('Erreur lors de la création de la ROS.'); });
+      const payload={ infosRos:{ name:nom, description:desc, creationDateYear:year, creationDateMonth:month, creationDateDay:day }, mapping:mapping };
+      $.ajax({ url:API+'/api/Ros', method:'POST', contentType:'application/json', data:JSON.stringify(payload) })
+        .done(function(){
+          loadRos();
+          closeModal('mRos');
+        })
+        .fail(function(){ alert('Erreur lors de la création de la ROS.'); });
+    }
   });
 
-  /* ── STATIC TEMPLATE ── */
+  /* ── EDIT ── */
+  $(document).on('click','.js-edit',function(){
+    const $tr=$(this).closest('tr');
+    const id=$tr.data('id');
+    const tbodyId=$tr.closest('tbody').attr('id');
+
+    if(tbodyId==='hostsBody'){
+      const h=hostsData.find(function(x){ return x.id==id; });
+      if(!h) return;
+      resetHost();
+      editingHostId=id;
+      $('#mHost .modal-title').text('Modifier un Host');
+      $('#saveHost').text('Enregistrer');
+      $('#hostNom').val(h.name);
+      $('#hostDesc').val(h.description||'');
+      $('#hostSubnet').val(h.subnet||'');
+      const $w=$('#ipWrap'), $i=$('#ipInput');
+      (h.ipAddresses||'').split(',').filter(Boolean).forEach(function(ip){ insertTag($w,$i,ip.trim(),true); });
+      setCustomSelect('envSelect', h.environment);
+      setCustomSelect('typeSelect', String(h.type));
+      $('#mHost').addClass('open');
+    }
+    else if(tbodyId==='cfgsBody'){
+      const c=cfgsData.find(function(x){ return x.id==id; });
+      if(!c) return;
+      resetCfg();
+      editingCfgId=id;
+      $('#mCfg .modal-title').text('Modifier une Config');
+      $('#saveCfg').text('Enregistrer');
+      $('#cfgNom').val(c.name);
+      $('#cfgDesc').val(c.description||'');
+      const $pw=$('#portWrap'), $pi=$('#portInput');
+      (c.ports||'').split(',').filter(Boolean).forEach(function(p){ insertTag($pw,$pi,p.trim(),true); });
+      const $lw=$('#plageWrap'), $li=$('#plageInput');
+      (c.bands||'').split(',').filter(Boolean).forEach(function(b){ insertTag($lw,$li,b.trim(),true); });
+      if(c.networkProtocol) $('#cfgNet').val(c.networkProtocol.split(',').map(function(s){ return s.trim(); }));
+      if(c.applicativeProtocols) $('#cfgApp').val(c.applicativeProtocols.split(',').map(function(s){ return s.trim(); }));
+      $('#mCfg').addClass('open');
+    }
+    else if(tbodyId==='rosBody'){
+      const r=rosData.find(function(x){ return x.id==id; });
+      if(!r) return;
+      resetRosModal();
+      editingRosId=id;
+      $('#mRos .modal-title').text('Modifier une ROS');
+      $('#saveRos').text('Enregistrer');
+      $('#rosNom').val(r.name);
+      $('#rosDesc').val(r.description||'');
+      const d=r.creationDateYear+'-'+String(r.creationDateMonth).padStart(2,'0')+'-'+String(r.creationDateDay).padStart(2,'0');
+      $('#rosDate').val(d);
+      $('#selSrc,#selTgt,#selCfg').closest('.fg').hide();
+      $('#mRos').addClass('open');
+    }
+  });
+
+  /* ── STATIC TEMPLATES ── */
   const ACT=`
-    <button class="icon-btn" title="Editer"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+    <button class="icon-btn js-edit" title="Editer"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
     <button class="icon-btn del js-del" title="Supprimer"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></button>`;
 
   const ACT_ROS=`
-    <button class="icon-btn" title="Editer"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+    <button class="icon-btn js-edit" title="Editer"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
     <button class="icon-btn js-csv" title="Exporter CSV"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
     <button class="icon-btn del js-del" title="Supprimer"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></button>`;
 
