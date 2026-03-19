@@ -487,13 +487,13 @@ $(function(){
     {h:'IRT Src',              f:'srcIrt'},
     {h:'Zone Src',             f:'srcZone'},
     {h:'Env Src',              f:'srcEnvironment'},
-    {h:'Hostname Src',         f:'srcHostname'},
+    {h:'Hostname Src',         f:'srcHostname',   cls:'col-host'},
     {h:'Real IP Src',          f:'srcRealIp'},
     {h:'Nat IP Src',           f:'srcNatIp'},
     {h:'IRT Dst',              f:'destIrt'},
     {h:'Zone Dst',             f:'destZone'},
     {h:'Env Dst',              f:'destEnvironment'},
-    {h:'Hostname Dst',         f:'destHostname'},
+    {h:'Hostname Dst',         f:'destHostname',  cls:'col-host'},
     {h:'Real IP Dst',          f:'destRealIp'},
     {h:'Nat IP Dst',           f:'destNatIp'},
     {h:'Port',                 f:'port'},
@@ -531,7 +531,10 @@ $(function(){
             arr.map(function(r){
               return '<tr>'+ROUTE_COLS.map(function(c){
                 const v=r[c.f];
-                return '<td>'+(v!==null&&v!==undefined&&v!==''?v:'&mdash;')+'</td>';
+                const disp=(v!==null&&v!==undefined&&v!=='')?v:'&mdash;';
+                const cls=c.cls?' class="'+c.cls+'"':'';
+                const tip=(c.cls&&v)?(' title="'+String(v).replace(/"/g,'&quot;')+'"'):'';
+                return '<td'+cls+tip+'>'+disp+'</td>';
               }).join('')+'</tr>';
             }).join('')+
           '</tbody></table>'

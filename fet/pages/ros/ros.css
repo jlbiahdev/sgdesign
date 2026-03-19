@@ -70,12 +70,13 @@ td:has(.actions-cell) { padding-left: 6px; padding-right: 6px; }
 /* ── ROS EXPANDABLE ROW ── */
 #rosBody tr.ros-row-open > td:first-child { border-left: 2px solid var(--red); }
 tr.ros-detail > td { padding: 0 !important; border-top: none; border-bottom: 2px solid var(--bg-border); }
-.tbl-wrap.detail-open { overflow-x: auto; }
-.ros-detail-inner { padding: 8px 0 14px; background: var(--bg-sub, rgba(0,0,0,.14)); overflow-x: auto; }
+.tbl-wrap.detail-open { overflow: visible; }
+.ros-detail-inner { padding: 8px 0 14px; background: var(--bg-sub, rgba(0,0,0,.14)); }
 [data-theme="light"] .ros-detail-inner { background: rgba(0,0,0,.03); }
 .ros-detail-label { font-family: 'DM Mono', monospace; font-size: .58rem; letter-spacing: .2em; text-transform: uppercase; color: var(--red); padding: 8px 16px 6px; display: block; }
 .ros-detail-empty { font-family: 'DM Mono', monospace; font-size: .72rem; color: var(--text-faint); padding: 8px 16px; }
-.ros-detail-table { width: max-content; border-collapse: collapse; }
+.ros-detail-table { width: 100%; table-layout: fixed; border-collapse: collapse; }
+.ros-detail-table .col-host { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ros-detail-table thead { background: var(--bg-card) !important; }
 .ros-detail-table th { font-family: 'DM Mono', monospace; font-size: .58rem; letter-spacing: .1em; text-transform: uppercase; color: var(--text-faint) !important; background: var(--bg-card) !important; padding: 5px 12px; border-bottom: 1px solid var(--bg-border); border-right: 1px solid var(--bg-border); text-align: left; white-space: nowrap; }
 .ros-detail-table th:last-child { border-right: none; }
