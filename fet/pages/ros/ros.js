@@ -479,6 +479,47 @@ $(function(){
       .fail(function(){ alert('Erreur lors de la suppression.'); });
   });
 
+  /* ── ROS EXPAND ── */
+  $(document).on('click','#rosBody tr[data-id]',function(e){
+    if($(e.target).closest('.icon-btn').length) return;
+    const $tr=$(this);
+    const id=$tr.data('id');
+    const $existing=$('#rosBody tr.ros-detail[data-for="'+id+'"]');
+    if($existing.length){ $existing.remove(); $tr.removeClass('ros-row-open'); return; }
+    $('#rosBody tr.ros-detail').remove();
+    $('#rosBody tr.ros-row-open').removeClass('ros-row-open');
+    $tr.addClass('ros-row-open');
+    const $detail=$('<tr class="ros-detail" data-for="'+id+'"><td colspan="5"><div class="ros-detail-inner"><div class="ros-detail-label">Commandes</div><div class="ros-detail-empty">Chargement...</div></div></td></tr>');
+    $detail.insertAfter($tr);
+    fetch(API_BASE+'/api/Ros/commands?rosId='+id)
+      .then(function(r){ return r.json(); })
+      .then(function(cmds){
+        const arr=Array.isArray(cmds)?cmds:[];
+        const $inner=$detail.find('.ros-detail-inner');
+        if(!arr.length){ $inner.find('.ros-detail-empty').text('Aucune commande'); return; }
+        if(typeof arr[0]==='string'){
+          $inner.html('<div class="ros-detail-label">Commandes</div><table class="ros-detail-table"><thead><tr><th>Commande</th></tr></thead><tbody>'+
+            arr.map(function(c){ return '<tr><td class="mono">'+c+'</td></tr>'; }).join('')+
+          '</tbody></table>');
+        } else {
+          const keys=Object.keys(arr[0]);
+          $inner.html('<div class="ros-detail-label">Commandes ('+arr.length+')</div><table class="ros-detail-table"><thead><tr>'+
+            keys.map(function(k){ return '<th>'+k+'</th>'; }).join('')+
+          '</tr></thead><tbody>'+
+            arr.map(function(c){
+              return '<tr>'+keys.map(function(k){
+                const v=c[k];
+                return '<td class="mono">'+(v!==null&&v!==undefined?v:'&mdash;')+'</td>';
+              }).join('')+'</tr>';
+            }).join('')+
+          '</tbody></table>');
+        }
+      })
+      .catch(function(){
+        $detail.find('.ros-detail-empty').text('Erreur de chargement').css('color','var(--red)');
+      });
+  });
+
   /* ── EXPORT CSV ── */
   $(document).on('click','.js-csv',function(){
     const id=$(this).closest('tr').data('id');
