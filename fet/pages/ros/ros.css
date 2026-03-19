@@ -65,7 +65,8 @@ td.small { font-family: 'DM Mono', monospace; font-size: .66rem; word-break: bre
 .sn-tag { display: inline-block; padding: 2px 7px; background: rgba(0,200,117,.07); border: 1px solid rgba(0,200,117,.3); font-family: 'DM Mono', monospace; font-size: .62rem; color: var(--green); margin: 2px; }
 .badge { display: inline-block; padding: 2px 7px; background: rgba(226,0,26,.1); border: 1px solid rgba(226,0,26,.3); font-family: 'DM Mono', monospace; font-size: .6rem; color: var(--red); }
 .badge.dev { background: rgba(14,184,200,.08); border-color: rgba(14,184,200,.3); color: var(--cyan); }
-.actions-cell { display: flex; align-items: center; gap: 6px; justify-content: center; }
+.actions-cell { display: flex; align-items: center; gap: 6px; justify-content: center; flex-wrap: nowrap; }
+td:has(.actions-cell) { padding-left: 6px; padding-right: 6px; }
 /* ── ROS EXPANDABLE ROW ── */
 #rosBody tr.ros-row-open > td:first-child { border-left: 2px solid var(--red); }
 tr.ros-detail > td { padding: 0 !important; border-top: none; border-bottom: 2px solid var(--bg-border); }
