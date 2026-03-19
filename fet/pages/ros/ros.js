@@ -12,6 +12,11 @@ $(function(){
     <button class="icon-btn js-csv" title="Télécharger CSV"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
     <button class="icon-btn del js-del" title="Supprimer"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></button>`;
 
+  /* ── HELP ── */
+  $('#btnHelp').on('click',function(){ $('#helpOverlay').addClass('open'); });
+  $('#helpCloseBtn').on('click',function(){ $('#helpOverlay').removeClass('open'); });
+  $('#helpOverlay').on('click',function(e){ if(e.target===this) $('#helpOverlay').removeClass('open'); });
+
   /* ── SUBNAV ── */
   $('.snb').on('click',function(){
     $('.snb').removeClass('active');

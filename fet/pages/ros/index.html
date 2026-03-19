@@ -38,6 +38,7 @@
   <button class="snb" data-view="ros">ROS</button>
   <button class="snb" data-view="hosts">Hosts</button>
   <button class="snb" data-view="configs">Configs</button>
+  <button class="btn-help" id="btnHelp" title="Aide">?</button>
 </nav>
 <main>
   <div class="view active" id="view-dashboard">
@@ -247,6 +248,61 @@
     <button class="btn-cancel" data-close="mCfg">Annuler</button>
   </div>
 </div></div>
+
+<!-- HELP OVERLAY -->
+<div class="help-overlay" id="helpOverlay">
+  <div class="help-card">
+    <div class="help-header">
+      <span class="help-title">Guide d'utilisation — ROS Generator</span>
+      <button class="help-close" id="helpCloseBtn">&times;</button>
+    </div>
+    <div class="help-body">
+
+      <div class="help-section">
+        <div class="help-section-title">Dashboard</div>
+        <div class="help-list">
+          <div class="help-item"><svg class="help-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg><span>Vue synthétique des KPIs : nombre de ROS, d'hosts, de configs et de routes totales.</span></div>
+          <div class="help-item"><svg class="help-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span>Les panneaux latéraux affichent la répartition par environnement et par protocole.</span></div>
+        </div>
+      </div>
+
+      <div class="help-sep"></div>
+
+      <div class="help-section">
+        <div class="help-section-title">Onglet ROS</div>
+        <div class="help-list">
+          <div class="help-item"><svg class="help-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span>Cliquez sur <strong>+ Créer une ROS</strong> pour définir une nouvelle règle (nom, description, date, hosts source/target, config).</span></div>
+          <div class="help-item"><svg class="help-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg><span>Le bouton <strong>éditer</strong> (crayon) permet de modifier une ROS existante.</span></div>
+          <div class="help-item"><svg class="help-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="1"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="9" x2="9" y2="21"/></svg><span>Le bouton <strong>détail</strong> (tableau) affiche le sous-tableau des routes associées à la ROS.</span></div>
+          <div class="help-item"><svg class="help-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg><span>Le bouton <strong>diagnostic</strong> (terminal) affiche les commandes netstat, telnet et tracert générées pour tester les routes — cliquez sur chaque paire pour la réduire, sur chaque groupe pour le replier.</span></div>
+          <div class="help-item"><svg class="help-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Le bouton <strong>télécharger</strong> (flèche) exporte les routes de la ROS au format CSV (séparateur <code>;</code>, encodage UTF-8 BOM).</span></div>
+          <div class="help-item"><svg class="help-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg><span>Le bouton <strong>supprimer</strong> (corbeille) retire définitivement la ROS après confirmation.</span></div>
+        </div>
+      </div>
+
+      <div class="help-sep"></div>
+
+      <div class="help-section">
+        <div class="help-section-title">Onglet Hosts</div>
+        <div class="help-list">
+          <div class="help-item"><svg class="help-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg><span>Gérez les serveurs référencés dans FETEAD : hostname, IPs, subnet, environnement et type.</span></div>
+          <div class="help-item"><svg class="help-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span>Les IPs sont saisies sous forme de tags — appuyez sur <strong>Entrée</strong> ou virgule pour valider chaque adresse.</span></div>
+        </div>
+      </div>
+
+      <div class="help-sep"></div>
+
+      <div class="help-section">
+        <div class="help-section-title">Onglet Configs</div>
+        <div class="help-list">
+          <div class="help-item"><svg class="help-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93A10 10 0 115.64 19.07"/></svg><span>Les configs regroupent les règles réseau : ports, protocoles et plages de ports associées à une ROS.</span></div>
+          <div class="help-item"><svg class="help-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span>Les plages de ports s'ajoutent en tag — format <strong>PORT</strong> (ex: 443) ou <strong>PORT-PORT</strong> (ex: 5022-5026).</span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
 
 <footer>
   <span>&copy; Groupe Societe Generale &middot; ASSU 2026</span>
