@@ -122,12 +122,7 @@ tr.ros-cmd > td { padding: 0 !important; border-top: none; border-bottom: 2px so
 .cmd-pair.collapsed .cmd-pair-body { display: none; }
 .cmd-group { margin-bottom: 14px; padding-top: 10px; border-top: 1px solid var(--bg-border); }
 .cmd-group:first-child { border-top: none; padding-top: 0; }
-.cmd-group-header { display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; margin-bottom: 8px; }
-.cmd-group-header:hover .cmd-group-chevron { color: var(--text); }
-.cmd-group-chevron { color: var(--text-faint); flex-shrink: 0; transition: transform .2s; }
-.cmd-group.collapsed .cmd-group-chevron { transform: rotate(-90deg); }
-.cmd-group.collapsed .cmd-chips { display: none; }
-.cmd-type-label { display: inline-block; font-family: 'DM Mono', monospace; font-size: .58rem; letter-spacing: .15em; text-transform: uppercase; color: #fff; padding: 2px 8px; }
+.cmd-type-label { display: inline-block; font-family: 'DM Mono', monospace; font-size: .58rem; letter-spacing: .15em; text-transform: uppercase; color: #fff; padding: 2px 8px; margin-bottom: 8px; }
 .cmd-type-label.cmd-ns  { background: var(--cyan); }
 .cmd-type-label.cmd-tel { background: var(--red); }
 .cmd-type-label.cmd-tr  { background: var(--green); }

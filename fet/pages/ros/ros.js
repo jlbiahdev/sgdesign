@@ -585,10 +585,7 @@ $(function(){
               const cmds=Array.isArray(item[g.key])&&item[g.key].length?item[g.key]:null;
               if(!cmds) return '';
               return '<div class="cmd-group">'+
-                '<div class="cmd-group-header">'+
-                  '<span class="cmd-type-label '+g.cls+'">'+g.label+'</span>'+
-                  '<svg class="cmd-group-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><polyline points="6 9 12 15 18 9"/></svg>'+
-                '</div>'+
+                '<span class="cmd-type-label '+g.cls+'">'+g.label+'</span>'+
                 '<div class="cmd-chips">'+
                   cmds.map(function(c){
                     const escaped=c.replace(/"/g,'&quot;');
@@ -622,13 +619,7 @@ $(function(){
     $(this).closest('.cmd-pair').toggleClass('collapsed');
   });
 
-  /* ── COLLAPSE GROUP ── */
-  $(document).on('click','.cmd-group-header',function(e){
-    e.stopPropagation();
-    $(this).closest('.cmd-group').toggleClass('collapsed');
-  });
-
-  /* ── COPY COMMANDE ── */
+/* ── COPY COMMANDE ── */
   $(document).on('click','.cmd-copy',function(){
     const cmd=$(this).data('cmd');
     navigator.clipboard.writeText(cmd);
