@@ -506,38 +506,39 @@ $(function(){
     const $tr=$btn.closest('tr');
     const id=$tr.data('id');
     const $existing=$('#rosBody tr.ros-detail[data-for="'+id+'"]');
-    if($existing.length){ $existing.remove(); $tr.removeClass('ros-row-open'); $btn.removeClass('active'); return; }
+    const $wrap=$tr.closest('.tbl-wrap');
+    if($existing.length){ $existing.remove(); $tr.removeClass('ros-row-open'); $btn.removeClass('active'); $wrap.removeClass('detail-open'); return; }
     $('#rosBody tr.ros-detail').remove();
     $('#rosBody tr.ros-row-open').removeClass('ros-row-open');
     $('#rosBody .js-detail').removeClass('active');
     $tr.addClass('ros-row-open');
     $btn.addClass('active');
-    const $detail=$('<tr class="ros-detail" data-for="'+id+'"><td colspan="5"><div class="ros-detail-inner"><div class="ros-detail-empty">Chargement...</div></div></td></tr>');
+    $wrap.addClass('detail-open');
+    const $detail=$('<tr class="ros-detail" data-for="'+id+'"><td colspan="5"><div class="ros-detail-inner"><span class="ros-detail-empty">Chargement...</span></div></td></tr>');
     $detail.insertAfter($tr);
     fetch(API_BASE+'/api/Ros/csv?rosId='+id)
       .then(function(r){ return r.json(); })
       .then(function(data){
         const arr=Array.isArray(data)?data:[];
         const $inner=$detail.find('.ros-detail-inner');
-        if(!arr.length){ $inner.html('<div class="ros-detail-empty">Aucune route</div>'); return; }
+        if(!arr.length){ $inner.html('<span class="ros-detail-empty">Aucune route</span>'); return; }
         $tr.find('td').eq(3).html('<span style="font-family:\'DM Mono\',monospace;color:var(--red);font-size:.9rem;font-weight:600">'+arr.length+'</span>');
         $inner.html(
-          '<div class="ros-detail-label">Routes ('+arr.length+')</div>'+
-          '<div style="overflow-x:auto">'+
+          '<span class="ros-detail-label">Routes ('+arr.length+')</span>'+
           '<table class="ros-detail-table"><thead><tr>'+
             ROUTE_COLS.map(function(c){ return '<th>'+c.h+'</th>'; }).join('')+
           '</tr></thead><tbody>'+
             arr.map(function(r){
               return '<tr>'+ROUTE_COLS.map(function(c){
                 const v=r[c.f];
-                return '<td class="mono">'+(v!==null&&v!==undefined&&v!==''?v:'&mdash;')+'</td>';
+                return '<td>'+(v!==null&&v!==undefined&&v!==''?v:'&mdash;')+'</td>';
               }).join('')+'</tr>';
             }).join('')+
-          '</tbody></table></div>'
+          '</tbody></table>'
         );
       })
       .catch(function(){
-        $detail.find('.ros-detail-inner').html('<div class="ros-detail-empty" style="color:var(--red)">Erreur de chargement</div>');
+        $detail.find('.ros-detail-inner').html('<span class="ros-detail-empty" style="color:var(--red)">Erreur de chargement</span>');
       });
   });
 

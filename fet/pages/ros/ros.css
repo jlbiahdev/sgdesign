@@ -67,17 +67,19 @@ td.small { font-family: 'DM Mono', monospace; font-size: .66rem; word-break: bre
 .badge.dev { background: rgba(14,184,200,.08); border-color: rgba(14,184,200,.3); color: var(--cyan); }
 .actions-cell { display: flex; align-items: center; gap: 6px; justify-content: center; }
 /* ── ROS EXPANDABLE ROW ── */
-#rosBody tr[data-id] { cursor: pointer; }
-#rosBody tr[data-id]:hover td { background: var(--bg-row-hover, rgba(255,255,255,.03)); }
 #rosBody tr.ros-row-open > td:first-child { border-left: 2px solid var(--red); }
-tr.ros-detail > td { padding: 0 !important; border-bottom: none; }
-.ros-detail-inner { padding: 0 20px 16px 32px; background: var(--bg-sub, rgba(0,0,0,.18)); border-bottom: 2px solid var(--bg-border); }
+tr.ros-detail > td { padding: 0 !important; border-top: none; border-bottom: 2px solid var(--bg-border); }
+.tbl-wrap.detail-open { overflow-x: auto; }
+.ros-detail-inner { padding: 8px 0 14px; background: var(--bg-sub, rgba(0,0,0,.14)); overflow-x: auto; }
 [data-theme="light"] .ros-detail-inner { background: rgba(0,0,0,.03); }
-.ros-detail-label { font-family: 'DM Mono', monospace; font-size: .58rem; letter-spacing: .2em; text-transform: uppercase; color: var(--red); padding: 10px 0 6px; }
-.ros-detail-empty { font-family: 'DM Mono', monospace; font-size: .72rem; color: var(--text-faint); padding: 10px 0; }
-.ros-detail-table { width: max-content; min-width: 100%; border-collapse: collapse; }
-.ros-detail-table th { font-family: 'DM Mono', monospace; font-size: .58rem; letter-spacing: .12em; text-transform: uppercase; color: var(--text-faint); padding: 5px 10px; border-bottom: 1px solid var(--bg-border); text-align: left; white-space: nowrap; }
-.ros-detail-table td { padding: 5px 10px; font-size: .67rem; border-bottom: 1px solid var(--bg-border); white-space: nowrap; }
+.ros-detail-label { font-family: 'DM Mono', monospace; font-size: .58rem; letter-spacing: .2em; text-transform: uppercase; color: var(--red); padding: 8px 16px 6px; display: block; }
+.ros-detail-empty { font-family: 'DM Mono', monospace; font-size: .72rem; color: var(--text-faint); padding: 8px 16px; }
+.ros-detail-table { width: max-content; border-collapse: collapse; }
+.ros-detail-table thead { background: var(--bg-card) !important; }
+.ros-detail-table th { font-family: 'DM Mono', monospace; font-size: .58rem; letter-spacing: .1em; text-transform: uppercase; color: var(--text-faint) !important; background: var(--bg-card) !important; padding: 5px 12px; border-bottom: 1px solid var(--bg-border); border-right: 1px solid var(--bg-border); text-align: left; white-space: nowrap; }
+.ros-detail-table th:last-child { border-right: none; }
+.ros-detail-table td { padding: 4px 12px; font-size: .67rem; border-bottom: 1px solid var(--bg-border); border-right: 1px solid var(--bg-border); white-space: nowrap; color: var(--text-dim); }
+.ros-detail-table td:last-child { border-right: none; }
 .ros-detail-table tr:last-child td { border-bottom: none; }
 .icon-btn { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; background: transparent; border: 1px solid var(--bg-border); color: var(--text-dim); cursor: pointer; transition: border-color .2s, color .2s; flex-shrink: 0; }
 .icon-btn:hover { border-color: var(--red); color: var(--red); }
