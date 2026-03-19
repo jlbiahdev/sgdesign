@@ -482,42 +482,55 @@ $(function(){
 
   /* ── ROS EXPAND ── */
   /* ── ROS DETAIL ── */
-  function parseCSV(text){
-    const lines=text.trim().split(/\r?\n/);
-    if(!lines.length) return { headers:[], rows:[] };
-    const sep=lines[0].includes(';')?';':',';
-    function splitLine(l){ return l.split(sep).map(function(s){ return s.trim().replace(/^"|"$/g,''); }); }
-    return { headers:splitLine(lines[0]), rows:lines.slice(1).map(splitLine) };
-  }
+  const ROUTE_COLS=[
+    {h:'#',                    f:'row'},
+    {h:'IRT Src',              f:'srcIrt'},
+    {h:'Zone Src',             f:'srcZone'},
+    {h:'Env Src',              f:'srcEnvironment'},
+    {h:'Hostname Src',         f:'srcHostname'},
+    {h:'Real IP Src',          f:'srcRealIp'},
+    {h:'Nat IP Src',           f:'srcNatIp'},
+    {h:'IRT Dst',              f:'destIrt'},
+    {h:'Zone Dst',             f:'destZone'},
+    {h:'Env Dst',              f:'destEnvironment'},
+    {h:'Hostname Dst',         f:'destHostname'},
+    {h:'Real IP Dst',          f:'destRealIp'},
+    {h:'Nat IP Dst',           f:'destNatIp'},
+    {h:'Port',                 f:'port'},
+    {h:'Network Protocol',     f:'networkProtocol1'},
+    {h:'Applicative Protocol', f:'applicativeProtocol'}
+  ];
 
   $(document).on('click','.js-detail',function(){
-    const $tr=$(this).closest('tr');
+    const $btn=$(this);
+    const $tr=$btn.closest('tr');
     const id=$tr.data('id');
     const $existing=$('#rosBody tr.ros-detail[data-for="'+id+'"]');
-    if($existing.length){ $existing.remove(); $tr.removeClass('ros-row-open'); $(this).removeClass('active'); return; }
+    if($existing.length){ $existing.remove(); $tr.removeClass('ros-row-open'); $btn.removeClass('active'); return; }
     $('#rosBody tr.ros-detail').remove();
     $('#rosBody tr.ros-row-open').removeClass('ros-row-open');
     $('#rosBody .js-detail').removeClass('active');
     $tr.addClass('ros-row-open');
-    $(this).addClass('active');
+    $btn.addClass('active');
     const $detail=$('<tr class="ros-detail" data-for="'+id+'"><td colspan="5"><div class="ros-detail-inner"><div class="ros-detail-empty">Chargement...</div></div></td></tr>');
     $detail.insertAfter($tr);
     fetch(API_BASE+'/api/Ros/csv?rosId='+id)
-      .then(function(r){ return r.text(); })
-      .then(function(text){
-        const csv=parseCSV(text);
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        const arr=Array.isArray(data)?data:[];
         const $inner=$detail.find('.ros-detail-inner');
-        if(!csv.rows.length){ $inner.html('<div class="ros-detail-empty">Aucune route</div>'); return; }
-        $tr.find('td').eq(3).html('<span style="font-family:\'DM Mono\',monospace;color:var(--red);font-size:.9rem;font-weight:600">'+csv.rows.length+'</span>');
+        if(!arr.length){ $inner.html('<div class="ros-detail-empty">Aucune route</div>'); return; }
+        $tr.find('td').eq(3).html('<span style="font-family:\'DM Mono\',monospace;color:var(--red);font-size:.9rem;font-weight:600">'+arr.length+'</span>');
         $inner.html(
-          '<div class="ros-detail-label">Routes ('+csv.rows.length+')</div>'+
+          '<div class="ros-detail-label">Routes ('+arr.length+')</div>'+
           '<div style="overflow-x:auto">'+
           '<table class="ros-detail-table"><thead><tr>'+
-            csv.headers.map(function(h){ return '<th>'+h+'</th>'; }).join('')+
+            ROUTE_COLS.map(function(c){ return '<th>'+c.h+'</th>'; }).join('')+
           '</tr></thead><tbody>'+
-            csv.rows.map(function(row){
-              return '<tr>'+row.map(function(cell){
-                return '<td class="mono">'+(cell||'&mdash;')+'</td>';
+            arr.map(function(r){
+              return '<tr>'+ROUTE_COLS.map(function(c){
+                const v=r[c.f];
+                return '<td class="mono">'+(v!==null&&v!==undefined&&v!==''?v:'&mdash;')+'</td>';
               }).join('')+'</tr>';
             }).join('')+
           '</tbody></table></div>'
@@ -532,9 +545,21 @@ $(function(){
   $(document).on('click','.js-csv',function(){
     const id=$(this).closest('tr').data('id');
     const nom=$(this).closest('tr').find('td').first().text().trim()||('ros-'+id);
-    fetch(API_BASE + '/api/Ros/csv?rosId='+id)
-      .then(function(r){ return r.blob(); })
-      .then(function(blob){
+    fetch(API_BASE+'/api/Ros/csv?rosId='+id)
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        const arr=Array.isArray(data)?data:[];
+        if(!arr.length) return;
+        const sep=';';
+        const headers=ROUTE_COLS.map(function(c){ return c.h; }).join(sep);
+        const lines=arr.map(function(r){
+          return ROUTE_COLS.map(function(c){
+            const v=r[c.f];
+            return (v!==null&&v!==undefined&&v!=='')?String(v):'';
+          }).join(sep);
+        });
+        const csv='\uFEFF'+headers+'\n'+lines.join('\n');
+        const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
         const url=URL.createObjectURL(blob);
         const $a=$('<a>').attr('href',url).attr('download',nom+'.csv').appendTo('body');
         $a[0].click();
