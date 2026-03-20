@@ -363,7 +363,7 @@ $(function(){
       $('#mHost').addClass('open');
     }
     else if(tbodyId==='cfgsBody'){
-      const c=cfgsData.find(function(x){ return x.id==id; });
+      const c=cfgsData.find(function(x){ return (x.id||x.configId)==id; });
       if(!c) return;
       resetCfg();
       editingCfgId=id;
@@ -423,7 +423,7 @@ $(function(){
     }
     $('#cfgsBody').html(cfgsData.map(function(c){
       const nets=(c.networkProtocol||'').split(',').filter(Boolean);
-      return `<tr data-id="${c.id}">
+      return `<tr data-id="${c.id||c.configId}">
         <td class="bold">${c.name}</td>
         <td style="font-size:.73rem">${c.description||'&mdash;'}</td>
         <td class="small">${c.ports||'&mdash;'}</td>
@@ -453,11 +453,11 @@ $(function(){
 
   function populateRosSelects(){
     if(hostsData.length){
-      const opts=hostsData.map(function(h){ return '<option value="'+h.id+'">'+h.name+'</option>'; }).join('');
+      const opts=hostsData.map(function(h){ return '<option value="'+h.id+'">'+h.description+'</option>'; }).join('');
       $('#selSrc,#selTgt').html(opts);
     }
     if(cfgsData.length){
-      const opts=cfgsData.map(function(c){ return '<option value="'+c.id+'">'+c.name+'</option>'; }).join('');
+      const opts=cfgsData.map(function(c){ return '<option value="'+(c.id||c.configId)+'">'+c.name+'</option>'; }).join('');
       $('#selCfg').html(opts);
     }
   }

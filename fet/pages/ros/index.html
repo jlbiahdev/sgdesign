@@ -130,22 +130,11 @@
   <div class="fg"><label>Date de creation *</label><input type="date" id="rosDate"></div>
   <div class="fg"><label>Hosts source</label>
     <select multiple size="5" id="selSrc">
-      <option>vp1dysx000dev.compute.eu-fr-paris.cloud.socgen</option>
-      <option>FR09540833W.dsk.eur.msd.world.socgen</option>
-      <option>FR09547493W.dsk.eur.msd.world.socgen</option>
-      <option>assuprdhpe01.fr.world.socgen</option>
-      <option>assuprdhpe02.fr.world.socgen</option>
-      <option>assuprdlen01.fr.world.socgen</option>
-      <option>assuprdlen02.fr.world.socgen</option>
     </select>
     <div class="field-hint">Ctrl+clic pour selectionner plusieurs</div>
   </div>
   <div class="fg"><label>Hosts target</label>
     <select multiple size="5" id="selTgt">
-      <option>assuprdhpe01.fr.world.socgen</option><option>assuprdhpe02.fr.world.socgen</option>
-      <option>assuprdlen01.fr.world.socgen</option><option>assuprdlen02.fr.world.socgen</option>
-      <option>cvspardc2asu101-data.fr.world.socgen</option><option>cvspardc2asu102-data.fr.world.socgen</option>
-      <option>cvspar1noasu101-data.fr.world.socgen</option><option>cvspar1noasu102-data.fr.world.socgen</option>
     </select>
     <div class="field-hint">Ctrl+clic pour selectionner plusieurs</div>
   </div>
@@ -230,12 +219,6 @@
       <option>RDP</option><option>TELNET</option><option>HTTP</option><option>HTTPS</option><option>SMB</option><option>FTP</option><option>SSH</option>
     </select>
     <div class="field-hint">Ctrl+clic pour selectionner plusieurs</div>
-  </div>
-  <div class="fg">
-    <label>Plages *</label>
-    <div class="tag-input-wrap" id="plageWrap"><input type="text" class="tag-input" id="plageInput" placeholder="ex: 5022-5026 puis Entree..."></div>
-    <div class="field-hint">Format : PORT ou PORT-PORT &bull; ex: 443 ou 5022-5026</div>
-    <div class="field-err" id="plageErr">Plage invalide &mdash; format attendu : 443 ou 5022-5026 (debut &le; fin, valeurs 1-65535)</div>
   </div>
   <div class="modal-acts">
     <button class="btn-save" id="saveCfg">Enregistrer</button>
