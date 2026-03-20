@@ -52,12 +52,6 @@ $(function(){
 
   function validIP(v)   { v=v.trim(); return RE_IP.test(v)||RE_CIDR.test(v); }
   function validPort(v) { v=v.trim(); return /^\d+$/.test(v) && +v>=1 && +v<=65535; }
-  function validRange(v){
-    v=v.trim();
-    if(validPort(v)) return true;
-    const m=v.match(/^(\d+)-(\d+)$/);
-    return m && +m[1]>=1 && +m[2]<=65535 && +m[1]<=+m[2];
-  }
 
   /* ── TAG-INPUT ENGINE ── */
   function initTags(wrapId, inputId, errId, validator){
@@ -231,16 +225,15 @@ $(function(){
 
   /* ── CONFIG MODAL ── */
   initTags('portWrap','portInput','portErr',validPort);
-  initTags('plageWrap','plageInput','plageErr',validRange);
 
   function resetCfg(){
     editingCfgId=null;
     $('#mCfg .modal-title').text('Creer une Config');
     $('#saveCfg').text('Enregistrer');
     $('#cfgNom,#cfgDesc').val('').removeClass('is-invalid');
-    $('#portWrap,#plageWrap').find('.tag').remove();
-    $('#portWrap,#plageWrap').removeClass('wrap-invalid');
-    $('#portErr,#plageErr').removeClass('show');
+    $('#portWrap').find('.tag').remove();
+    $('#portWrap').removeClass('wrap-invalid');
+    $('#portErr').removeClass('show');
     $('#cfgNet,#cfgApp').val([]).removeClass('is-invalid');
   }
 
@@ -252,8 +245,6 @@ $(function(){
     if(!nom){ $('#cfgNom').addClass('is-invalid'); ok=false; } else $('#cfgNom').removeClass('is-invalid');
     const ports=getValidTags('portWrap');
     if(!ports.length){ $('#portWrap').addClass('wrap-invalid'); $('#portErr').addClass('show'); ok=false; }
-    const plages=getValidTags('plageWrap');
-    if(!plages.length){ $('#plageWrap').addClass('wrap-invalid'); $('#plageErr').addClass('show'); ok=false; }
     const nets=$('#cfgNet').val();
     if(!nets||!nets.length){ $('#cfgNet').addClass('is-invalid'); ok=false; } else $('#cfgNet').removeClass('is-invalid');
     const apps=$('#cfgApp').val();
@@ -265,8 +256,7 @@ $(function(){
       description: $('#cfgDesc').val().trim(),
       ports: ports.join(','),
       networkProtocol: nets.join(','),
-      applicativeProtocols: apps.join(','),
-      bands: plages.join(',')
+      applicativeProtocols: apps.join(',')
     };
 
     if(editingCfgId!==null){
@@ -377,8 +367,6 @@ $(function(){
       $('#cfgDesc').val(c.description||'');
       const $pw=$('#portWrap'), $pi=$('#portInput');
       (c.ports||'').split(',').filter(Boolean).forEach(function(p){ insertTag($pw,$pi,p.trim(),true); });
-      const $lw=$('#plageWrap'), $li=$('#plageInput');
-      (c.bands||'').split(',').filter(Boolean).forEach(function(b){ insertTag($lw,$li,b.trim(),true); });
       if(c.networkProtocol) $('#cfgNet').val(c.networkProtocol.split(',').map(function(s){ return s.trim(); }));
       if(c.applicativeProtocols) $('#cfgApp').val(c.applicativeProtocols.split(',').map(function(s){ return s.trim(); }));
       $('#mCfg').addClass('open');
@@ -435,7 +423,6 @@ $(function(){
         <td class="small">${c.ports||'&mdash;'}</td>
         <td>${nets.map(function(n){ return '<span class="pill">'+n.trim()+'</span>'; }).join(' ')}</td>
         <td class="mono" style="font-size:.67rem">${c.applicativeProtocols||'&mdash;'}</td>
-        <td class="small">${c.bands||'&mdash;'}</td>
         <td><div class="actions-cell">${ACT}</div></td>
       </tr>`;
     }).join(''));
