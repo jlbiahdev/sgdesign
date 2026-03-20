@@ -49,8 +49,7 @@ $(function(){
   const RE_IP   = /^((25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)\.){3}(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)$/;
   const RE_CIDR = /^((25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)\.){3}(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)\/(3[0-2]|[12]?\d)$/;
 
-  function validIP(v)   { return RE_IP.test(v.trim()); }
-  function validCIDR(v) { v=v.trim(); return !v||RE_CIDR.test(v); }
+  function validIP(v)   { v=v.trim(); return RE_IP.test(v)||RE_CIDR.test(v); }
   function validPort(v) { v=v.trim(); return /^\d+$/.test(v) && +v>=1 && +v<=65535; }
   function validRange(v){
     v=v.trim();
@@ -112,18 +111,11 @@ $(function(){
   /* ── HOST MODAL ── */
   initTags('ipWrap','ipInput','ipErr',validIP);
 
-  $('#hostSubnet').on('input',function(){
-    $(this).removeClass('is-invalid is-valid');
-    $('#subnetErr').removeClass('show');
-  });
-
   function resetHost(){
     editingHostId=null;
     $('#mHost .modal-title').text('Creer un Host');
     $('#saveHost').text('Creer');
     $('#hostNom,#hostDesc').val('').removeClass('is-invalid is-valid');
-    $('#hostSubnet').val('').removeClass('is-invalid is-valid');
-    $('#subnetErr').removeClass('show');
     $('#hostEnv,#hostType').val('').removeClass('is-invalid');
     $('#ipWrap').find('.tag').remove();
     $('#ipWrap').removeClass('wrap-invalid'); $('#ipErr').removeClass('show');
@@ -146,9 +138,6 @@ $(function(){
     if(!nom){ $('#hostNom').addClass('is-invalid'); ok=false; } else $('#hostNom').removeClass('is-invalid');
     const ips=getValidTags('ipWrap');
     if(!ips.length){ $('#ipWrap').addClass('wrap-invalid'); $('#ipErr').addClass('show'); ok=false; }
-    const sn=$('#hostSubnet').val().trim();
-    if(sn&&!validCIDR(sn)){ $('#hostSubnet').addClass('is-invalid'); $('#subnetErr').addClass('show'); ok=false; }
-    else { $('#hostSubnet').removeClass('is-invalid'); $('#subnetErr').removeClass('show'); }
     const env=$('#hostEnv').val();
     if(!env){ $('#envSelect .cs-trigger').addClass('is-invalid'); $('#envErr').addClass('show'); ok=false; }
     else { $('#envSelect .cs-trigger').removeClass('is-invalid'); $('#envErr').removeClass('show'); }
@@ -161,7 +150,6 @@ $(function(){
       name: nom,
       description: $('#hostDesc').val().trim(),
       ipAddresses: ips.join(','),
-      subnet: sn,
       environment: env,
       type: parseInt(typ)
     };
@@ -318,7 +306,6 @@ $(function(){
       $('#saveHost').text('Enregistrer');
       $('#hostNom').val(h.name);
       $('#hostDesc').val(h.description||'');
-      $('#hostSubnet').val(h.subnet||'');
       const $w=$('#ipWrap'), $i=$('#ipInput');
       (h.ipAddresses||'').split(',').filter(Boolean).forEach(function(ip){ insertTag($w,$i,ip.trim(),true); });
       setCustomSelect('envSelect', h.environment);
@@ -364,7 +351,7 @@ $(function(){
   /* ── RENDER ── */
   function renderHosts(){
     if(!hostsData.length){
-      $('#hostsBody').html('<tr><td colspan="7" style="text-align:center;color:var(--text-faint)">Aucun host</td></tr>');
+      $('#hostsBody').html('<tr><td colspan="6" style="text-align:center;color:var(--text-faint)">Aucun host</td></tr>');
       return;
     }
     $('#hostsBody').html(hostsData.map(function(h){
@@ -374,7 +361,6 @@ $(function(){
         <td class="bold" style="font-family:'DM Mono',monospace;font-size:.67rem">${h.name}</td>
         <td>${h.description||'&mdash;'}</td>
         <td>${ips.map(function(ip){ return '<span class="ip-tag">'+ip.trim()+'</span>'; }).join('')}</td>
-        <td>${h.subnet?'<span class="sn-tag">'+h.subnet+'</span>':'&mdash;'}</td>
         <td><span class="badge${isDev?' dev':''}">${h.environment}</span></td>
         <td class="mono">${h.type}</td>
         <td><div class="actions-cell">${ACT}</div></td>
@@ -384,7 +370,7 @@ $(function(){
 
   function renderConfigs(){
     if(!cfgsData.length){
-      $('#cfgsBody').html('<tr><td colspan="7" style="text-align:center;color:var(--text-faint)">Aucune config</td></tr>');
+      $('#cfgsBody').html('<tr><td colspan="6" style="text-align:center;color:var(--text-faint)">Aucune config</td></tr>');
       return;
     }
     $('#cfgsBody').html(cfgsData.map(function(c){
@@ -441,13 +427,13 @@ $(function(){
   function loadHosts(){
     return $.get(API_BASE + '/api/ros/Host')
       .done(function(data){ hostsData=toArray(data); renderHosts(); updateKpis(); })
-      .fail(function(){ $('#hostsBody').html('<tr><td colspan="7" style="text-align:center;color:var(--red)">Erreur de chargement</td></tr>'); });
+      .fail(function(){ $('#hostsBody').html('<tr><td colspan="6" style="text-align:center;color:var(--red)">Erreur de chargement</td></tr>'); });
   }
 
   function loadConfigs(){
     return $.get(API_BASE + '/api/ros/Config')
       .done(function(data){ cfgsData=toArray(data); renderConfigs(); updateKpis(); })
-      .fail(function(){ $('#cfgsBody').html('<tr><td colspan="7" style="text-align:center;color:var(--red)">Erreur de chargement</td></tr>'); });
+      .fail(function(){ $('#cfgsBody').html('<tr><td colspan="6" style="text-align:center;color:var(--red)">Erreur de chargement</td></tr>'); });
   }
 
   function loadRos(){

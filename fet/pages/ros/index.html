@@ -109,7 +109,7 @@
   <div class="view" id="view-hosts">
     <div class="sec-hdr"><div class="sec-title">Liste des Hosts</div><button class="btn-create" id="btnOpenHost">+ Creer un Host</button></div>
     <div class="tbl-wrap"><table>
-      <thead><tr><th>Nom</th><th>Description</th><th>IP(s)</th><th>Subnet</th><th>Environnement</th><th>Type</th><th style="width:80px;text-align:center">Actions</th></tr></thead>
+      <thead><tr><th>Nom</th><th>Description</th><th>IP(s)</th><th>Environnement</th><th>Type</th><th style="width:80px;text-align:center">Actions</th></tr></thead>
       <tbody id="hostsBody"></tbody>
     </table></div>
   </div>
@@ -168,15 +168,9 @@
   <div class="fg"><label>Description *</label><input type="text" id="hostDesc" placeholder="ex: HPE Headnode 1"></div>
   <div class="fg">
     <label>IP(s) *</label>
-    <div class="tag-input-wrap" id="ipWrap"><input type="text" class="tag-input" id="ipInput" placeholder="Saisir une IP puis Entree..."></div>
-    <div class="field-hint">Entree ou virgule pour valider &bull; Format IPv4 : 0.0.0.0</div>
-    <div class="field-err" id="ipErr">Adresse IP invalide &mdash; format attendu : 192.168.1.1 (4 octets entre 0 et 255)</div>
-  </div>
-  <div class="fg">
-    <label>Subnet</label>
-    <input type="text" id="hostSubnet" placeholder="ex: 184.122.130.0/21">
-    <div class="field-hint">Format CIDR : x.x.x.x/n &bull; optionnel</div>
-    <div class="field-err" id="subnetErr">Subnet invalide &mdash; format attendu : 192.168.1.0/24 (masque entre 0 et 32)</div>
+    <div class="tag-input-wrap" id="ipWrap"><input type="text" class="tag-input" id="ipInput" placeholder="IP ou subnet puis Entree..."></div>
+    <div class="field-hint">Entree ou virgule pour valider &bull; IP : 0.0.0.0 &bull; Subnet : 0.0.0.0/0</div>
+    <div class="field-err" id="ipErr">Format invalide &mdash; attendu : 192.168.1.1 ou 192.168.1.0/24</div>
   </div>
   <div class="fg">
     <label>Environnement *</label>
@@ -291,7 +285,7 @@
       <div class="help-section">
         <div class="help-section-title">Onglet Hosts</div>
         <div class="help-list">
-          <div class="help-item"><svg class="help-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg><span>Gérez les serveurs référencés dans FETEAD : hostname, IPs, subnet, environnement et type.</span></div>
+          <div class="help-item"><svg class="help-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg><span>Gérez les serveurs référencés dans FETEAD : hostname, IPs, environnement et type.</span></div>
           <div class="help-item"><svg class="help-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span>Les IPs sont saisies sous forme de tags — appuyez sur <strong>Entrée</strong> ou virgule pour valider chaque adresse.</span></div>
         </div>
       </div>
