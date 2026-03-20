@@ -32,6 +32,9 @@
         <span class="tgl-label" id="lblLight">Light</span>
       </div>
       <div class="hdr-sep"></div>
+      <div class="hdr-sep"></div>
+      <button class="btn-help" id="btnHelp" title="Aide">?</button>
+      <div class="hdr-sep"></div>
       <div class="user-badge">
         <div class="user-avatar">JD</div>
         <div><div class="user-name">John Doe</div><div class="user-role">ASSU · Production</div></div>
@@ -225,6 +228,45 @@
   </div>
 
 </main>
+
+<!-- HELP OVERLAY -->
+<div class="help-overlay" id="helpOverlay" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="help-card">
+    <div class="help-header">
+      <span class="help-title">Guide d'utilisation — TaskFlow Runner</span>
+      <button class="help-close" onclick="document.getElementById('helpOverlay').classList.remove('open')">&times;</button>
+    </div>
+    <div class="help-body">
+      <div class="help-intro">
+        <strong>TaskFlow Runner</strong> est une plateforme de supervision et d'exécution de tâches techniques (commandes Shell ou .NET). Soumettez des tâches, suivez leur progression en temps réel via SignalR et consultez le détail de chaque exécution.
+      </div>
+      <div class="help-sep"></div>
+      <div class="help-section">
+        <div class="help-section-title">Dashboard</div>
+        <div class="help-list">
+          <div class="help-item"><svg class="help-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg><span>Vue synthétique des tâches par état : <strong>Soumises</strong>, <strong>En cours</strong>, <strong>Terminées</strong>, <strong>Échouées</strong>, <strong>Annulées</strong>.</span></div>
+          <div class="help-item"><svg class="help-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span>Les compteurs se mettent à jour en temps réel via la connexion <strong>SignalR</strong> — indicateur de statut visible en haut à droite.</span></div>
+        </div>
+      </div>
+      <div class="help-sep"></div>
+      <div class="help-section">
+        <div class="help-section-title">Soumettre une tâche</div>
+        <div class="help-list">
+          <div class="help-item"><svg class="help-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span>Renseignez l'<strong>ID externe</strong>, le type de commande (Shell ou DotNet), l'exécutable et les arguments, puis soumettez.</span></div>
+          <div class="help-item"><svg class="help-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg><span>Le runner disponible prend en charge la tâche — son état passe de <strong>Soumise</strong> à <strong>En cours</strong> puis <strong>Terminée</strong>.</span></div>
+        </div>
+      </div>
+      <div class="help-sep"></div>
+      <div class="help-section">
+        <div class="help-section-title">Actions sur les tâches</div>
+        <div class="help-list">
+          <div class="help-item"><svg class="help-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span>Cliquez sur une tâche pour afficher son <strong>détail complet</strong> : commande, arguments, timeline d'exécution.</span></div>
+          <div class="help-item"><svg class="help-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg><span>Le bouton <strong>Annuler</strong> interrompt une tâche en cours d'exécution.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- ══ FOOTER ════════════════════════════════════════════════════════ -->
 <footer>

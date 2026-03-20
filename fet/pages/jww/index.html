@@ -22,6 +22,9 @@
         <span class="tgl-label" id="lblLight">Light</span>
       </div>
       <div class="hdr-sep"></div>
+      <div class="hdr-sep"></div>
+      <button class="btn-help" id="btnHelp" title="Aide">?</button>
+      <div class="hdr-sep"></div>
       <div class="user-badge">
         <div class="user-avatar">JD</div>
         <div><div class="user-name">John Doe</div><div class="user-role">ASSU · Production</div></div>
@@ -76,6 +79,38 @@
   </div>
 </main>
 
+<!-- HELP OVERLAY -->
+<div class="help-overlay" id="helpOverlay" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="help-card">
+    <div class="help-header">
+      <span class="help-title">Guide d'utilisation — JSON WPF → Web</span>
+      <button class="help-close" onclick="document.getElementById('helpOverlay').classList.remove('open')">&times;</button>
+    </div>
+    <div class="help-body">
+      <div class="help-intro">
+        <strong>JSON WPF → Web</strong> convertit automatiquement un fichier de configuration JSON au format WPF vers un format compatible Web. Collez ou déposez votre JSON source — la conversion s'effectue instantanément et le résultat est disponible en copie ou en téléchargement.
+      </div>
+      <div class="help-sep"></div>
+      <div class="help-section">
+        <div class="help-section-title">Saisie</div>
+        <div class="help-list">
+          <div class="help-item"><svg class="help-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Glissez-déposez un fichier <strong>.json</strong> directement dans le panneau d'entrée.</span></div>
+          <div class="help-item"><svg class="help-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg><span>Ou collez votre JSON directement dans la zone de texte — la conversion démarre automatiquement.</span></div>
+          <div class="help-item"><svg class="help-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg><span>Le bouton <strong>Effacer</strong> réinitialise les deux panneaux.</span></div>
+        </div>
+      </div>
+      <div class="help-sep"></div>
+      <div class="help-section">
+        <div class="help-section-title">Sortie</div>
+        <div class="help-list">
+          <div class="help-item"><svg class="help-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg><span>Copiez le JSON converti dans le presse-papiers via le bouton <strong>Copier</strong>.</span></div>
+          <div class="help-item"><svg class="help-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Ou téléchargez-le directement en fichier <strong>.json</strong> via le bouton Télécharger.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <footer>
   <span>© Groupe Société Générale · ASSU 2026</span>
   <span>FETEAD · JSON WPF → Web</span>
@@ -83,5 +118,6 @@
 
 <script src="/app.js"></script>
 <script src="json.js"></script>
+<script>document.getElementById('btnHelp').addEventListener('click',function(){document.getElementById('helpOverlay').classList.add('open');});</script>
 </body>
 </html>

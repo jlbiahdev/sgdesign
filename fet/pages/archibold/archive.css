@@ -63,3 +63,5 @@ td.act { white-space: nowrap; text-align: right; }
 .help-popup-body strong { color: var(--text); font-weight: 600; }
 .help-step { display: flex; gap: 10px; margin-bottom: 8px; align-items: flex-start; }
 .help-step-num { flex-shrink: 0; width: 18px; height: 18px; background: var(--red); color: #fff; font-family: 'Bebas Neue'; font-size: .7rem; display: flex; align-items: center; justify-content: center; margin-top: 2px; }
+.help-intro { font-size: .78rem; color: var(--text-dim); line-height: 1.65; border-left: 2px solid var(--red); padding-left: 12px; margin-bottom: 4px; }
+.help-intro strong { color: var(--text); }

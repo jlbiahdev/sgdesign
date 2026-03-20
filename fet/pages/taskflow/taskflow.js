@@ -307,4 +307,7 @@ $(function () {
   updateFormHints();
   initSignalR();
   setInterval(loadAll, POLL_INTERVAL);
+
+  /* ── HELP ── */
+  $('#btnHelp').on('click', function(){ $('#helpOverlay').addClass('open'); });
 });

@@ -127,6 +127,8 @@ main { padding-top: 108px; padding-bottom: 40px; max-width: 1440px; }
 .help-list { display: flex; flex-direction: column; gap: 5px; }
 .help-item { display: flex; align-items: flex-start; gap: 9px; font-size: .79rem; color: var(--text-dim); line-height: 1.5; }
 .help-item-icon { width: 16px; height: 16px; flex-shrink: 0; margin-top: 2px; }
+.help-intro { font-size: .8rem; color: var(--text-dim); line-height: 1.65; border-left: 2px solid var(--red); padding-left: 12px; }
+.help-intro strong { color: var(--text); }
 .help-sep { height: 1px; background: var(--bg-border); }
 .help-status-list { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 2px; }
 .help-status { display: flex; align-items: center; gap: 6px; font-family: 'DM Mono', monospace; font-size: .61rem; letter-spacing: .08em; text-transform: uppercase; color: var(--text-dim); }
