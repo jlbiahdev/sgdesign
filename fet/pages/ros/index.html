@@ -92,7 +92,7 @@
   <div class="view" id="view-ros">
     <div class="sec-hdr"><div class="sec-title">Liste des ROS</div><button class="btn-create" id="btnOpenRos">+ Creer une ROS</button></div>
     <div class="tbl-wrap"><table>
-      <thead><tr><th>Nom</th><th>Description</th><th>Date creation</th><th>Nb Routes</th><th style="width:210px;text-align:center">Actions</th></tr></thead>
+      <thead><tr><th>Nom</th><th>Description</th><th>IRT Src</th><th>IRT Dst</th><th>Date creation</th><th>Nb Routes</th><th style="width:210px;text-align:center">Actions</th></tr></thead>
       <tbody id="rosBody">
         <tr>
           <td class="bold">FR09540833W vers tous</td><td class="mono">Mappings pour FR09540833W</td><td class="mono">05/06/2024</td>
@@ -127,6 +127,10 @@
   <div class="modal-title">Creer une ROS</div>
   <div class="fg"><label>Nom *</label><input type="text" id="rosNom" placeholder="Nom de la regle"></div>
   <div class="fg"><label>Description *</label><input type="text" id="rosDesc" placeholder="Description"></div>
+  <div class="fg-row">
+    <div class="fg"><label>Code IRT Source</label><input type="text" id="rosIrtSrc" placeholder="Ex: ASS-U"></div>
+    <div class="fg"><label>Code IRT Destination</label><input type="text" id="rosIrtDst" placeholder="Ex: XGRID"></div>
+  </div>
   <div class="fg"><label>Date de creation *</label><input type="date" id="rosDate"></div>
   <div class="fg"><label>Hosts source</label>
     <select multiple size="5" id="selSrc">

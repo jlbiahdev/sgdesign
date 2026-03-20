@@ -158,6 +158,8 @@ tr.ros-cmd > td { padding: 0 !important; border-top: none; border-bottom: 2px so
 .modal { background: var(--bg-card); border: 1px solid var(--bg-border); border-top: 2px solid var(--red); padding: 38px; width: 100%; max-width: 580px; max-height: 90vh; overflow-y: auto; animation: fadeUp .28s ease both; transition: background .28s, border-color .28s; }
 .modal-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.7rem; letter-spacing: .06em; margin-bottom: 26px; color: var(--text); }
 .fg { margin-bottom: 18px; }
+.fg-row { display: flex; gap: 12px; margin-bottom: 18px; }
+.fg-row .fg { flex: 1; margin-bottom: 0; }
 .fg label { display: block; font-family: 'DM Mono', monospace; font-size: .61rem; letter-spacing: .17em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 7px; }
 input[type="text"], input[type="date"], select { width: 100%; padding: 10px 13px; background: var(--bg-input); border: 1px solid var(--bg-border); color: var(--text); font-family: 'DM Mono', monospace; font-size: .76rem; outline: none; transition: border-color .2s, box-shadow .2s, background .28s, color .28s; }
 input:focus, select:focus { border-color: var(--red); box-shadow: 0 0 0 3px var(--red-glow); }

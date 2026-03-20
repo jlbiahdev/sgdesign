@@ -293,9 +293,9 @@ $(function(){
     editingRosId=null;
     $('#mRos .modal-title').text('Creer une ROS');
     $('#saveRos').text('Creer');
-    $('#rosNom,#rosDesc').val('').removeClass('is-invalid');
+    $('#rosNom,#rosDesc,#rosIrtSrc,#rosIrtDst').val('').removeClass('is-invalid');
     $('#rosDate').val('').removeClass('is-invalid');
-    $('#selSrc,#selTgt,#selCfg').closest('.fg').show();
+    $('#selSrc,#selTgt,#selCfg').closest('.fg,.fg-row').show();
   }
 
   $('#saveRos').on('click',function(){
@@ -306,9 +306,11 @@ $(function(){
     if(!date){ $('#rosDate').addClass('is-invalid'); return; } else $('#rosDate').removeClass('is-invalid');
 
     const [year,month,day]=date.split('-').map(Number);
+    const irtSrc=$('#rosIrtSrc').val().trim();
+    const irtDst=$('#rosIrtDst').val().trim();
 
     if(editingRosId!==null){
-      const payload={ id:editingRosId, name:nom, description:desc, creationDateYear:year, creationDateMonth:month, creationDateDay:day };
+      const payload={ id:editingRosId, name:nom, description:desc, irtSource:irtSrc, irtDestination:irtDst, creationDateYear:year, creationDateMonth:month, creationDateDay:day };
       $.ajax({ url:API_BASE + '/api/Ros/'+editingRosId, method:'PUT', contentType:'application/json', data:JSON.stringify(payload) })
         .done(function(){
           const idx=rosData.findIndex(function(r){ return r.id==editingRosId; });
@@ -331,7 +333,7 @@ $(function(){
         });
       });
 
-      const payload={ infosRos:{ name:nom, description:desc, creationDateYear:year, creationDateMonth:month, creationDateDay:day }, mapping:mapping };
+      const payload={ infosRos:{ name:nom, description:desc, irtSource:irtSrc, irtDestination:irtDst, creationDateYear:year, creationDateMonth:month, creationDateDay:day }, mapping:mapping };
       $.ajax({ url:API_BASE + '/api/Ros', method:'POST', contentType:'application/json', data:JSON.stringify(payload) })
         .done(function(){
           loadRos();
@@ -386,9 +388,11 @@ $(function(){
       $('#saveRos').text('Enregistrer');
       $('#rosNom').val(r.name);
       $('#rosDesc').val(r.description||'');
+      $('#rosIrtSrc').val(r.irtSource||'');
+      $('#rosIrtDst').val(r.irtDestination||'');
       const d=r.creationDateYear+'-'+String(r.creationDateMonth).padStart(2,'0')+'-'+String(r.creationDateDay).padStart(2,'0');
       $('#rosDate').val(d);
-      $('#selSrc,#selTgt,#selCfg').closest('.fg').hide();
+      $('#selSrc,#selTgt,#selCfg').closest('.fg,.fg-row').hide();
       $('#mRos').addClass('open');
     }
   });
@@ -436,7 +440,7 @@ $(function(){
 
   function renderRos(){
     if(!rosData.length){
-      $('#rosBody').html('<tr><td colspan="5" style="text-align:center;color:var(--text-faint)">Aucune ROS</td></tr>');
+      $('#rosBody').html('<tr><td colspan="7" style="text-align:center;color:var(--text-faint)">Aucune ROS</td></tr>');
       return;
     }
     $('#rosBody').html(rosData.map(function(r){
@@ -444,6 +448,8 @@ $(function(){
       return `<tr data-id="${r.id}">
         <td class="bold">${r.name}</td>
         <td class="mono">${r.description||'&mdash;'}</td>
+        <td style="font-family:'DM Mono',monospace;font-size:.72rem">${r.irtSource||'&mdash;'}</td>
+        <td style="font-family:'DM Mono',monospace;font-size:.72rem">${r.irtDestination||'&mdash;'}</td>
         <td class="mono">${d}</td>
         <td><span style="font-family:'DM Mono',monospace;color:var(--red);font-size:.9rem;font-weight:600">&mdash;</span></td>
         <td><div class="actions-cell">${ACT_ROS}</div></td>
@@ -486,7 +492,7 @@ $(function(){
   function loadRos(){
     return $.get(API_BASE + '/api/Ros')
       .done(function(data){ rosData=toArray(data); renderRos(); updateKpis(); })
-      .fail(function(){ $('#rosBody').html('<tr><td colspan="5" style="text-align:center;color:var(--red)">Erreur de chargement</td></tr>'); });
+      .fail(function(){ $('#rosBody').html('<tr><td colspan="7" style="text-align:center;color:var(--red)">Erreur de chargement</td></tr>'); });
   }
 
   $.when(loadHosts(), loadConfigs(), loadRos()).done(function(){
@@ -553,7 +559,7 @@ $(function(){
     $tr.addClass('ros-row-open');
     $btn.addClass('active');
     $wrap.addClass('detail-open');
-    const $detail=$('<tr class="ros-detail" data-for="'+id+'"><td colspan="5"><div class="ros-detail-inner"><span class="ros-detail-empty">Chargement...</span></div></td></tr>');
+    const $detail=$('<tr class="ros-detail" data-for="'+id+'"><td colspan="7"><div class="ros-detail-inner"><span class="ros-detail-empty">Chargement...</span></div></td></tr>');
     $detail.insertAfter($tr);
     fetch(API_BASE+'/api/Ros/csv?rosId='+id)
       .then(function(r){ return r.json(); })
@@ -599,7 +605,7 @@ $(function(){
     $tr.addClass('ros-row-open');
     $btn.addClass('active');
     $wrap.addClass('detail-open');
-    const $panel=$('<tr class="ros-cmd" data-for="'+id+'"><td colspan="5"><div class="ros-cmd-inner"><span class="ros-detail-empty">Chargement...</span></div></td></tr>');
+    const $panel=$('<tr class="ros-cmd" data-for="'+id+'"><td colspan="7"><div class="ros-cmd-inner"><span class="ros-detail-empty">Chargement...</span></div></td></tr>');
     $panel.insertAfter($tr);
     fetch(API_BASE+'/api/Ros/commands?rosId='+id)
       .then(function(r){ return r.json(); })
