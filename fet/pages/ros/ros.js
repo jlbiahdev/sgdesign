@@ -51,7 +51,13 @@ $(function(){
   const RE_CIDR = /^((25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)\.){3}(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)\/(3[0-2]|[12]?\d)$/;
 
   function validIP(v)   { v=v.trim(); return RE_IP.test(v)||RE_CIDR.test(v); }
-  function validPort(v) { v=v.trim(); return /^\d+$/.test(v) && +v>=1 && +v<=65535; }
+  function validPort(v) {
+    v=v.trim();
+    if(/^\d+$/.test(v)) return +v>=1 && +v<=65535;
+    const m=v.match(/^(\d+)-(\d+)$/);
+    if(m) return +m[1]>=1 && +m[1]<=65535 && +m[2]>=1 && +m[2]<=65535 && +m[1]<+m[2];
+    return false;
+  }
 
   /* ── TAG-INPUT ENGINE ── */
   function initTags(wrapId, inputId, errId, validator){

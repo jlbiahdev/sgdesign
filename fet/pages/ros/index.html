@@ -116,7 +116,7 @@
   <div class="view" id="view-configs">
     <div class="sec-hdr"><div class="sec-title">Liste des Configs</div><button class="btn-create" id="btnOpenCfg">+ Creer une Config</button></div>
     <div class="tbl-wrap"><table>
-      <thead><tr><th>Nom</th><th>Description</th><th>Port(s)</th><th>Protocole Reseau</th><th>Protocoles Applicatifs</th><th>Plages</th><th style="width:80px;text-align:center">Actions</th></tr></thead>
+      <thead><tr><th>Nom</th><th>Description</th><th>Port(s)</th><th>Protocole Reseau</th><th>Protocoles Applicatifs</th><th style="width:80px;text-align:center">Actions</th></tr></thead>
       <tbody id="cfgsBody"></tbody>
     </table></div>
   </div>
@@ -217,9 +217,9 @@
   <div class="fg"><label>Description</label><input type="text" id="cfgDesc" placeholder="Description optionnelle"></div>
   <div class="fg">
     <label>Ports *</label>
-    <div class="tag-input-wrap" id="portWrap"><input type="text" class="tag-input" id="portInput" placeholder="Saisir un port puis Entree..."></div>
+    <div class="tag-input-wrap" id="portWrap"><input type="text" class="tag-input" id="portInput" placeholder="Port ou range puis Entree..."></div>
     <div class="field-hint">Entree ou virgule pour valider &bull; Entier entre 1 et 65535</div>
-    <div class="field-err" id="portErr">Port invalide &mdash; entier entre 1 et 65535</div>
+    <div class="field-err" id="portErr">Format invalide &mdash; port (443) ou range (5022-5026)</div>
   </div>
   <div class="fg"><label>Protocole reseau *</label>
     <select multiple size="3" id="cfgNet"><option>TCP</option><option>UDP</option><option>TCP/UDP</option></select>
@@ -273,7 +273,7 @@
     <div class="help-body">
 
       <div class="help-intro">
-        Une <strong>ROS</strong> définit une relation réseau entre une machine source et une machine destination, associée à une configuration (protocole réseau, protocole applicatif, plages de ports). Pour créer une ROS, suivez l'ordre de saisie suivant : enregistrez d'abord les <strong>Hosts</strong>, définissez ensuite les <strong>Configs</strong>, puis créez la <strong>ROS</strong> en les associant.
+        Une <strong>ROS</strong> définit une relation réseau entre une machine source et une machine destination, associée à une configuration (protocole réseau, protocole applicatif, ports). Pour créer une ROS, suivez l'ordre de saisie suivant : enregistrez d'abord les <strong>Hosts</strong>, définissez ensuite les <strong>Configs</strong>, puis créez la <strong>ROS</strong> en les associant.
       </div>
 
       <div class="help-sep"></div>
@@ -315,8 +315,8 @@
       <div class="help-section">
         <div class="help-section-title">Onglet Configs</div>
         <div class="help-list">
-          <div class="help-item"><svg class="help-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93A10 10 0 115.64 19.07"/></svg><span>Les configs regroupent les règles réseau : ports, protocoles et plages de ports associées à une ROS.</span></div>
-          <div class="help-item"><svg class="help-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span>Les plages de ports s'ajoutent en tag — format <strong>PORT</strong> (ex: 443) ou <strong>PORT-PORT</strong> (ex: 5022-5026).</span></div>
+          <div class="help-item"><svg class="help-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93A10 10 0 115.64 19.07"/></svg><span>Les configs regroupent les règles réseau : ports, protocoles associés à une ROS.</span></div>
+          <div class="help-item"><svg class="help-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span>Les ports s'ajoutent en tag — format <strong>PORT</strong> (ex: 443) ou <strong>PORT-PORT</strong> (ex: 5022-5026).</span></div>
         </div>
       </div>
 
