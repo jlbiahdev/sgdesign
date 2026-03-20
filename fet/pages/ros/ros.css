@@ -26,6 +26,8 @@
 .help-item { display: flex; align-items: flex-start; gap: 9px; font-size: .79rem; color: var(--text-dim); line-height: 1.5; }
 .help-item-icon { width: 16px; height: 16px; flex-shrink: 0; margin-top: 2px; }
 .help-item code { font-family: 'DM Mono', monospace; font-size: .72rem; background: var(--bg-border); padding: 1px 5px; color: var(--text); }
+.help-intro { font-size: .8rem; color: var(--text-dim); line-height: 1.65; padding: 4px 0; border-left: 2px solid var(--red); padding-left: 12px; }
+.help-intro strong { color: var(--text); }
 .help-sep { height: 1px; background: var(--bg-border); }
 .snb { padding: 13px 18px; font-family: 'DM Mono', monospace; font-size: .65rem; letter-spacing: .12em; text-transform: uppercase; color: var(--text-dim); background: none; border: none; cursor: pointer; border-bottom: 2px solid transparent; transition: color .2s, border-color .2s; }
 .snb:hover { color: var(--text); }
@@ -116,8 +118,9 @@ tr.ros-cmd > td { padding: 0 !important; border-top: none; border-bottom: 2px so
 .cmd-pair-header:hover { background: var(--row-hover); }
 .cmd-host { font-family: 'DM Mono', monospace; font-size: .7rem; color: var(--text); background: var(--bg-card); border: 1px solid var(--bg-border); padding: 4px 10px; }
 .cmd-arrow { color: var(--text-faint); flex-shrink: 0; }
-.cmd-chevron { color: var(--text-faint); flex-shrink: 0; margin-left: auto; transition: transform .2s; }
-.cmd-pair.collapsed .cmd-chevron { transform: rotate(-90deg); }
+.cmd-chevron { color: var(--text-dim); flex-shrink: 0; margin-left: auto; transition: transform .2s; }
+.cmd-pair-header:hover .cmd-chevron { color: var(--text); }
+.cmd-pair.collapsed .cmd-chevron { transform: rotate(180deg); }
 .cmd-pair-body { padding: 0 16px 12px; }
 .cmd-pair.collapsed .cmd-pair-body { display: none; }
 .cmd-group { margin-bottom: 14px; padding-top: 10px; border-top: 1px solid var(--bg-border); }

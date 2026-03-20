@@ -575,7 +575,7 @@ $(function(){
         const $inner=$panel.find('.ros-cmd-inner');
         if(!arr.length){ $inner.html('<span class="ros-detail-empty">Aucune commande</span>'); return; }
         const groups=[{key:'netstats',label:'netstat',cls:'cmd-ns'},{key:'telnets',label:'telnet',cls:'cmd-tel'},{key:'tracerts',label:'tracert',cls:'cmd-tr'}];
-        const chevron='<svg class="cmd-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><polyline points="6 9 12 15 18 9"/></svg>';
+        const chevron='<svg class="cmd-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><polyline points="6 9 12 15 18 9"/></svg>';
         $inner.html(
           '<span class="ros-detail-label">Diag Commandes</span>'+
           arr.map(function(item){
