@@ -29,6 +29,7 @@ $(function(){
   $('#btnOpenRos').on('click',function(){ resetRosModal(); populateRosSelects(); $('#mRos').addClass('open'); });
   $('#btnOpenHost').on('click',function(){ resetHost(); $('#mHost').addClass('open'); });
   $('#btnOpenCfg').on('click',function(){ resetCfg(); $('#mCfg').addClass('open'); });
+  $('#btnCidr').on('click',function(){ $('#cidrIp,#cidrMask').val('').removeClass('is-invalid'); $('#cidrResult').hide(); $('#cidrErr').text('').hide(); $('#mCidr').addClass('open'); });
 
   $('[data-close]').on('click',function(){
     const id=$(this).data('close');
@@ -107,6 +108,59 @@ $(function(){
     $('#'+selectId+' input[type=hidden]').val(value);
     $('#'+selectId+' .cs-trigger').removeClass('is-invalid');
   }
+
+  /* ── CIDR CALCULATOR ── */
+  function maskToPrefix(mask){
+    return mask.split('.').reduce(function(acc,oct){
+      return acc + (parseInt(oct,10)>>>0).toString(2).split('').filter(function(b){ return b==='1'; }).length;
+    },0);
+  }
+  function applyMask(ip,mask){
+    const ipParts=ip.split('.').map(Number);
+    const mParts=mask.split('.').map(Number);
+    return ipParts.map(function(o,i){ return o&mParts[i]; }).join('.');
+  }
+  function intToIp(n){ return [(n>>>24)&255,(n>>>16)&255,(n>>>8)&255,n&255].join('.'); }
+
+  $('#calcCidr').on('click',function(){
+    const ip=$('#cidrIp').val().trim();
+    const mask=$('#cidrMask').val().trim();
+    $('#cidrIp,#cidrMask').removeClass('is-invalid');
+    $('#cidrErr').text('').hide();
+    let ok=true;
+    if(!RE_IP.test(ip)){ $('#cidrIp').addClass('is-invalid'); ok=false; }
+    if(!RE_IP.test(mask)){ $('#cidrMask').addClass('is-invalid'); ok=false; }
+    if(!ok){ $('#cidrErr').text('Format invalide — attendu : X.X.X.X').show(); return; }
+    // Vérifier que le masque est valide (suite de 1 puis de 0 en binaire)
+    const maskBin=mask.split('.').map(function(o){ return (parseInt(o,10)>>>0).toString(2).padStart(8,'0'); }).join('');
+    if(!/^1*0*$/.test(maskBin)){ $('#cidrMask').addClass('is-invalid'); $('#cidrErr').text('Masque invalide — ex: 255.255.255.0').show(); return; }
+    const prefix=maskToPrefix(mask);
+    const network=applyMask(ip,mask);
+    const cidr=network+'/'+prefix;
+    // Broadcast & plage
+    const maskInt=mask.split('.').reduce(function(acc,o){ return (acc<<8)|parseInt(o,10); },0)>>>0;
+    const netInt=network.split('.').reduce(function(acc,o){ return (acc<<8)|parseInt(o,10); },0)>>>0;
+    const broadInt=(netInt|(~maskInt>>>0))>>>0;
+    const hosts=prefix>=31?'':(broadInt-netInt-1)+' hôtes utilisables';
+    $('#cidrValue').text(cidr);
+    $('#cidrDetails').html([
+      '<div class="cidr-detail-line">Adresse réseau&nbsp;&nbsp;: <span>'+network+'</span></div>',
+      '<div class="cidr-detail-line">Broadcast&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: <span>'+intToIp(broadInt)+'</span></div>',
+      '<div class="cidr-detail-line">Masque&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: <span>'+mask+'</span></div>',
+      hosts?'<div class="cidr-detail-line">Plage&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: <span>'+intToIp(netInt+1)+' — '+intToIp(broadInt-1)+'</span></div>':'',
+      hosts?'<div class="cidr-detail-line">Capacité&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: <span>'+hosts+'</span></div>':''
+    ].join(''));
+    $('#cidrResult').show();
+  });
+
+  $('#cidrCopy').on('click',function(){
+    const val=$('#cidrValue').text();
+    if(!val) return;
+    navigator.clipboard.writeText(val);
+    $(this).addClass('copied');
+    const self=this;
+    setTimeout(function(){ $(self).removeClass('copied'); },1500);
+  });
 
   /* ── HOST MODAL ── */
   initTags('ipWrap','ipInput','ipErr',validIP);

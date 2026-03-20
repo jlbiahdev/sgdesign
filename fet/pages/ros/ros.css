@@ -136,6 +136,21 @@ tr.ros-cmd > td { padding: 0 !important; border-top: none; border-bottom: 2px so
 .cmd-copy:hover { color: var(--red); background: rgba(226,0,26,.07); }
 .cmd-copy.copied { color: var(--green); background: rgba(0,200,117,.07); }
 
+/* ── BOUTON CIDR ── */
+.btn-cidr { display: flex; align-items: center; gap: 7px; padding: 9px 18px; background: transparent; border: 1px solid var(--bg-border); color: var(--text-dim); font-family: 'DM Mono', monospace; font-size: .67rem; letter-spacing: .12em; text-transform: uppercase; cursor: pointer; transition: border-color .2s, color .2s; }
+.btn-cidr:hover { border-color: var(--red); color: var(--red); }
+/* ── RÉSULTAT CIDR ── */
+.cidr-result { margin-top: 18px; padding: 14px; background: var(--bg-input); border: 1px solid var(--bg-border); border-left: 2px solid var(--red); }
+.cidr-result-label { font-family: 'DM Mono', monospace; font-size: .58rem; letter-spacing: .2em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 8px; }
+.cidr-result-row { display: flex; align-items: center; gap: 10px; }
+.cidr-result-value { font-family: 'DM Mono', monospace; font-size: 1.1rem; font-weight: 500; color: var(--red); letter-spacing: .05em; }
+.cidr-copy { display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; background: transparent; border: 1px solid var(--bg-border); color: var(--text-faint); cursor: pointer; transition: color .15s, border-color .15s; flex-shrink: 0; }
+.cidr-copy:hover { color: var(--red); border-color: var(--red); }
+.cidr-copy.copied { color: var(--green); border-color: var(--green); }
+.cidr-details { margin-top: 10px; display: flex; flex-direction: column; gap: 3px; }
+.cidr-detail-line { font-family: 'DM Mono', monospace; font-size: .65rem; color: var(--text-faint); }
+.cidr-detail-line span { color: var(--text-dim); }
+
 /* ── MODAL ── */
 .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.75); z-index: 300; align-items: center; justify-content: center; }
 [data-theme="light"] .overlay { background: rgba(0,0,0,.45); }

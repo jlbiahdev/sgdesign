@@ -107,7 +107,7 @@
     </table></div>
   </div>
   <div class="view" id="view-hosts">
-    <div class="sec-hdr"><div class="sec-title">Liste des Hosts</div><button class="btn-create" id="btnOpenHost">+ Creer un Host</button></div>
+    <div class="sec-hdr"><div class="sec-title">Liste des Hosts</div><div style="display:flex;gap:8px"><button class="btn-cidr" id="btnCidr">Calculer Subnet (CIDR)</button><button class="btn-create" id="btnOpenHost">+ Creer un Host</button></div></div>
     <div class="tbl-wrap"><table>
       <thead><tr><th>Nom</th><th>Description</th><th>IP(s)</th><th>Environnement</th><th>Type</th><th style="width:80px;text-align:center">Actions</th></tr></thead>
       <tbody id="hostsBody"></tbody>
@@ -240,6 +240,26 @@
   <div class="modal-acts">
     <button class="btn-save" id="saveCfg">Enregistrer</button>
     <button class="btn-cancel" data-close="mCfg">Annuler</button>
+  </div>
+</div></div>
+
+<!-- MODAL CIDR -->
+<div class="overlay" id="mCidr"><div class="modal" style="max-width:420px">
+  <div class="modal-title">Calculer Subnet (CIDR)</div>
+  <div class="fg"><label>Adresse IP *</label><input type="text" id="cidrIp" placeholder="ex: 192.168.1.45"></div>
+  <div class="fg"><label>Masque de sous-réseau *</label><input type="text" id="cidrMask" placeholder="ex: 255.255.255.0"></div>
+  <div class="cidr-result" id="cidrResult" style="display:none">
+    <div class="cidr-result-label">Résultat CIDR</div>
+    <div class="cidr-result-row">
+      <span class="cidr-result-value" id="cidrValue"></span>
+      <button class="cidr-copy" id="cidrCopy" title="Copier"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>
+    </div>
+    <div class="cidr-details" id="cidrDetails"></div>
+  </div>
+  <div class="field-err" id="cidrErr" style="display:block"><!-- --></div>
+  <div class="modal-acts">
+    <button class="btn-save" id="calcCidr">Calculer</button>
+    <button class="btn-cancel" data-close="mCidr">Fermer</button>
   </div>
 </div></div>
 
