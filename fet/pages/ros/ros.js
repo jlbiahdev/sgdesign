@@ -542,7 +542,7 @@ $(function(){
     {h:'Real IP Dst',          f:'destRealIp'},
     {h:'Nat IP Dst',           f:'destNatIp'},
     {h:'Port',                 f:'port'},
-    {h:'Network Protocol',     f:'networkProtocol1'},
+    {h:'Network Protocol',     f:'networkProtocol'},
     {h:'Applicative Protocol', f:'applicativeProtocol'}
   ];
 
