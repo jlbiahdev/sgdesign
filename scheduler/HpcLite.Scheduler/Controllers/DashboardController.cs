@@ -39,4 +39,27 @@ public class DashboardController : ControllerBase
             queued_model_job_ids = queuedJobIds
         });
     }
+
+    [HttpPost("/runners")]
+    public async Task<IActionResult> AddRunner([FromBody] AddRunnerRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Name)    ||
+            string.IsNullOrWhiteSpace(request.Host)    ||
+            string.IsNullOrWhiteSpace(request.ExePath))
+            return BadRequest(new { error = "name, host et exe_path sont obligatoires." });
+
+        await _runnerRepo.UpsertRunnerAsync(
+            request.Name.Trim(),
+            request.Host.Trim(),
+            request.ExePath.Trim());
+
+        return Ok(new { name = request.Name.Trim(), host = request.Host.Trim() });
+    }
+}
+
+public class AddRunnerRequest
+{
+    public string Name    { get; set; } = "";
+    public string Host    { get; set; } = "";
+    public string ExePath { get; set; } = "";
 }

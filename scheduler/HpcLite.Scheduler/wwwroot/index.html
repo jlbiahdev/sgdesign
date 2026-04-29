@@ -79,8 +79,8 @@
     <!-- Runners -->
     <div class="card card-wide">
       <div class="card-head">
-        <span>Runners</span>
-        <span id="runners-count" style="opacity:.55">0</span>
+        <span>Runners <span id="runners-count" style="opacity:.55">0</span></span>
+        <button class="btn-add" onclick="openModal()">+ Ajouter</button>
       </div>
       <div class="table-wrap">
         <table>
@@ -114,6 +114,42 @@
   <span>HpcLite · Scheduler Dashboard</span>
   <span id="clock"></span>
 </footer>
+
+<!-- ══ MODAL — Ajouter un runner ════════════════════════════════ -->
+<div id="modal-overlay" class="modal-overlay" onclick="closeModal(event)">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-head">
+      <div id="modal-title" class="modal-title">Ajouter un runner</div>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+
+    <div class="form-row">
+      <label class="form-label" for="f-name">Nom logique</label>
+      <input id="f-name" class="form-input" type="text" placeholder="Runner-03" autocomplete="off">
+      <div class="form-hint">Identifiant unique du runner (ex&nbsp;: Runner-03).</div>
+    </div>
+
+    <div class="form-row">
+      <label class="form-label" for="f-host">Host (hostname ou IP)</label>
+      <input id="f-host" class="form-input" type="text" placeholder="COMPUTE-03" autocomplete="off">
+      <div class="form-hint">Nom réseau de la machine compute où tourne cet agent.</div>
+    </div>
+
+    <div class="form-row">
+      <label class="form-label" for="f-exepath">Chemin de l'exécutable</label>
+      <input id="f-exepath" class="form-input" type="text"
+             placeholder="C:\apps\HpcLite.Runner\HpcLite.Runner.exe" autocomplete="off">
+      <div class="form-hint">Chemin absolu vers HpcLite.Runner.exe sur la machine compute.</div>
+    </div>
+
+    <div id="modal-error" class="modal-error" style="display:none"></div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal()">Annuler</button>
+      <button class="btn-save" id="btn-save" onclick="submitRunner()">Enregistrer</button>
+    </div>
+  </div>
+</div>
 
 <script src="dashboard.js"></script>
 </body>

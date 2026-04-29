@@ -71,6 +71,18 @@ public class RunnerRepository
                       END AS is_alive
                FROM runners");
     }
+
+    public async Task UpsertRunnerAsync(string name, string host, string exePath)
+    {
+        using var conn = Open();
+        await conn.ExecuteAsync(
+            @"INSERT INTO runners (name, host, exe_path)
+              VALUES (@name, @host, @exePath)
+              ON CONFLICT (name) DO UPDATE
+                SET host     = EXCLUDED.host,
+                    exe_path = EXCLUDED.exe_path",
+            new { name, host, exePath });
+    }
 }
 
 public class RunnerRecord

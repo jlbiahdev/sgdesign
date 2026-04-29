@@ -157,6 +157,69 @@ function renderQueue(queuedIds) {
   ).join('');
 }
 
+// ── Modal — Ajouter un runner ────────────────────────────────────
+function openModal() {
+  document.getElementById('f-name').value    = '';
+  document.getElementById('f-host').value    = '';
+  document.getElementById('f-exepath').value = '';
+  setModalError('');
+  document.getElementById('btn-save').disabled = false;
+  document.getElementById('modal-overlay').classList.add('open');
+  document.getElementById('f-name').focus();
+}
+
+function closeModal(e) {
+  if (e && e.target !== document.getElementById('modal-overlay')) return;
+  document.getElementById('modal-overlay').classList.remove('open');
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') document.getElementById('modal-overlay').classList.remove('open');
+});
+
+function setModalError(msg) {
+  const el = document.getElementById('modal-error');
+  if (msg) { el.textContent = msg; el.style.display = 'block'; }
+  else      { el.style.display = 'none'; }
+}
+
+async function submitRunner() {
+  const name    = document.getElementById('f-name').value.trim();
+  const host    = document.getElementById('f-host').value.trim();
+  const exePath = document.getElementById('f-exepath').value.trim();
+
+  if (!name || !host || !exePath) {
+    setModalError('Tous les champs sont obligatoires.');
+    return;
+  }
+
+  const btn = document.getElementById('btn-save');
+  btn.disabled = true;
+  btn.textContent = '…';
+  setModalError('');
+
+  try {
+    const resp = await fetch(API_HOST + '/runners', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ name, host, exePath }),
+    });
+
+    if (!resp.ok) {
+      const data = await resp.json().catch(() => ({}));
+      throw new Error(data.error || `Erreur HTTP ${resp.status}`);
+    }
+
+    document.getElementById('modal-overlay').classList.remove('open');
+    await loadAll();
+  } catch (err) {
+    setModalError(err.message);
+  } finally {
+    btn.disabled    = false;
+    btn.textContent = 'Enregistrer';
+  }
+}
+
 // ── Init ─────────────────────────────────────────────────────────
 setConnStatus('reconnecting');
 loadAll();
