@@ -33,6 +33,8 @@ try
     builder.Services.AddHostedService<WatchdogService>();
 
     var app = builder.Build();
+    app.UseDefaultFiles();
+    app.UseStaticFiles();
     app.MapControllers();
     await app.RunAsync();
 }

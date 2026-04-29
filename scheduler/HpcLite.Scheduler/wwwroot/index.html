@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HpcLite — Scheduler Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+
+<div class="top-accent"></div>
+
+<header>
+  <div class="header-main">
+    <div class="logo">
+      <div>
+        <div class="logo-text">HPCLITE</div>
+        <div class="logo-sub">Scheduler · Monitor</div>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <div id="conn-status">
+        <div class="conn-dot" id="conn-dot"></div>
+        <span id="conn-label">—</span>
+      </div>
+      <div class="hdr-sep"></div>
+      <div class="theme-toggle" onclick="toggleTheme()" title="Changer le thème">
+        <span class="tgl-label" id="lblDark">Dark</span>
+        <div class="tgl-track"><div class="tgl-knob"></div></div>
+        <span class="tgl-label" id="lblLight">Light</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="page-top">
+    <div>
+      <div class="mod-label">Monitoring temps réel</div>
+      <div class="mod-title">Dashboard <span class="mod-total" id="total-label"></span></div>
+    </div>
+    <button class="btn-refresh" onclick="loadAll()">↻ Actualiser</button>
+  </div>
+
+  <!-- Stat cards -->
+  <div id="stat-grid">
+    <div class="stat-card" data-status="idle">
+      <div class="stat-label">Idle</div>
+      <div class="stat-value" id="stat-idle">—</div>
+    </div>
+    <div class="stat-card" data-status="active">
+      <div class="stat-label">Actifs</div>
+      <div class="stat-value" id="stat-active">—</div>
+    </div>
+    <div class="stat-card" data-status="dead">
+      <div class="stat-label">Morts</div>
+      <div class="stat-value" id="stat-dead">—</div>
+    </div>
+    <div class="stat-card" data-status="queued">
+      <div class="stat-label">Jobs en queue</div>
+      <div class="stat-value" id="stat-queued">—</div>
+    </div>
+  </div>
+
+  <div id="main-grid">
+
+    <!-- Schedulers -->
+    <div class="card">
+      <div class="card-head">
+        <span>Schedulers</span>
+        <span id="schedulers-count" style="opacity:.55">0</span>
+      </div>
+      <div class="card-body" id="schedulers-list">
+        <div class="empty-row">Chargement…</div>
+      </div>
+    </div>
+
+    <!-- Runners -->
+    <div class="card card-wide">
+      <div class="card-head">
+        <span>Runners</span>
+        <span id="runners-count" style="opacity:.55">0</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Nom</th><th>Host</th><th>État</th><th>Job en cours</th><th>Heartbeat</th>
+            </tr>
+          </thead>
+          <tbody id="runners-tbody">
+            <tr class="loading-row"><td colspan="5">Chargement…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Queue -->
+    <div class="card">
+      <div class="card-head">
+        <span>File d'attente</span>
+        <span id="queue-count" style="opacity:.55">0</span>
+      </div>
+      <div class="card-body" id="queue-list">
+        <div class="empty-row">Aucun job en attente</div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer>
+  <span>HpcLite · Scheduler Dashboard</span>
+  <span id="clock"></span>
+</footer>
+
+<script src="dashboard.js"></script>
+</body>
+</html>

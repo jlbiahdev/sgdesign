@@ -37,4 +37,21 @@ public class SchedulerRepository
             "UPDATE schedulers SET status='inactive' WHERE host=@host",
             new { host });
     }
+
+    public async Task<IEnumerable<SchedulerRecord>> GetAllAsync()
+    {
+        using var conn = Open();
+        return await conn.QueryAsync<SchedulerRecord>(
+            "SELECT id, name, host, status, started_at, heartbeat FROM schedulers ORDER BY id");
+    }
+}
+
+public class SchedulerRecord
+{
+    public long      Id        { get; set; }
+    public string    Name      { get; set; } = "";
+    public string    Host      { get; set; } = "";
+    public string    Status    { get; set; } = "";
+    public DateTime? StartedAt { get; set; }
+    public DateTime? Heartbeat { get; set; }
 }
