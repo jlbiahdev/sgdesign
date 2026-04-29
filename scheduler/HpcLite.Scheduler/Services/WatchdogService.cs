@@ -4,11 +4,11 @@ namespace HpcLite.Scheduler.Services;
 
 public class WatchdogService : BackgroundService
 {
-    private readonly RunnerRepository    _runnerRepo;
-    private readonly ModelJobRepository  _modelJobRepo;
+    private readonly RunnerRepository      _runnerRepo;
+    private readonly ModelJobRepository    _modelJobRepo;
     private readonly RunnerDispatchService _dispatch;
-    private readonly IAlertService       _alerts;
-    private readonly IConfiguration      _configuration;
+    private readonly IAlertService         _alerts;
+    private readonly IConfiguration        _configuration;
     private readonly ILogger<WatchdogService> _logger;
 
     public WatchdogService(
@@ -19,12 +19,12 @@ public class WatchdogService : BackgroundService
         IConfiguration configuration,
         ILogger<WatchdogService> logger)
     {
-        _runnerRepo   = runnerRepo;
-        _modelJobRepo = modelJobRepo;
-        _dispatch     = dispatch;
-        _alerts       = alerts;
+        _runnerRepo    = runnerRepo;
+        _modelJobRepo  = modelJobRepo;
+        _dispatch      = dispatch;
+        _alerts        = alerts;
         _configuration = configuration;
-        _logger       = logger;
+        _logger        = logger;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -45,13 +45,15 @@ public class WatchdogService : BackgroundService
         var timeoutSeconds = _configuration.GetValue<int>("Orchestrator:HeartbeatTimeoutSeconds", 60);
         var expired        = await _runnerRepo.GetExpiredRunnersAsync(timeoutSeconds);
 
+        var anyReleased = false;
         foreach (var runner in expired)
         {
             _logger.LogError(
-                "[Watchdog] Runner {Name} (PID {Pid} on {Host}) timed out. ModelJob {ModelJobId} marked Failed.",
+                "[Watchdog] Runner '{Name}' (PID {Pid} on {Host}) timed out — model_job {ModelJobId} marked Failed.",
                 runner.Name, runner.Pid, runner.Host, runner.ModelJobId);
 
             await _runnerRepo.ReleaseRunnerAsync(runner.Id);
+            anyReleased = true;
 
             if (runner.ModelJobId.HasValue)
             {
@@ -61,16 +63,8 @@ public class WatchdogService : BackgroundService
             }
         }
 
-        // Retry queued jobs
-        var pendingIds = await _modelJobRepo.GetPendingModelJobIdsAsync();
-        foreach (var modelJobId in pendingIds)
-        {
-            var job = await _modelJobRepo.GetByIdAsync(modelJobId);
-            if (job is null) continue;
-
-            // settings_path not stored on the Scheduler side — retry only possible if Styx re-calls /schedule
-            // Log for observability; the caller is responsible for re-submitting
-            _logger.LogInformation("[Watchdog] model_job {Id} is queued but has no active runner.", modelJobId);
-        }
+        // A runner just became free — immediately try to assign pending jobs to it.
+        if (anyReleased)
+            await _dispatch.TryDispatchAllPendingAsync();
     }
 }

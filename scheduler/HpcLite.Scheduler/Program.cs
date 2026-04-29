@@ -31,6 +31,7 @@ try
     builder.Services.AddSingleton<IAlertService, NoOpAlertService>();
     builder.Services.AddHostedService<SchedulerRegistrationService>();
     builder.Services.AddHostedService<WatchdogService>();
+    builder.Services.AddHostedService<JobListenerService>();
 
     var app = builder.Build();
     app.UseDefaultFiles();

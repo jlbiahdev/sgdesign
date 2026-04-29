@@ -59,11 +59,42 @@ public class ModelJobRepository
               WHERE mj.runner_id IS NULL
               AND dj.state = 'Queued'");
     }
+
+    // Claim the oldest dispatchable model_job inside an existing transaction.
+    // Uses SELECT FOR UPDATE SKIP LOCKED so concurrent Schedulers never pick the same job.
+    // Returns null if no dispatchable job exists.
+    public async Task<PendingJobRecord?> ClaimNextPendingAsync(
+        NpgsqlConnection conn, NpgsqlTransaction tx)
+    {
+        return await conn.QuerySingleOrDefaultAsync<PendingJobRecord>(
+            @"SELECT id, template_folder
+              FROM model_job
+              WHERE runner_id IS NULL
+                AND template_folder IS NOT NULL
+                AND EXISTS (
+                    SELECT 1 FROM data_job
+                    WHERE parent_model_id = model_job.id
+                      AND state = 'Queued'
+                )
+              ORDER BY id ASC
+              LIMIT 1
+              FOR UPDATE SKIP LOCKED",
+            transaction: tx);
+    }
 }
 
 public class ModelJobRecord
 {
-    public long   Id       { get; set; }
-    public string Name     { get; set; } = "";
-    public long?  RunnerId { get; set; }
+    public long   Id           { get; set; }
+    public string Name         { get; set; } = "";
+    public long?  RunnerId     { get; set; }
+}
+
+public class PendingJobRecord
+{
+    public long   Id             { get; set; }
+    public string TemplateFolder { get; set; } = "";
+
+    public string SettingsPath =>
+        Path.Combine(TemplateFolder, "settings.json");
 }

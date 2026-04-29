@@ -7,50 +7,32 @@ namespace HpcLite.Scheduler.Controllers;
 [ApiController]
 public class SchedulerController : ControllerBase
 {
-    private readonly ModelJobRepository  _modelJobRepo;
-    private readonly RunnerRepository    _runnerRepo;
+    private readonly RunnerRepository      _runnerRepo;
     private readonly RunnerDispatchService _dispatch;
-    private readonly IConfiguration      _configuration;
+    private readonly IConfiguration        _configuration;
     private readonly ILogger<SchedulerController> _logger;
 
     public SchedulerController(
-        ModelJobRepository modelJobRepo,
         RunnerRepository runnerRepo,
         RunnerDispatchService dispatch,
         IConfiguration configuration,
         ILogger<SchedulerController> logger)
     {
-        _modelJobRepo  = modelJobRepo;
         _runnerRepo    = runnerRepo;
         _dispatch      = dispatch;
         _configuration = configuration;
         _logger        = logger;
     }
 
+    // Manual trigger — useful for tests or for Styx.JobApi if it ever wants to nudge the Scheduler.
+    // The Scheduler now finds jobs itself via DB polling; this endpoint is no longer required
+    // for normal operation.
     [HttpPost("/schedule")]
-    public async Task<IActionResult> Schedule([FromBody] ScheduleRequest request)
+    public async Task<IActionResult> Schedule()
     {
-        var modelJob = await _modelJobRepo.GetByIdAsync(request.ModelJobId);
-        if (modelJob is null)
-            return NotFound($"model_job {request.ModelJobId} not found");
-        if (modelJob.RunnerId.HasValue)
-            return Conflict(new { model_job_id = request.ModelJobId, detail = "Already running" });
-
-        DispatchResult result;
-        try
-        {
-            result = await _dispatch.TryDispatchAsync(request.ModelJobId, request.SettingsPath);
-        }
-        catch
-        {
-            return StatusCode(502, new { detail = "Agent unreachable" });
-        }
-
-        return Accepted(new
-        {
-            model_job_id = request.ModelJobId,
-            status       = result == DispatchResult.Dispatched ? "dispatched" : "queued"
-        });
+        _logger.LogInformation("Manual /schedule trigger received");
+        _ = Task.Run(() => _dispatch.TryDispatchAllPendingAsync());
+        return Accepted(new { detail = "dispatch cycle triggered" });
     }
 
     [HttpGet("/runners/ping")]
@@ -60,10 +42,4 @@ public class SchedulerController : ControllerBase
         var runners        = await _runnerRepo.GetAllForPingAsync(timeoutSeconds);
         return Ok(new { runners });
     }
-}
-
-public class ScheduleRequest
-{
-    public long   ModelJobId   { get; set; }
-    public string SettingsPath { get; set; } = "";
 }
