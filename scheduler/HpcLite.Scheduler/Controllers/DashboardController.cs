@@ -40,6 +40,20 @@ public class DashboardController : ControllerBase
         });
     }
 
+    [HttpPost("/schedulers")]
+    public async Task<IActionResult> AddScheduler([FromBody] AddSchedulerRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Name) ||
+            string.IsNullOrWhiteSpace(request.Host))
+            return BadRequest(new { error = "name et host sont obligatoires." });
+
+        await _schedulerRepo.UpsertSchedulerAsync(
+            request.Name.Trim(),
+            request.Host.Trim());
+
+        return Ok(new { name = request.Name.Trim(), host = request.Host.Trim() });
+    }
+
     [HttpPost("/runners")]
     public async Task<IActionResult> AddRunner([FromBody] AddRunnerRequest request)
     {
@@ -55,6 +69,12 @@ public class DashboardController : ControllerBase
 
         return Ok(new { name = request.Name.Trim(), host = request.Host.Trim() });
     }
+}
+
+public class AddSchedulerRequest
+{
+    public string Name { get; set; } = "";
+    public string Host { get; set; } = "";
 }
 
 public class AddRunnerRequest

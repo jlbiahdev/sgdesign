@@ -157,6 +157,63 @@ function renderQueue(queuedIds) {
   ).join('');
 }
 
+// ── Modal — Ajouter un scheduler ─────────────────────────────────
+function openSchedulerModal() {
+  document.getElementById('fs-name').value = '';
+  document.getElementById('fs-host').value = '';
+  setSchedulerError('');
+  document.getElementById('btn-save-scheduler').disabled = false;
+  document.getElementById('modal-scheduler-overlay').classList.add('open');
+  document.getElementById('fs-name').focus();
+}
+
+function closeSchedulerModal(e) {
+  if (e && e.target !== document.getElementById('modal-scheduler-overlay')) return;
+  document.getElementById('modal-scheduler-overlay').classList.remove('open');
+}
+
+function setSchedulerError(msg) {
+  const el = document.getElementById('modal-scheduler-error');
+  if (msg) { el.textContent = msg; el.style.display = 'block'; }
+  else      { el.style.display = 'none'; }
+}
+
+async function submitScheduler() {
+  const name = document.getElementById('fs-name').value.trim();
+  const host = document.getElementById('fs-host').value.trim();
+
+  if (!name || !host) {
+    setSchedulerError('Tous les champs sont obligatoires.');
+    return;
+  }
+
+  const btn = document.getElementById('btn-save-scheduler');
+  btn.disabled = true;
+  btn.textContent = '…';
+  setSchedulerError('');
+
+  try {
+    const resp = await fetch(API_HOST + '/schedulers', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ name, host }),
+    });
+
+    if (!resp.ok) {
+      const data = await resp.json().catch(() => ({}));
+      throw new Error(data.error || `Erreur HTTP ${resp.status}`);
+    }
+
+    document.getElementById('modal-scheduler-overlay').classList.remove('open');
+    await loadAll();
+  } catch (err) {
+    setSchedulerError(err.message);
+  } finally {
+    btn.disabled    = false;
+    btn.textContent = 'Enregistrer';
+  }
+}
+
 // ── Modal — Ajouter un runner ────────────────────────────────────
 function openModal() {
   document.getElementById('f-name').value    = '';
@@ -174,7 +231,10 @@ function closeModal(e) {
 }
 
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') document.getElementById('modal-overlay').classList.remove('open');
+  if (e.key === 'Escape') {
+    document.getElementById('modal-overlay').classList.remove('open');
+    document.getElementById('modal-scheduler-overlay').classList.remove('open');
+  }
 });
 
 function setModalError(msg) {

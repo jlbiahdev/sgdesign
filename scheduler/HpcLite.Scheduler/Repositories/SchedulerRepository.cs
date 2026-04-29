@@ -44,6 +44,17 @@ public class SchedulerRepository
         return await conn.QueryAsync<SchedulerRecord>(
             "SELECT id, name, host, status, started_at, heartbeat FROM schedulers ORDER BY id");
     }
+
+    public async Task UpsertSchedulerAsync(string name, string host)
+    {
+        using var conn = Open();
+        await conn.ExecuteAsync(
+            @"INSERT INTO schedulers (name, host)
+              VALUES (@name, @host)
+              ON CONFLICT (host) DO UPDATE
+                SET name = EXCLUDED.name",
+            new { name, host });
+    }
 }
 
 public class SchedulerRecord

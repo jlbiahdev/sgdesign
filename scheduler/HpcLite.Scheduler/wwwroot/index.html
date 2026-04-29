@@ -68,8 +68,8 @@
     <!-- Schedulers -->
     <div class="card">
       <div class="card-head">
-        <span>Schedulers</span>
-        <span id="schedulers-count" style="opacity:.55">0</span>
+        <span>Schedulers <span id="schedulers-count" style="opacity:.55">0</span></span>
+        <button class="btn-add" onclick="openSchedulerModal()">+ Ajouter</button>
       </div>
       <div class="card-body" id="schedulers-list">
         <div class="empty-row">Chargement…</div>
@@ -114,6 +114,35 @@
   <span>HpcLite · Scheduler Dashboard</span>
   <span id="clock"></span>
 </footer>
+
+<!-- ══ MODAL — Ajouter un scheduler ════════════════════════════ -->
+<div id="modal-scheduler-overlay" class="modal-overlay" onclick="closeSchedulerModal(event)">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-scheduler-title">
+    <div class="modal-head">
+      <div id="modal-scheduler-title" class="modal-title">Ajouter un scheduler</div>
+      <button class="modal-close" onclick="closeSchedulerModal()">&times;</button>
+    </div>
+
+    <div class="form-row">
+      <label class="form-label" for="fs-name">Nom logique</label>
+      <input id="fs-name" class="form-input" type="text" placeholder="Scheduler-02" autocomplete="off">
+      <div class="form-hint">Identifiant unique du scheduler (ex&nbsp;: Scheduler-02).</div>
+    </div>
+
+    <div class="form-row">
+      <label class="form-label" for="fs-host">Host (hostname ou IP)</label>
+      <input id="fs-host" class="form-input" type="text" placeholder="HEADNODE-02" autocomplete="off">
+      <div class="form-hint">Nom réseau du headnode sur lequel tourne ce scheduler.</div>
+    </div>
+
+    <div id="modal-scheduler-error" class="modal-error" style="display:none"></div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeSchedulerModal()">Annuler</button>
+      <button class="btn-save" id="btn-save-scheduler" onclick="submitScheduler()">Enregistrer</button>
+    </div>
+  </div>
+</div>
 
 <!-- ══ MODAL — Ajouter un runner ════════════════════════════════ -->
 <div id="modal-overlay" class="modal-overlay" onclick="closeModal(event)">
