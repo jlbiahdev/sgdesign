@@ -4,17 +4,19 @@ namespace HpcLite.Scheduler.Services;
 
 public class WatchdogService : BackgroundService
 {
-    private readonly RunnerRepository      _runnerRepo;
-    private readonly ModelJobRepository    _modelJobRepo;
-    private readonly RunnerDispatchService _dispatch;
-    private readonly IAlertService         _alerts;
-    private readonly IConfiguration        _configuration;
+    private readonly RunnerRepository        _runnerRepo;
+    private readonly ModelJobRepository      _modelJobRepo;
+    private readonly RunnerDispatchService   _dispatch;
+    private readonly LightJobDispatchService _lightDispatch;
+    private readonly IAlertService           _alerts;
+    private readonly IConfiguration          _configuration;
     private readonly ILogger<WatchdogService> _logger;
 
     public WatchdogService(
         RunnerRepository runnerRepo,
         ModelJobRepository modelJobRepo,
         RunnerDispatchService dispatch,
+        LightJobDispatchService lightDispatch,
         IAlertService alerts,
         IConfiguration configuration,
         ILogger<WatchdogService> logger)
@@ -22,6 +24,7 @@ public class WatchdogService : BackgroundService
         _runnerRepo    = runnerRepo;
         _modelJobRepo  = modelJobRepo;
         _dispatch      = dispatch;
+        _lightDispatch = lightDispatch;
         _alerts        = alerts;
         _configuration = configuration;
         _logger        = logger;
@@ -63,8 +66,11 @@ public class WatchdogService : BackgroundService
             }
         }
 
-        // A runner just became free — immediately try to assign pending jobs to it.
+        // A runner just became free — try to assign pending jobs.
         if (anyReleased)
+        {
             await _dispatch.TryDispatchAllPendingAsync();
+            await _lightDispatch.TryDispatchAllPendingAsync();
+        }
     }
 }

@@ -12,24 +12,28 @@ public class JobListenerService : BackgroundService
 
     private readonly string _connectionString;
     private readonly RunnerDispatchService _dispatcher;
+    private readonly LightJobDispatchService _lightDispatcher;
     private readonly int _pollIntervalSeconds;
     private readonly ILogger<JobListenerService> _logger;
 
     public JobListenerService(
         IConfiguration configuration,
         RunnerDispatchService dispatcher,
+        LightJobDispatchService lightDispatcher,
         ILogger<JobListenerService> logger)
     {
         _connectionString    = configuration.GetConnectionString("Postgres")!;
         _pollIntervalSeconds = configuration.GetValue<int>("Orchestrator:PollIntervalSeconds", 10);
         _dispatcher          = dispatcher;
+        _lightDispatcher     = lightDispatcher;
         _logger              = logger;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        // Initial dispatch on startup: pick up any jobs that were submitted while the Scheduler was down
+        // Initial dispatch on startup: pick up any jobs submitted while the Scheduler was down
         await _dispatcher.TryDispatchAllPendingAsync();
+        await _lightDispatcher.TryDispatchAllPendingAsync();
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -55,7 +59,7 @@ public class JobListenerService : BackgroundService
         await conn.OpenAsync(ct);
 
         conn.Notification += (_, args) =>
-            _logger.LogDebug("[JobListener] NOTIFY received: model_job_id={Id}", args.AdditionalInformation);
+            _logger.LogDebug("[JobListener] NOTIFY received: model_job_id={Id}", args.Payload);
 
         await using (var cmd = conn.CreateCommand())
         {
@@ -72,6 +76,7 @@ public class JobListenerService : BackgroundService
             // Either way we attempt a dispatch — the SKIP LOCKED query is a no-op if nothing is pending.
             await conn.WaitAsync(TimeSpan.FromSeconds(_pollIntervalSeconds), ct);
             await _dispatcher.TryDispatchAllPendingAsync();
+            await _lightDispatcher.TryDispatchAllPendingAsync();
         }
     }
 }

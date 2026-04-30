@@ -27,11 +27,14 @@ try
     builder.Services.AddSingleton<SchedulerRepository>();
     builder.Services.AddSingleton<RunnerRepository>();
     builder.Services.AddSingleton<ModelJobRepository>();
+    builder.Services.AddSingleton<DataJobRepository>();
     builder.Services.AddSingleton<RunnerDispatchService>();
+    builder.Services.AddSingleton<LightJobDispatchService>();
     builder.Services.AddSingleton<IAlertService, NoOpAlertService>();
     builder.Services.AddHostedService<SchedulerRegistrationService>();
     builder.Services.AddHostedService<WatchdogService>();
     builder.Services.AddHostedService<JobListenerService>();
+    builder.Services.AddHostedService<TaskFlowCompletionListener>();
 
     var app = builder.Build();
     app.UseDefaultFiles();

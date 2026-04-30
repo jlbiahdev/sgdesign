@@ -72,9 +72,16 @@ public class ModelJobRepository
               WHERE runner_id IS NULL
                 AND template_folder IS NOT NULL
                 AND EXISTS (
-                    SELECT 1 FROM data_job
-                    WHERE parent_model_id = model_job.id
-                      AND state = 'Queued'
+                    SELECT 1 FROM data_job dj
+                    WHERE dj.parent_model_id = model_job.id
+                      AND dj.state = 'Queued'
+                      AND dj.job_command_type = 1
+                      AND NOT EXISTS (
+                          SELECT 1 FROM data_job_parent djp
+                          JOIN data_job p ON p.id = djp.parent_job_id
+                          WHERE djp.job_id = dj.id
+                            AND p.state != 'Finished'
+                      )
                 )
               ORDER BY id ASC
               LIMIT 1

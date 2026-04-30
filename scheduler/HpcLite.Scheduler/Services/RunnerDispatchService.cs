@@ -64,16 +64,24 @@ public class RunnerDispatchService
         await conn.OpenAsync();
         await using var tx = await conn.BeginTransactionAsync();
 
-        // Step 1 — find the oldest dispatchable job (runner_id IS NULL, data_jobs Queued)
+        // Step 1 — find the oldest dispatchable Grid job (runner_id IS NULL, at least one type-1
+        //          data_job Queued with all its parents Finished or no parents)
         var job = await conn.QuerySingleOrDefaultAsync<PendingJobRecord>(
             @"SELECT id, template_folder
               FROM model_job
               WHERE runner_id IS NULL
                 AND template_folder IS NOT NULL
                 AND EXISTS (
-                    SELECT 1 FROM data_job
-                    WHERE parent_model_id = model_job.id
-                      AND state = 'Queued'
+                    SELECT 1 FROM data_job dj
+                    WHERE dj.parent_model_id = model_job.id
+                      AND dj.state = 'Queued'
+                      AND dj.job_command_type = 1
+                      AND NOT EXISTS (
+                          SELECT 1 FROM data_job_parent djp
+                          JOIN data_job p ON p.id = djp.parent_job_id
+                          WHERE djp.job_id = dj.id
+                            AND p.state != 'Finished'
+                      )
                 )
               ORDER BY id ASC
               LIMIT 1
