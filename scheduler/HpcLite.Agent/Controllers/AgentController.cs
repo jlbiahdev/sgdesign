@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HpcLite.Agent.Controllers;
@@ -38,7 +39,12 @@ public class AgentController : ControllerBase
 
 public class RunRequest
 {
-    public long   RunnerId    { get; set; }
-    public string ExePath     { get; set; } = "";
+    [JsonPropertyName("runner_id")]
+    public long   RunnerId     { get; set; }
+
+    [JsonPropertyName("exe_path")]
+    public string ExePath      { get; set; } = "";
+
+    [JsonPropertyName("settings_path")]
     public string SettingsPath { get; set; } = "";
 }

@@ -22,7 +22,7 @@ public class RunnerRepository
 
         var runner = await conn.QuerySingleOrDefaultAsync<RunnerRecord>(
             @"SELECT id, name, host, exe_path
-              FROM runners
+              FROM scheduler.runners
               WHERE status = 'idle'
               ORDER BY id ASC
               LIMIT 1
@@ -36,7 +36,7 @@ public class RunnerRepository
         }
 
         await conn.ExecuteAsync(
-            "UPDATE runners SET status='active', model_job_id=@modelJobId, started_at=NOW() WHERE id=@id",
+            "UPDATE scheduler.runners SET status='active', model_job_id=@modelJobId, started_at=NOW() WHERE id=@id",
             new { modelJobId, id = runner.Id }, tx);
 
         await tx.CommitAsync();
@@ -47,7 +47,7 @@ public class RunnerRepository
     {
         using var conn = Open();
         await conn.ExecuteAsync(
-            "UPDATE runners SET status='idle', model_job_id=NULL, pid=NULL WHERE id=@id",
+            "UPDATE scheduler.runners SET status='idle', model_job_id=NULL, pid=NULL WHERE id=@id",
             new { id = runnerId });
     }
 
@@ -56,7 +56,7 @@ public class RunnerRepository
         using var conn = Open();
         return await conn.QueryAsync<RunnerRecord>(
             $@"SELECT id, name, pid, host, model_job_id, exe_path
-               FROM runners
+               FROM scheduler.runners
                WHERE status = 'active'
                AND heartbeat < NOW() - INTERVAL '{heartbeatTimeoutSeconds} seconds'");
     }
@@ -69,14 +69,14 @@ public class RunnerRepository
                       CASE WHEN status = 'idle' THEN NULL
                            ELSE (heartbeat > NOW() - INTERVAL '{heartbeatTimeoutSeconds} seconds')
                       END AS is_alive
-               FROM runners");
+               FROM scheduler.runners");
     }
 
     public async Task UpsertRunnerAsync(string name, string host, string exePath)
     {
         using var conn = Open();
         await conn.ExecuteAsync(
-            @"INSERT INTO runners (name, host, exe_path)
+            @"INSERT INTO scheduler.runners (name, host, exe_path)
               VALUES (@name, @host, @exePath)
               ON CONFLICT (name) DO UPDATE
                 SET host     = EXCLUDED.host,

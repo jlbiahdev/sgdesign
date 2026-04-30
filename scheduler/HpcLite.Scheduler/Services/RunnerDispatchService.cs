@@ -97,7 +97,7 @@ public class RunnerDispatchService
         // Step 2 — find an idle runner
         var runner = await conn.QuerySingleOrDefaultAsync<RunnerRecord>(
             @"SELECT id, name, host, exe_path
-              FROM runners
+              FROM scheduler.runners
               WHERE status = 'idle'
               ORDER BY id ASC
               LIMIT 1
@@ -113,7 +113,7 @@ public class RunnerDispatchService
 
         // Step 3 — claim both atomically
         await conn.ExecuteAsync(
-            "UPDATE runners   SET status='active', model_job_id=@jobId, started_at=NOW() WHERE id=@id",
+            "UPDATE scheduler.runners   SET status='active', model_job_id=@jobId, started_at=NOW() WHERE id=@id",
             new { jobId = job.Id, id = runner.Id }, tx);
 
         await conn.ExecuteAsync(
@@ -162,7 +162,7 @@ public class RunnerDispatchService
             // Rollback: release runner and clear model_job.runner_id
             await using var conn = OpenConnection();
             await conn.ExecuteAsync(
-                "UPDATE runners   SET status='idle', model_job_id=NULL, pid=NULL WHERE id=@id",
+                "UPDATE scheduler.runners   SET status='idle', model_job_id=NULL, pid=NULL WHERE id=@id",
                 new { id = c.Runner.Id });
             await conn.ExecuteAsync(
                 "UPDATE model_job SET runner_id=NULL WHERE id=@id",

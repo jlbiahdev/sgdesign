@@ -18,7 +18,7 @@ public class SchedulerRepository
     {
         using var conn = Open();
         return await conn.ExecuteAsync(
-            "UPDATE schedulers SET status='active', started_at=NOW(), heartbeat=NOW() WHERE host=@host",
+            "UPDATE scheduler.schedulers SET status='active', started_at=NOW(), heartbeat=NOW() WHERE host=@host",
             new { host });
     }
 
@@ -26,7 +26,7 @@ public class SchedulerRepository
     {
         using var conn = Open();
         await conn.ExecuteAsync(
-            "UPDATE schedulers SET heartbeat=NOW() WHERE host=@host",
+            "UPDATE scheduler.schedulers SET heartbeat=NOW() WHERE host=@host",
             new { host });
     }
 
@@ -34,7 +34,7 @@ public class SchedulerRepository
     {
         using var conn = Open();
         await conn.ExecuteAsync(
-            "UPDATE schedulers SET status='inactive' WHERE host=@host",
+            "UPDATE scheduler.schedulers SET status='inactive' WHERE host=@host",
             new { host });
     }
 
@@ -42,14 +42,14 @@ public class SchedulerRepository
     {
         using var conn = Open();
         return await conn.QueryAsync<SchedulerRecord>(
-            "SELECT id, name, host, status, started_at, heartbeat FROM schedulers ORDER BY id");
+            "SELECT id, name, host, status, started_at, heartbeat FROM scheduler.schedulers ORDER BY id");
     }
 
     public async Task UpsertSchedulerAsync(string name, string host)
     {
         using var conn = Open();
         await conn.ExecuteAsync(
-            @"INSERT INTO schedulers (name, host)
+            @"INSERT INTO scheduler.schedulers (name, host)
               VALUES (@name, @host)
               ON CONFLICT (host) DO UPDATE
                 SET name = EXCLUDED.name",
