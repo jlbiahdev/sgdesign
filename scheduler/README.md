@@ -14,7 +14,7 @@ Styx.JobApi
                                             ├─ job_command_type = 0 (Light)
                                             │       └─ POST /taskflow/tasks ──► TaskFlow.Server
                                             │                                        │
-                                            │                                        └─ TaskFlow.Client (workers pool)
+                                            │                                        └─ TaskFlow.Runner (workers pool)
                                             │                                                │
                                             │                                        (NOTIFY taskflow_events)
                                             │                                                │
@@ -74,7 +74,7 @@ AND NOT EXISTS (
       └─ SELECT data_jobs Queued, type=0, parents Finished  [FOR UPDATE SKIP LOCKED]
       └─ UPDATE data_job SET state='Running'
       └─ POST /taskflow/tasks  pour chaque data_task
-5. TaskFlow.Client exécute les tâches
+5. TaskFlow.Runner exécute les tâches
 6. Trigger PostgreSQL → NOTIFY taskflow_events  {taskId, state}
 7. TaskFlowCompletionListener reçoit la notification
       └─ Résout external_id → data_task
