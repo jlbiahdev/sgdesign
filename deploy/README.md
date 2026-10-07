@@ -46,15 +46,19 @@ dangereuses ne sont jamais testées en premier :
 ```text
 tests_download_deploy\
 ├── README.md                  ce fichier
-├── download_deploy.ps1        LE script de déploiement (version de production)
+├── download_deploy.ps1        LE script de déploiement (version de production, générée)
 ├── run_jalon.ps1              lance tous les scénarios d'un jalon + bilan
+├── _outils\
+│   ├── download_deploy.template.ps1   SOURCE unique du script, balisée par jalon
+│   └── Build-JalonVersions.ps1        génère la production et les versions par jalon
 ├── _commun\
 │   ├── TestHelpers.psm1       boîte à outils commune à tous les tests
 │   └── test-config.psd1       configuration de la machine de test (à adapter)
 ├── jalon_0_compatibilite_serveur\
+│   ├── CHANGEMENTS.md         code ajouté par ce jalon (généré)
 │   ├── t_0_01_psversion_ok\
 │   │   ├── launch_test.ps1    lanceur documenté du scénario
-│   │   └── download_deploy.ps1  version du script pour ce jalon
+│   │   └── download_deploy.ps1  version INCRÉMENTALE du script pour ce jalon
 │   └── ...
 ├── ...
 ├── jalon_19_production\
@@ -81,53 +85,72 @@ la machine.
 
 ## 2. Principe
 
-### Une seule version du code, un point d'arrêt par jalon
+### Un code qui grandit d'un jalon à l'autre
 
-Le `download_deploy.ps1` de chaque scénario est **identique au script de production à
-une ligne près** :
+Le `download_deploy.ps1` d'un scénario du jalon N est une **version incrémentale** :
+il ne contient **que** le code des jalons 0 à N (fonctions, configuration, étapes du
+programme principal). Il se termine par :
 
-```powershell
-$script:JalonCible = 7      # copie du jalon 7
-$script:JalonCible = $null  # production, et copies des jalons 15 à 19
+```text
+JALON N ATTEINT : <ce qui vient d'être vérifié>.
+TEST TERMINÉ : ...
 ```
 
-Après chaque étape, le script appelle `Stop-SiJalonAtteint N`. Si `JalonCible` vaut N,
-il s'arrête volontairement avec le code 0 et le message `JALON N ATTEINT`. On teste
-donc toujours **le code qui sera livré**, en coupant l'exécution au bon endroit.
+puis `exit 0`. La version du jalon N+1 reprend celle du jalon N et y ajoute le code du
+jalon N+1. Le fichier `CHANGEMENTS.md` de chaque dossier de jalon montre **exactement**
+ce code ajouté, pour que la relecture porte sur l'incrément. Les versions des jalons 15
+à 19 sont identiques au script de production.
 
-| Jalon cible | Le script s'arrête après... |
-|---|---|
-| 0 | compatibilité du serveur |
-| 1 | affichage des paramètres |
-| 2 | création du journal (la validation de `-d` est faite avant : le journal vit dans `<d>`) |
-| 3 | validation de la demande |
-| 4 | contrôle des destinations |
-| 5 | identification de la source du package |
-| 6 | téléchargement ou copie du package |
-| 7 | extraction et contrôle du contenu |
-| 8 | staging |
-| 9 | services Windows et processus |
-| 10 | lecture du pool IIS |
-| 11 | enregistrement de l'état initial (`state.json`) |
-| 12 | arrêt des applications (**elles restent arrêtées** ; le lanceur les restaure) |
-| 13 | arrêt **puis** redémarrage, **sans** sauvegarde ni installation |
-| 14 | arrêt, sauvegarde, **restauration**, redémarrage (aucun nouveau fichier installé) |
-| 15 à 19 | pas d'arrêt : déploiement complet |
+Toutes ces versions sont **générées** à partir d'une source unique,
+`_outils\download_deploy.template.ps1`. C'est le script complet, découpé par des
+balises de jalon (voir §9). Le script de production à la racine est lui aussi généré
+depuis cette source : les versions incrémentales et la production ne peuvent donc pas
+diverger.
+
+| Version du jalon | Contient en plus du jalon précédent | Se termine après... |
+|---|---|---|
+| 0 | journal console, droits, compatibilité serveur | compatibilité du serveur |
+| 1 | affichage des paramètres | affichage des paramètres |
+| 2 | validation de `-d` et fichier journal (*) | création du journal |
+| 3 | contrôle des trigrammes, synthèse de la demande | validation de la demande |
+| 4 | contrôle des dossiers et exécutables | contrôle des destinations |
+| 5 | variables d'environnement, `-PackageFile` | identification de la source du package |
+| 6 | téléchargement curl / copie du package local | récupération du package |
+| 7 | extraction et contrôle du contenu | extraction |
+| 8 | staging | staging |
+| 9 | services Windows et processus | services et processus |
+| 10 | lecture du pool IIS | lecture du pool IIS |
+| 11 | état initial (`state.json`), `-ValidationOnly` | état initial |
+| 12 | confirmation, arrêt des applications | arrêt (**les applications restent arrêtées** ; le lanceur les restaure) |
+| 13 | redémarrage | arrêt **puis** redémarrage, sans toucher aux fichiers |
+| 14 | sauvegarde, rollback (**) | sauvegarde vérifiée, **restaurée**, puis redémarrage |
+| 15 | installation, message de succès | aucun arrêt : version de production |
+| 16 à 19 | rien (ces jalons testent le code existant) | version de production |
+
+(*) Le journal est créé dans `<d>\deployment-logs` : `-d` doit donc être validé dès le
+jalon 2. Le jalon 3 ajoute le contrôle des trigrammes et la synthèse de la demande.
+Les scénarios de validation de `-d` restent au jalon 3, comme dans le plan d'origine.
+
+(**) Dès que le jalon 14 déplace des dossiers, le code de rollback doit exister : sinon
+une erreur aux jalons 14 ou 15 laisserait l'environnement de test cassé. Il arrive donc
+au jalon 14. Le jalon 16 le teste volontairement, à chaque étape.
 
 ### Le lanceur adapte une copie, jamais l'original
 
 `launch_test.ps1` ne modifie jamais le `download_deploy.ps1` de son dossier. Il en écrit
 une **copie temporaire** (`%TEMP%\styx-tests\<scénario>\`) dans laquelle il peut :
 
-- reporter les valeurs de `test-config.psd1` (pool IIS, noms des services) ;
+- reporter les valeurs de `test-config.psd1` (pool IIS, noms des services), si la version
+  du jalon contient déjà la ligne correspondante ;
 - passer en **mode test** (`$UseWindowsServices = $false`) : les composants sont alors de
   simples processus factices, et aucun vrai service n'est touché ;
 - simuler un serveur différent : lecteur absent, IIS ou curl absents ;
 - injecter une **erreur volontaire** à un point de test (rollback, voir §8).
 
-Les remplacements ne portent que sur la section `CONFIGURATION` du script, et chacun doit
-trouver exactement une ligne. Sinon le test s'arrête au statut « non exécuté » : un test
-ne tourne jamais sur un script qu'il croit, à tort, avoir adapté.
+Les remplacements ne portent que sur la section `CONFIGURATION` du script. Une valeur
+demandée explicitement par un test doit trouver exactement une ligne. Sinon le test
+s'arrête au statut « non exécuté » : un test ne tourne jamais sur un script qu'il croit,
+à tort, avoir adapté.
 
 ### Deux environnements
 
@@ -378,7 +401,7 @@ endroit, peut donc réussir.
 
 1. Copier le dossier d'un scénario proche du même jalon et le renommer
    `t_X_YY_description_ok|ko` : pas d'espace, pas d'accent.
-2. Ne **pas** toucher à son `download_deploy.ps1`.
+2. Ne **pas** toucher à son `download_deploy.ps1` : il est généré.
 3. Adapter l'en-tête et le corps de `launch_test.ps1`. Les briques disponibles sont
    documentées dans `_commun\TestHelpers.psm1` (`Get-Help` fonctionne sur chaque
    fonction) :
@@ -392,9 +415,31 @@ endroit, peut donc réussir.
      `Assert-ApplicationStateUnchanged`.
 4. Ajouter une ligne au tableau de suivi (§12).
 
-**Après une modification du script de production**, recopier `download_deploy.ps1` dans
-tous les scénarios en conservant la ligne `JalonCible` propre à chaque jalon. Les jalons
-déjà validés doivent ensuite être relancés.
+### Modifier le script de déploiement
+
+Ne jamais modifier un `download_deploy.ps1` généré : la modification serait écrasée.
+
+1. Modifier `_outils\download_deploy.template.ps1`.
+2. Placer le nouveau code dans la région du jalon qui l'introduit. Les balises sont des
+   lignes qui commencent en colonne 0 :
+
+   | Balise | Effet |
+   |---|---|
+   | `#>>J7` ... `#<<J7` | code présent à partir du jalon 7 |
+   | `#>>J14-14` ... `#<<J14-14` | code présent **uniquement** dans la version du jalon 14 |
+   | `#@FIN 7\|description` | fin de la version du jalon 7 (« JALON 7 ATTEINT ») |
+
+3. Régénérer :
+
+   ```powershell
+   .\_outils\Build-JalonVersions.ps1
+   ```
+
+   Le script réécrit `download_deploy.ps1` à la racine et dans chaque scénario, ainsi que
+   les `CHANGEMENTS.md`. Il vérifie que les balises sont équilibrées, que chaque version
+   est syntaxiquement valide, que chaque jalon 0 à 14 a exactement une fin, et que les
+   versions 15 à 19 sont identiques à la production.
+4. Relancer les jalons concernés : celui qui a changé et tous les suivants.
 
 ---
 
@@ -731,7 +776,7 @@ Un jalon est validé lorsque :
 7. les tests sont reproductibles : relancés, ils donnent le même résultat ;
 8. aucun secret n'est exposé ;
 9. aucun effet indésirable ne subsiste après les tests ;
-10. la version de `download_deploy.ps1` testée est archivée.
+10. la version de `download_deploy.ps1` testée (et son `CHANGEMENTS.md`) est archivée.
 
 Le jalon suivant ne doit être commencé qu'après validation du jalon courant.
 

@@ -122,8 +122,11 @@
     Windows PowerShell 5.1 le lit en ANSI et les accents sont corrompus.
 
     Tests :
-      - $script:JalonCible (voir plus bas) arrête volontairement le script
-        après un jalon. Il vaut $null en production.
+      - Ce fichier est généré à partir de _outils\download_deploy.template.ps1.
+        Les dossiers de test contiennent des versions PARTIELLES : la version
+        du jalon N ne contient que le code des jalons 0 à N et se termine par
+        « TEST TERMINÉ ». Ne pas modifier ce fichier directement : modifier
+        le modèle puis lancer _outils\Build-JalonVersions.ps1.
       - Les commentaires « # [POINT-DE-TEST:nom] » sont de simples
         commentaires. Les lanceurs de test les remplacent, dans une COPIE
         temporaire du script, par une erreur volontaire (tests de rollback).
@@ -167,13 +170,18 @@ $ErrorActionPreference = "Stop"
 # certaines de ces lignes dans une copie temporaire du script.
 # ============================================================
 
+#>>J0
 # Lecteur obligatoire pour la destination, le journal, le staging et
 # les sauvegardes.
 $RequiredDrive = "D:\"
+#<<J0
 
+#>>J10
 # Nom exact du pool IIS qui héberge l'API STX.
 $StxApplicationPoolName = "STYX"
+#<<J10
 
+#>>J4
 # Exécutable Taskflow, relatif à <d>\taskflow. Une seule instance autorisée.
 $TaskflowExecutableRelativePath = "Taskflow.exe"
 
@@ -186,7 +194,9 @@ $HpcLiteSchedulerFolder = "scheduler"
 $HpcLiteAgentExecutableName = "HpcLite.Agent.exe"
 $HpcLiteRunnerExecutableName = "HpcLite.Runner.exe"
 $HpcLiteSchedulerExecutableName = "HpcLite.Scheduler.exe"
+#<<J4
 
+#>>J9
 # $true  : production. Taskflow, l'Agent et le Scheduler sont pilotés par
 #          le gestionnaire de services (Stop-Service / Start-Service).
 #          Tuer le processus d'un service déclencherait ses options de
@@ -201,12 +211,16 @@ $UseWindowsServices = $true
 $TaskflowServiceName = "TaskFlow Runner"
 $HpcLiteAgentServiceName = "HpcLite Agent"
 $HpcLiteSchedulerServiceName = "HpcLite Scheduler"
+#<<J9
 
+#>>J13
 # Arguments de démarrage, utilisés seulement si $UseWindowsServices = $false.
 $TaskflowStartArguments = @()
 $HpcLiteAgentStartArguments = @()
 $HpcLiteSchedulerStartArguments = @()
+#<<J13
 
+#>>J15
 # Fichiers propres au serveur, conservés d'une version à l'autre.
 # Chemins relatifs au dossier du composant (<d>\taskflow, <d>\api,
 # <d>\HpcLite). Ils sont recopiés depuis la sauvegarde après installation.
@@ -214,26 +228,24 @@ $HpcLiteSchedulerStartArguments = @()
 $PreservedRelativePathsSTP = @()
 $PreservedRelativePathsSTX = @()
 $PreservedRelativePathsSTJ = @()
+#<<J15
 
+#>>J12
 # Délais maximum (secondes) pour constater un arrêt ou un démarrage.
 $ProcessTimeoutSeconds = 30
 $ServiceTimeoutSeconds = 60
 $IisTimeoutSeconds = 60
+#<<J12
 
+#>>J0
 # Outils Windows utilisés.
 # curl.exe est appelé explicitement : dans Windows PowerShell 5.1,
 # « curl » est un alias d'Invoke-WebRequest.
 $AppCmdPath = Join-Path $env:WINDIR "System32\inetsrv\appcmd.exe"
 $CurlPath = Join-Path $env:WINDIR "System32\curl.exe"
-# <<< FIN CONFIGURATION
+#<<J0
 
-# >>> JALON CIBLE
-# Réservé aux tests : numéro du jalon après lequel le script s'arrête
-# volontairement (0 à 14). $null = exécution complète (production).
-# Les copies de ce script placées dans les dossiers de test ne diffèrent
-# de l'original QUE par cette ligne.
-$script:JalonCible = $null
-# <<< JALON CIBLE
+# <<< FIN CONFIGURATION
 
 # ============================================================
 # VARIABLES INTERNES
@@ -246,12 +258,16 @@ $script:LogFile = $null
 # dès sa création, pour que le fichier contienne tout l'historique.
 $script:PendingLogLines = [System.Collections.Generic.List[string]]::new()
 
+#>>J14
 # Composants dont le dossier a été déplacé en sauvegarde. Sert au rollback.
 $script:ChangedComponents = [System.Collections.ArrayList]::new()
+#<<J14
 
+#>>J6
 # Initialisée ici pour que le bloc finally fonctionne même si l'erreur
 # survient très tôt (Set-StrictMode interdit les variables non définies).
 $workingDirectory = $null
+#<<J6
 
 # Source du package choisie par l'utilisateur.
 $usePackageFile = $PSCmdlet.ParameterSetName -eq "FromFile"
@@ -260,6 +276,7 @@ $usePackageFile = $PSCmdlet.ParameterSetName -eq "FromFile"
 # AFFICHAGE ET JOURNAL
 # ============================================================
 
+#>>J0
 <#
 .SYNOPSIS
     Écrit un message horodaté dans la console (en couleur) et dans le journal.
@@ -295,7 +312,9 @@ function Write-Log {
 
     Add-Content -LiteralPath $script:LogFile -Value $line -Encoding UTF8 -ErrorAction SilentlyContinue
 }
+#<<J0
 
+#>>J0
 <#
 .SYNOPSIS
     Affiche un titre d'étape encadré et l'écrit dans le journal.
@@ -313,7 +332,9 @@ function Write-Step {
 
     Write-Log -Message $Title
 }
+#<<J0
 
+#>>J2
 <#
 .SYNOPSIS
     Crée le fichier journal et y recopie les lignes en attente.
@@ -332,45 +353,13 @@ function Set-LogFile {
     $script:LogFile = $Path
     $script:PendingLogLines.Clear()
 }
-
-<#
-.SYNOPSIS
-    Arrête volontairement le script si le jalon de test ciblé est atteint.
-.DESCRIPTION
-    Sans effet en production (JalonCible vaut $null).
-    En test, termine le script avec le code 0 après avoir écrit un message
-    explicite. Le bloc finally du programme principal s'exécute quand même
-    (nettoyage du dossier de travail).
-#>
-function Stop-SiJalonAtteint {
-    param(
-        [Parameter(Mandatory = $true)] [int] $Jalon,
-        [Parameter(Mandatory = $true)] [string] $Description
-    )
-
-    if ($null -eq $script:JalonCible -or $script:JalonCible -ne $Jalon) {
-        return
-    }
-
-    Write-Log -Message "JALON $Jalon ATTEINT : $Description." -Level "ATTENTION"
-
-    if ($Jalon -lt 12) {
-        Write-Log -Message "TEST TERMINÉ : aucune application n'a été arrêtée." -Level "ATTENTION"
-    }
-    elseif ($Jalon -eq 12) {
-        Write-Log -Message "TEST TERMINÉ : les applications sélectionnées sont arrêtées et le RESTENT. Le lanceur de test doit restaurer leur état." -Level "ATTENTION"
-    }
-    else {
-        Write-Log -Message "TEST TERMINÉ : les applications ont retrouvé leur état initial." -Level "ATTENTION"
-    }
-
-    exit 0
-}
+#<<J2
 
 # ============================================================
 # VALIDATIONS GÉNÉRALES (J0, J3, J4)
 # ============================================================
 
+#>>J0
 <#
 .SYNOPSIS
     Vérifie que la console est ouverte en tant qu'administrateur. (J0)
@@ -396,7 +385,9 @@ Fermez cette fenêtre, puis :
 
     Write-Log -Message "Console administrateur : oui." -Level "OK"
 }
+#<<J0
 
+#>>J0
 <#
 .SYNOPSIS
     Vérifie que le serveur dispose de ce dont le script a besoin. (J0)
@@ -433,7 +424,9 @@ les fichiers temporaires et les sauvegardes.
         Write-Log -Message "IIS (appcmd.exe) disponible : $AppCmdPath" -Level "OK"
     }
 }
+#<<J0
 
+#>>J2
 <#
 .SYNOPSIS
     Valide la racine -d et la renvoie sous forme normalisée. (J3)
@@ -519,7 +512,9 @@ $resolvedPath
 
     return $resolvedPath
 }
+#<<J2
 
+#>>J4
 <#
 .SYNOPSIS
     Échoue avec un message clair si le dossier n'existe pas.
@@ -541,7 +536,9 @@ Le déploiement est annulé avant l'arrêt des applications.
 "@
     }
 }
+#<<J4
 
+#>>J0
 <#
 .SYNOPSIS
     Échoue avec un message clair si le fichier n'existe pas.
@@ -563,7 +560,9 @@ Vérifiez le nom configuré au début du script.
 "@
     }
 }
+#<<J0
 
+#>>J7
 <#
 .SYNOPSIS
     Compte les fichiers d'un dossier, sous-dossiers compris.
@@ -575,11 +574,13 @@ function Get-FileCount {
 
     return @(Get-ChildItem -LiteralPath $Path -File -Recurse -Force).Count
 }
+#<<J7
 
 # ============================================================
 # VARIABLES D'ENVIRONNEMENT (J5)
 # ============================================================
 
+#>>J5
 <#
 .SYNOPSIS
     Lit une variable d'environnement : session courante, puis Machine.
@@ -612,11 +613,13 @@ function Get-ConfigurationValue {
         Source = $source
     }
 }
+#<<J5
 
 # ============================================================
 # IDENTIFICATION DES PROCESSUS (J9, J12)
 # ============================================================
 
+#>>J9
 <#
 .SYNOPSIS
     Renvoie les processus dont l'exécutable est exactement ce chemin.
@@ -642,7 +645,9 @@ function Get-ProcessesByExecutablePath {
 
     return $processes
 }
+#<<J9
 
+#>>J9
 <#
 .SYNOPSIS
     Échoue si plus d'une instance est détectée (Taskflow, Agent, Scheduler).
@@ -676,7 +681,9 @@ Le déploiement est annulé.
 "@
     }
 }
+#<<J9
 
+#>>J12
 <#
 .SYNOPSIS
     Arrête brutalement tous les processus lancés depuis cet exécutable.
@@ -733,7 +740,9 @@ $remainingIds
 
     Write-Log -Message "$ComponentName est maintenant arrêté." -Level "OK"
 }
+#<<J12
 
+#>>J13
 <#
 .SYNOPSIS
     Démarre un exécutable (mode test uniquement) et attend son processus.
@@ -797,11 +806,13 @@ $ExecutablePath
 
     Write-Log -Message "$ComponentName a démarré correctement." -Level "OK"
 }
+#<<J13
 
 # ============================================================
 # SERVICES WINDOWS : TASKFLOW, AGENT, SCHEDULER (J9, J12, J13)
 # ============================================================
 
+#>>J9
 <#
 .SYNOPSIS
     Renvoie le service Windows, ou échoue clairement s'il n'existe pas.
@@ -827,7 +838,9 @@ Vérifiez la configuration au début du script.
 
     return $service
 }
+#<<J9
 
+#>>J9
 <#
 .SYNOPSIS
     Vérifie qu'un service existe ET exécute l'exécutable du dossier -d. (J9)
@@ -887,7 +900,9 @@ Vérifiez -d et les noms configurés au début du script.
 
     Write-Log -Message "Service $ComponentName ('$ServiceName') trouvé et cohérent avec la destination." -Level "OK"
 }
+#<<J9
 
+#>>J12
 <#
 .SYNOPSIS
     Arrête un service et attend l'état Stopped.
@@ -921,7 +936,9 @@ function Stop-ServiceSafe {
 
     Write-Log -Message "Le service $ComponentName est arrêté." -Level "OK"
 }
+#<<J12
 
+#>>J13
 <#
 .SYNOPSIS
     Démarre un service et attend l'état Running.
@@ -955,7 +972,9 @@ function Start-ServiceSafe {
 
     Write-Log -Message "Le service $ComponentName fonctionne." -Level "OK"
 }
+#<<J13
 
+#>>J12
 <#
 .SYNOPSIS
     Arrête un composant à instance unique (Taskflow, Agent, Scheduler).
@@ -977,7 +996,9 @@ function Stop-SingleComponent {
 
     Stop-ProcessesByExecutablePath -ExecutablePath $ExecutablePath -ComponentName $ComponentName -SingleInstance
 }
+#<<J12
 
+#>>J13
 <#
 .SYNOPSIS
     Démarre un composant à instance unique (Taskflow, Agent, Scheduler).
@@ -1000,7 +1021,9 @@ function Start-SingleComponent {
 
     Start-Executable -ExecutablePath $ExecutablePath -ComponentName $ComponentName -Arguments $Arguments -SingleInstance
 }
+#<<J13
 
+#>>J9
 <#
 .SYNOPSIS
     Indique si un composant à instance unique fonctionne actuellement.
@@ -1024,11 +1047,13 @@ function Test-SingleComponentRunning {
 
     return ($Processes.Count -gt 0)
 }
+#<<J9
 
 # ============================================================
 # POOL IIS DE L'API (J10, J12, J13)
 # ============================================================
 
+#>>J10
 <#
 .SYNOPSIS
     Vérifie que le pool IIS configuré existe. (J10)
@@ -1058,7 +1083,9 @@ Vérifiez la variable StxApplicationPoolName au début du script.
 
     Write-Log -Message "Pool IIS '$ApplicationPoolName' trouvé." -Level "OK"
 }
+#<<J10
 
+#>>J10
 <#
 .SYNOPSIS
     Renvoie Started, Stopped ou Unknown pour le pool IIS.
@@ -1083,7 +1110,9 @@ function Get-IisApplicationPoolState {
     # Sortie inattendue : on ne prétend pas connaître une information incertaine.
     return "Unknown"
 }
+#<<J10
 
+#>>J12
 <#
 .SYNOPSIS
     Attend la fin du processus w3wp.exe du pool.
@@ -1117,7 +1146,9 @@ function Wait-IisWorkerProcessExit {
     $workerIds = $workers.ProcessId -join ", "
     throw "Le processus IIS (w3wp.exe) du pool '$ApplicationPoolName' ne s'est pas terminé. PID : $workerIds"
 }
+#<<J12
 
+#>>J12
 <#
 .SYNOPSIS
     Arrête le pool IIS (jamais IIS entier) et attend la fin de son w3wp.
@@ -1165,7 +1196,9 @@ $($output -join [Environment]::NewLine)
 
     Write-Log -Message "Le pool IIS '$ApplicationPoolName' est arrêté." -Level "OK"
 }
+#<<J12
 
+#>>J13
 <#
 .SYNOPSIS
     Démarre le pool IIS et attend l'état Started.
@@ -1210,11 +1243,13 @@ $($output -join [Environment]::NewLine)
 
     Write-Log -Message "Le pool IIS '$ApplicationPoolName' fonctionne." -Level "OK"
 }
+#<<J13
 
 # ============================================================
 # TÉLÉCHARGEMENT, EXTRACTION ET STAGING (J6, J7, J8)
 # ============================================================
 
+#>>J6
 <#
 .SYNOPSIS
     Télécharge le package avec curl.exe. (J6)
@@ -1299,7 +1334,9 @@ $(($curlErrors | ForEach-Object { $_.ToString() }) -join [Environment]::NewLine)
     Write-Log -Message "Réponse HTTP : $httpCode"
     Assert-PackageFile -Path $OutputFile -Description "Package téléchargé"
 }
+#<<J6
 
+#>>J6
 <#
 .SYNOPSIS
     Vérifie qu'un package existe, n'est pas vide, et journalise taille et
@@ -1326,7 +1363,9 @@ function Assert-PackageFile {
     Write-Log -Message "$Description : $($file.Length) octets." -Level "OK"
     Write-Log -Message "Empreinte SHA-256 : $($hash.Hash)"
 }
+#<<J6
 
+#>>J7
 <#
 .SYNOPSIS
     Extrait un .nupkg (archive ZIP) dans un dossier. (J7)
@@ -1390,7 +1429,9 @@ $($_.Exception.Message)
 
     Write-Log -Message "Package extrait correctement : $extractedCount fichiers." -Level "OK"
 }
+#<<J7
 
+#>>J8
 <#
 .SYNOPSIS
     Copie le contenu d'un dossier et vérifie le nombre de fichiers. (J8)
@@ -1417,11 +1458,13 @@ function Copy-DirectoryContent {
 
     return $sourceCount
 }
+#<<J8
 
 # ============================================================
 # ARRÊT ET DÉMARRAGE DES APPLICATIONS (J12, J13)
 # ============================================================
 
+#>>J12
 <#
 .SYNOPSIS
     Arrête les applications sélectionnées. (J12)
@@ -1460,7 +1503,9 @@ function Stop-SelectedApplications {
         Write-Log -Message "Tous les processus HpcLite concernés sont arrêtés." -Level "OK"
     }
 }
+#<<J12
 
+#>>J13
 <#
 .SYNOPSIS
     Redémarre ce qui fonctionnait avant le déploiement. (J13)
@@ -1520,11 +1565,13 @@ function Start-PreviouslyRunningApplications {
         Write-Log -Message "L'Agent pourra créer de nouveaux Runners selon les jobs présents en base."
     }
 }
+#<<J13
 
 # ============================================================
 # SAUVEGARDE, INSTALLATION ET ROLLBACK (J14, J15, J16)
 # ============================================================
 
+#>>J14
 <#
 .SYNOPSIS
     Déplace le dossier actuel d'un composant dans la sauvegarde. (J14)
@@ -1574,7 +1621,9 @@ function Backup-Component {
 
     Write-Log -Message "Sauvegarde de $Trigram vérifiée : $backupCount fichiers." -Level "OK"
 }
+#<<J14
 
+#>>J15
 <#
 .SYNOPSIS
     Installe les nouveaux fichiers d'un composant depuis le staging. (J15)
@@ -1641,7 +1690,9 @@ $($_.Exception.Message)
 
     Write-Log -Message "$Trigram a été installé correctement : $installedCount fichiers." -Level "OK"
 }
+#<<J15
 
+#>>J14
 <#
 .SYNOPSIS
     Restaure les dossiers sauvegardés, dans l'ordre inverse. (J16)
@@ -1690,6 +1741,7 @@ function Invoke-Rollback {
 
     return $allRestored
 }
+#<<J14
 
 # ============================================================
 # PROGRAMME PRINCIPAL
@@ -1710,8 +1762,9 @@ try {
     Assert-Administrator
     Assert-ServerCompatibility
 
-    Stop-SiJalonAtteint -Jalon 0 -Description "compatibilité du serveur vérifiée"
+#@FIN 0|compatibilité du serveur vérifiée
 
+#>>J1
     # --------------------------------------------------------
     # J1 - Paramètres reçus
     # --------------------------------------------------------
@@ -1737,13 +1790,13 @@ try {
     Write-Log -Message "Sans confirmation (-Force) : $Force"
     Write-Log -Message "Conserver les fichiers temporaires : $KeepTemporaryFiles"
 
-    Stop-SiJalonAtteint -Jalon 1 -Description "paramètres reçus et affichés"
+#@FIN 1|paramètres reçus et affichés
+#<<J1
 
+#>>J3
     # --------------------------------------------------------
-    # J3 (validation) puis J2 (journal)
+    # [J3] Au moins une application demandée
     # --------------------------------------------------------
-    # Le journal est créé dans <d>\deployment-logs : -d doit donc être
-    # validé avant. Le jalon 2 exécute ainsi déjà la validation de -d.
 
     if (-not ($STP -or $STX -or $STJ)) {
         throw @"
@@ -1758,6 +1811,14 @@ Exemple :
 .\download_deploy.ps1 -d "D:\Applications" -STX
 "@
     }
+#<<J3
+
+#>>J2
+    # --------------------------------------------------------
+    # [J2] Journal
+    # --------------------------------------------------------
+    # Le journal est créé dans <d>\deployment-logs : -d est donc validé
+    # dès ce jalon (lecteur, chemin complet, existence).
 
     $DestinationRoot = Get-ValidatedDestinationRoot -Path $DestinationRoot
 
@@ -1789,8 +1850,10 @@ $($_.Exception.Message)
 
     # [POINT-DE-TEST:apres-journal]
 
-    Stop-SiJalonAtteint -Jalon 2 -Description "journal créé"
+#@FIN 2|journal créé
+#<<J2
 
+#>>J3
     # --------------------------------------------------------
     # J3 - Synthèse de la demande validée
     # --------------------------------------------------------
@@ -1801,8 +1864,10 @@ $($_.Exception.Message)
     Write-Log -Message "Dossier racine valide : $DestinationRoot" -Level "OK"
     Write-Log -Message "Applications demandées : $((@('STP', 'STX', 'STJ') | Where-Object { Get-Variable -Name $_ -ValueOnly }) -join ', ')" -Level "OK"
 
-    Stop-SiJalonAtteint -Jalon 3 -Description "demande validée"
+#@FIN 3|demande validée
+#<<J3
 
+#>>J4
     # --------------------------------------------------------
     # J4 - Destinations
     # --------------------------------------------------------
@@ -1850,8 +1915,10 @@ $($_.Exception.Message)
         Write-Log -Message "Destination STJ valide : $hpcLiteDestination" -Level "OK"
     }
 
-    Stop-SiJalonAtteint -Jalon 4 -Description "destinations vérifiées"
+#@FIN 4|destinations vérifiées
+#<<J4
 
+#>>J5
     # --------------------------------------------------------
     # J5 - Source du package et variables d'environnement
     # --------------------------------------------------------
@@ -1932,8 +1999,10 @@ $PackageUrl
         Write-Log -Message "Adresse du package valide : $PackageUrl" -Level "OK"
     }
 
-    Stop-SiJalonAtteint -Jalon 5 -Description "source du package identifiée"
+#@FIN 5|source du package identifiée
+#<<J5
 
+#>>J6
     # --------------------------------------------------------
     # J6 - Téléchargement (ou copie du package local)
     # --------------------------------------------------------
@@ -1966,8 +2035,10 @@ $PackageUrl
         $tokenSetting = $null
     }
 
-    Stop-SiJalonAtteint -Jalon 6 -Description "package récupéré"
+#@FIN 6|package récupéré
+#<<J6
 
+#>>J7
     # --------------------------------------------------------
     # J7 - Extraction et contrôle du contenu
     # --------------------------------------------------------
@@ -2023,8 +2094,10 @@ $($component.PackagePath)
         Write-Log -Message "Contenu $($component.Trigram) trouvé : $fileCount fichiers." -Level "OK"
     }
 
-    Stop-SiJalonAtteint -Jalon 7 -Description "package extrait et contrôlé"
+#@FIN 7|package extrait et contrôlé
+#<<J7
 
+#>>J8
     # --------------------------------------------------------
     # J8 - Staging
     # --------------------------------------------------------
@@ -2053,8 +2126,10 @@ $($component.PackagePath)
 
     Write-Log -Message "Nouveaux exécutables présents dans le staging." -Level "OK"
 
-    Stop-SiJalonAtteint -Jalon 8 -Description "staging prêt"
+#@FIN 8|staging prêt
+#<<J8
 
+#>>J9
     # --------------------------------------------------------
     # J9 - Services Windows et processus
     # --------------------------------------------------------
@@ -2110,8 +2185,10 @@ $($component.PackagePath)
         Write-Log -Message "HpcLite Runner : $($runnerProcesses.Count) processus."
     }
 
-    Stop-SiJalonAtteint -Jalon 9 -Description "services et processus identifiés"
+#@FIN 9|services et processus identifiés
+#<<J9
 
+#>>J10
     # --------------------------------------------------------
     # J10 - IIS
     # --------------------------------------------------------
@@ -2135,8 +2212,10 @@ $($component.PackagePath)
         Write-Log -Message "API non demandée : IIS n'est pas consulté."
     }
 
-    Stop-SiJalonAtteint -Jalon 10 -Description "pool IIS consulté sans être arrêté"
+#@FIN 10|pool IIS consulté sans être arrêté
+#<<J10
 
+#>>J11
     # --------------------------------------------------------
     # J11 - État initial
     # --------------------------------------------------------
@@ -2163,10 +2242,12 @@ $($component.PackagePath)
         exit 0
     }
 
-    Stop-SiJalonAtteint -Jalon 11 -Description "état initial enregistré"
+#@FIN 11|état initial enregistré
+#<<J11
 
+#>>J12
     # --------------------------------------------------------
-    # Confirmation
+    # J12 - Confirmation
     # --------------------------------------------------------
 
     if (-not $Force) {
@@ -2194,8 +2275,10 @@ $($component.PackagePath)
     # J12 à J15 - Arrêt, sauvegarde, installation, redémarrage
     # --------------------------------------------------------
 
+#>>J14
     $backupRoot = Join-Path $DestinationRoot ".rollback\$deploymentTimestamp-$deploymentId"
 
+#<<J14
     try {
         Write-Step "[J12] Arrêt des applications"
 
@@ -2203,52 +2286,52 @@ $($component.PackagePath)
 
         # [POINT-DE-TEST:apres-arret]
 
-        Stop-SiJalonAtteint -Jalon 12 -Description "applications arrêtées"
+#@FIN 12|applications arrêtées
+#>>J14
+        Write-Step "[J14] Sauvegarde et installation"
 
-        # Le jalon 13 teste le redémarrage seul : ni sauvegarde ni installation.
-        if ($script:JalonCible -ne 13) {
-            Write-Step "[J14-J15] Sauvegarde et installation"
+        New-Item -Path $backupRoot -ItemType Directory -Force | Out-Null
 
-            New-Item -Path $backupRoot -ItemType Directory -Force | Out-Null
+        foreach ($component in $deploymentPlan) {
+            $backupPath = Join-Path $backupRoot $component.Trigram
 
-            foreach ($component in $deploymentPlan) {
-                $backupPath = Join-Path $backupRoot $component.Trigram
+            Backup-Component -Trigram $component.Trigram -Destination $component.Destination -Backup $backupPath
 
-                Backup-Component -Trigram $component.Trigram -Destination $component.Destination -Backup $backupPath
+            # [POINT-DE-TEST:apres-sauvegarde]
+#>>J15
 
-                # [POINT-DE-TEST:apres-sauvegarde]
+            Install-Component -Trigram $component.Trigram -Source $component.StagingPath -Destination $component.Destination -Backup $backupPath
 
-                # Le jalon 14 teste la sauvegarde seule : pas d'installation.
-                if ($script:JalonCible -eq 14) {
-                    continue
-                }
-
-                Install-Component -Trigram $component.Trigram -Source $component.StagingPath -Destination $component.Destination -Backup $backupPath
-
-                # [POINT-DE-TEST:apres-installation-composant]
-            }
-
-            if ($script:JalonCible -eq 14) {
-                Write-Step "[J14] Restauration des dossiers sauvegardés (test de sauvegarde)"
-
-                if (-not (Invoke-Rollback)) {
-                    throw "La restauration des dossiers sauvegardés est incomplète."
-                }
-            }
+            # [POINT-DE-TEST:apres-installation-composant]
+#<<J15
         }
 
+#>>J14-14
+        # Version du jalon 14 uniquement : la sauvegarde est vérifiée puis
+        # immédiatement restaurée (l'installation arrive au jalon 15).
+        Write-Step "[J14] Restauration des dossiers sauvegardés (test de sauvegarde)"
+
+        if (-not (Invoke-Rollback)) {
+            throw "La restauration des dossiers sauvegardés est incomplète."
+        }
+
+#<<J14-14
+#<<J14
+#>>J13
         Write-Step "[J13] Redémarrage des applications"
 
         Start-PreviouslyRunningApplications -Paths $paths -PreviousState $previousState
 
-        Stop-SiJalonAtteint -Jalon 13 -Description "applications arrêtées puis redémarrées sans changement de fichiers"
-        Stop-SiJalonAtteint -Jalon 14 -Description "sauvegarde vérifiée puis anciens dossiers restaurés"
+#@FIN 13|applications arrêtées puis redémarrées sans changement de fichiers
+#@FIN 14|sauvegarde vérifiée puis anciens dossiers restaurés
+#<<J13
     }
     catch {
         $deploymentError = $_
 
         Write-Log -Message "Le déploiement a échoué après l'arrêt des applications." -Level "ERREUR"
         Write-Log -Message $deploymentError.Exception.Message -Level "ERREUR"
+#>>J14
 
         # On arrête les éventuels nouveaux processus avant de remettre les
         # anciens fichiers.
@@ -2265,6 +2348,8 @@ $($component.PackagePath)
         if (-not $rollbackComplete) {
             Write-Log -Message "ROLLBACK INCOMPLET : intervention manuelle nécessaire. Sauvegardes : $backupRoot" -Level "ERREUR"
         }
+#<<J14
+#>>J13
 
         # On tente de remettre les applications dans leur état initial.
         try {
@@ -2272,14 +2357,17 @@ $($component.PackagePath)
             Start-PreviouslyRunningApplications -Paths $paths -PreviousState $previousState
         }
         catch {
-            Write-Log -Message "Les anciens fichiers ont été restaurés, mais le redémarrage a échoué : $($_.Exception.Message)" -Level "ERREUR"
+            Write-Log -Message "Les fichiers sont en place, mais le redémarrage a échoué : $($_.Exception.Message)" -Level "ERREUR"
         }
+#<<J13
 
         throw $deploymentError
     }
+#<<J12
 
+#>>J15
     # --------------------------------------------------------
-    # Succès
+    # J15 - Succès
     # --------------------------------------------------------
 
     Write-Host ""
@@ -2297,6 +2385,7 @@ $($component.PackagePath)
     }
 
     exit 0
+#<<J15
 }
 catch {
     Write-Host ""
@@ -2319,6 +2408,7 @@ catch {
     exit 1
 }
 finally {
+#>>J6
     if (-not [string]::IsNullOrWhiteSpace($workingDirectory) -and (Test-Path -LiteralPath $workingDirectory)) {
         if ($KeepTemporaryFiles) {
             Write-Log -Message "Les fichiers temporaires sont conservés dans : $workingDirectory" -Level "ATTENTION"
@@ -2334,4 +2424,5 @@ finally {
             }
         }
     }
+#<<J6
 }

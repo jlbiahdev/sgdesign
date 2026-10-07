@@ -42,10 +42,12 @@
       1  TEST ÉCHOUÉ   au moins une vérification a échoué
       2  NON EXÉCUTÉ   prérequis absent ou erreur de préparation
 
-    download_deploy.ps1 (ce dossier) = script de production avec
-    $script:JalonCible = 9 : il s'arrête volontairement après le jalon 9.
-    Ne jamais le modifier pour faire réussir ce test : les adaptations
-    nécessaires sont faites par le lanceur dans une copie temporaire.
+    download_deploy.ps1 (ce dossier) = version INCRÉMENTALE du jalon 9 :
+    uniquement le code des jalons 0 à 9, terminé par « TEST TERMINÉ ».
+    Code ajouté par ce jalon : ..\CHANGEMENTS.md
+    Fichier généré par _outils\Build-JalonVersions.ps1 : ne pas le modifier.
+    Les adaptations propres à ce test sont faites par le lanceur dans une
+    copie temporaire.
 #>
 
 #requires -Version 5.1

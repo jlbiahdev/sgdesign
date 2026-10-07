@@ -122,8 +122,11 @@
     Windows PowerShell 5.1 le lit en ANSI et les accents sont corrompus.
 
     Tests :
-      - $script:JalonCible (voir plus bas) arrête volontairement le script
-        après un jalon. Il vaut $null en production.
+      - Ce fichier est généré à partir de _outils\download_deploy.template.ps1.
+        Les dossiers de test contiennent des versions PARTIELLES : la version
+        du jalon N ne contient que le code des jalons 0 à N et se termine par
+        « TEST TERMINÉ ». Ne pas modifier ce fichier directement : modifier
+        le modèle puis lancer _outils\Build-JalonVersions.ps1.
       - Les commentaires « # [POINT-DE-TEST:nom] » sont de simples
         commentaires. Les lanceurs de test les remplacent, dans une COPIE
         temporaire du script, par une erreur volontaire (tests de rollback).
@@ -225,15 +228,8 @@ $IisTimeoutSeconds = 60
 # « curl » est un alias d'Invoke-WebRequest.
 $AppCmdPath = Join-Path $env:WINDIR "System32\inetsrv\appcmd.exe"
 $CurlPath = Join-Path $env:WINDIR "System32\curl.exe"
-# <<< FIN CONFIGURATION
 
-# >>> JALON CIBLE
-# Réservé aux tests : numéro du jalon après lequel le script s'arrête
-# volontairement (0 à 14). $null = exécution complète (production).
-# Les copies de ce script placées dans les dossiers de test ne diffèrent
-# de l'original QUE par cette ligne.
-$script:JalonCible = $null
-# <<< JALON CIBLE
+# <<< FIN CONFIGURATION
 
 # ============================================================
 # VARIABLES INTERNES
@@ -331,40 +327,6 @@ function Set-LogFile {
 
     $script:LogFile = $Path
     $script:PendingLogLines.Clear()
-}
-
-<#
-.SYNOPSIS
-    Arrête volontairement le script si le jalon de test ciblé est atteint.
-.DESCRIPTION
-    Sans effet en production (JalonCible vaut $null).
-    En test, termine le script avec le code 0 après avoir écrit un message
-    explicite. Le bloc finally du programme principal s'exécute quand même
-    (nettoyage du dossier de travail).
-#>
-function Stop-SiJalonAtteint {
-    param(
-        [Parameter(Mandatory = $true)] [int] $Jalon,
-        [Parameter(Mandatory = $true)] [string] $Description
-    )
-
-    if ($null -eq $script:JalonCible -or $script:JalonCible -ne $Jalon) {
-        return
-    }
-
-    Write-Log -Message "JALON $Jalon ATTEINT : $Description." -Level "ATTENTION"
-
-    if ($Jalon -lt 12) {
-        Write-Log -Message "TEST TERMINÉ : aucune application n'a été arrêtée." -Level "ATTENTION"
-    }
-    elseif ($Jalon -eq 12) {
-        Write-Log -Message "TEST TERMINÉ : les applications sélectionnées sont arrêtées et le RESTENT. Le lanceur de test doit restaurer leur état." -Level "ATTENTION"
-    }
-    else {
-        Write-Log -Message "TEST TERMINÉ : les applications ont retrouvé leur état initial." -Level "ATTENTION"
-    }
-
-    exit 0
 }
 
 # ============================================================
@@ -1710,8 +1672,6 @@ try {
     Assert-Administrator
     Assert-ServerCompatibility
 
-    Stop-SiJalonAtteint -Jalon 0 -Description "compatibilité du serveur vérifiée"
-
     # --------------------------------------------------------
     # J1 - Paramètres reçus
     # --------------------------------------------------------
@@ -1737,13 +1697,9 @@ try {
     Write-Log -Message "Sans confirmation (-Force) : $Force"
     Write-Log -Message "Conserver les fichiers temporaires : $KeepTemporaryFiles"
 
-    Stop-SiJalonAtteint -Jalon 1 -Description "paramètres reçus et affichés"
-
     # --------------------------------------------------------
-    # J3 (validation) puis J2 (journal)
+    # [J3] Au moins une application demandée
     # --------------------------------------------------------
-    # Le journal est créé dans <d>\deployment-logs : -d doit donc être
-    # validé avant. Le jalon 2 exécute ainsi déjà la validation de -d.
 
     if (-not ($STP -or $STX -or $STJ)) {
         throw @"
@@ -1758,6 +1714,12 @@ Exemple :
 .\download_deploy.ps1 -d "D:\Applications" -STX
 "@
     }
+
+    # --------------------------------------------------------
+    # [J2] Journal
+    # --------------------------------------------------------
+    # Le journal est créé dans <d>\deployment-logs : -d est donc validé
+    # dès ce jalon (lecteur, chemin complet, existence).
 
     $DestinationRoot = Get-ValidatedDestinationRoot -Path $DestinationRoot
 
@@ -1789,8 +1751,6 @@ $($_.Exception.Message)
 
     # [POINT-DE-TEST:apres-journal]
 
-    Stop-SiJalonAtteint -Jalon 2 -Description "journal créé"
-
     # --------------------------------------------------------
     # J3 - Synthèse de la demande validée
     # --------------------------------------------------------
@@ -1800,8 +1760,6 @@ $($_.Exception.Message)
     Write-Log -Message "Identifiant du déploiement : $deploymentId"
     Write-Log -Message "Dossier racine valide : $DestinationRoot" -Level "OK"
     Write-Log -Message "Applications demandées : $((@('STP', 'STX', 'STJ') | Where-Object { Get-Variable -Name $_ -ValueOnly }) -join ', ')" -Level "OK"
-
-    Stop-SiJalonAtteint -Jalon 3 -Description "demande validée"
 
     # --------------------------------------------------------
     # J4 - Destinations
@@ -1849,8 +1807,6 @@ $($_.Exception.Message)
 
         Write-Log -Message "Destination STJ valide : $hpcLiteDestination" -Level "OK"
     }
-
-    Stop-SiJalonAtteint -Jalon 4 -Description "destinations vérifiées"
 
     # --------------------------------------------------------
     # J5 - Source du package et variables d'environnement
@@ -1932,8 +1888,6 @@ $PackageUrl
         Write-Log -Message "Adresse du package valide : $PackageUrl" -Level "OK"
     }
 
-    Stop-SiJalonAtteint -Jalon 5 -Description "source du package identifiée"
-
     # --------------------------------------------------------
     # J6 - Téléchargement (ou copie du package local)
     # --------------------------------------------------------
@@ -1965,8 +1919,6 @@ $PackageUrl
 
         $tokenSetting = $null
     }
-
-    Stop-SiJalonAtteint -Jalon 6 -Description "package récupéré"
 
     # --------------------------------------------------------
     # J7 - Extraction et contrôle du contenu
@@ -2023,8 +1975,6 @@ $($component.PackagePath)
         Write-Log -Message "Contenu $($component.Trigram) trouvé : $fileCount fichiers." -Level "OK"
     }
 
-    Stop-SiJalonAtteint -Jalon 7 -Description "package extrait et contrôlé"
-
     # --------------------------------------------------------
     # J8 - Staging
     # --------------------------------------------------------
@@ -2052,8 +2002,6 @@ $($component.PackagePath)
     }
 
     Write-Log -Message "Nouveaux exécutables présents dans le staging." -Level "OK"
-
-    Stop-SiJalonAtteint -Jalon 8 -Description "staging prêt"
 
     # --------------------------------------------------------
     # J9 - Services Windows et processus
@@ -2110,8 +2058,6 @@ $($component.PackagePath)
         Write-Log -Message "HpcLite Runner : $($runnerProcesses.Count) processus."
     }
 
-    Stop-SiJalonAtteint -Jalon 9 -Description "services et processus identifiés"
-
     # --------------------------------------------------------
     # J10 - IIS
     # --------------------------------------------------------
@@ -2134,8 +2080,6 @@ $($component.PackagePath)
     else {
         Write-Log -Message "API non demandée : IIS n'est pas consulté."
     }
-
-    Stop-SiJalonAtteint -Jalon 10 -Description "pool IIS consulté sans être arrêté"
 
     # --------------------------------------------------------
     # J11 - État initial
@@ -2163,10 +2107,8 @@ $($component.PackagePath)
         exit 0
     }
 
-    Stop-SiJalonAtteint -Jalon 11 -Description "état initial enregistré"
-
     # --------------------------------------------------------
-    # Confirmation
+    # J12 - Confirmation
     # --------------------------------------------------------
 
     if (-not $Force) {
@@ -2203,46 +2145,26 @@ $($component.PackagePath)
 
         # [POINT-DE-TEST:apres-arret]
 
-        Stop-SiJalonAtteint -Jalon 12 -Description "applications arrêtées"
+        Write-Step "[J14] Sauvegarde et installation"
 
-        # Le jalon 13 teste le redémarrage seul : ni sauvegarde ni installation.
-        if ($script:JalonCible -ne 13) {
-            Write-Step "[J14-J15] Sauvegarde et installation"
+        New-Item -Path $backupRoot -ItemType Directory -Force | Out-Null
 
-            New-Item -Path $backupRoot -ItemType Directory -Force | Out-Null
+        foreach ($component in $deploymentPlan) {
+            $backupPath = Join-Path $backupRoot $component.Trigram
 
-            foreach ($component in $deploymentPlan) {
-                $backupPath = Join-Path $backupRoot $component.Trigram
+            Backup-Component -Trigram $component.Trigram -Destination $component.Destination -Backup $backupPath
 
-                Backup-Component -Trigram $component.Trigram -Destination $component.Destination -Backup $backupPath
+            # [POINT-DE-TEST:apres-sauvegarde]
 
-                # [POINT-DE-TEST:apres-sauvegarde]
+            Install-Component -Trigram $component.Trigram -Source $component.StagingPath -Destination $component.Destination -Backup $backupPath
 
-                # Le jalon 14 teste la sauvegarde seule : pas d'installation.
-                if ($script:JalonCible -eq 14) {
-                    continue
-                }
-
-                Install-Component -Trigram $component.Trigram -Source $component.StagingPath -Destination $component.Destination -Backup $backupPath
-
-                # [POINT-DE-TEST:apres-installation-composant]
-            }
-
-            if ($script:JalonCible -eq 14) {
-                Write-Step "[J14] Restauration des dossiers sauvegardés (test de sauvegarde)"
-
-                if (-not (Invoke-Rollback)) {
-                    throw "La restauration des dossiers sauvegardés est incomplète."
-                }
-            }
+            # [POINT-DE-TEST:apres-installation-composant]
         }
 
         Write-Step "[J13] Redémarrage des applications"
 
         Start-PreviouslyRunningApplications -Paths $paths -PreviousState $previousState
 
-        Stop-SiJalonAtteint -Jalon 13 -Description "applications arrêtées puis redémarrées sans changement de fichiers"
-        Stop-SiJalonAtteint -Jalon 14 -Description "sauvegarde vérifiée puis anciens dossiers restaurés"
     }
     catch {
         $deploymentError = $_
@@ -2272,14 +2194,14 @@ $($component.PackagePath)
             Start-PreviouslyRunningApplications -Paths $paths -PreviousState $previousState
         }
         catch {
-            Write-Log -Message "Les anciens fichiers ont été restaurés, mais le redémarrage a échoué : $($_.Exception.Message)" -Level "ERREUR"
+            Write-Log -Message "Les fichiers sont en place, mais le redémarrage a échoué : $($_.Exception.Message)" -Level "ERREUR"
         }
 
         throw $deploymentError
     }
 
     # --------------------------------------------------------
-    # Succès
+    # J15 - Succès
     # --------------------------------------------------------
 
     Write-Host ""

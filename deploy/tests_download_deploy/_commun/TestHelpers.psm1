@@ -669,21 +669,30 @@ function New-ScriptUnderTest {
     $text = [IO.File]::ReadAllText($source)
 
     # Valeurs appliquées, dans l'ordre : test-config, mode, demandes du test.
+    # Les versions des premiers jalons ne contiennent pas encore toutes les
+    # lignes de configuration (ex. le pool IIS arrive au jalon 10) : les
+    # valeurs de test-config et du mode test ne sont appliquées que si la
+    # ligne existe. Les valeurs demandées explicitement (-Configuration)
+    # doivent, elles, toujours exister.
     $overrides = [ordered] @{}
+    $optional  = @{}
 
     if (-not $SansAdaptation) {
         $overrides["StxApplicationPoolName"]      = ConvertTo-PsLiteral $config.PoolIis
         $overrides["TaskflowServiceName"]         = ConvertTo-PsLiteral $config.ServiceTaskflow
         $overrides["HpcLiteAgentServiceName"]     = ConvertTo-PsLiteral $config.ServiceAgent
         $overrides["HpcLiteSchedulerServiceName"] = ConvertTo-PsLiteral $config.ServiceScheduler
+        foreach ($key in @($overrides.Keys)) { $optional[$key] = $true }
     }
 
     if ($ModeExecutable) {
         $overrides["UseWindowsServices"] = '$false'
+        $optional["UseWindowsServices"] = $true
     }
 
     foreach ($key in $Configuration.Keys) {
         $overrides[$key] = $Configuration[$key]
+        $optional.Remove($key)
     }
 
     # Remplacements limités à la section CONFIGURATION.
@@ -703,6 +712,10 @@ function New-ScriptUnderTest {
     foreach ($name in $overrides.Keys) {
         $pattern = "(?m)^\`$" + [regex]::Escape($name) + "\s*=.*$"
         $count   = ([regex]::Matches($block, $pattern)).Count
+
+        if ($count -eq 0 -and $optional.ContainsKey($name)) {
+            continue
+        }
 
         if ($count -ne 1) {
             throw "PREPARATION : la ligne de configuration `$$name a été trouvée $count fois (1 attendue)."

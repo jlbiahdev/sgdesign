@@ -122,8 +122,11 @@
     Windows PowerShell 5.1 le lit en ANSI et les accents sont corrompus.
 
     Tests :
-      - $script:JalonCible (voir plus bas) arrête volontairement le script
-        après un jalon. Il vaut $null en production.
+      - Ce fichier est généré à partir de _outils\download_deploy.template.ps1.
+        Les dossiers de test contiennent des versions PARTIELLES : la version
+        du jalon N ne contient que le code des jalons 0 à N et se termine par
+        « TEST TERMINÉ ». Ne pas modifier ce fichier directement : modifier
+        le modèle puis lancer _outils\Build-JalonVersions.ps1.
       - Les commentaires « # [POINT-DE-TEST:nom] » sont de simples
         commentaires. Les lanceurs de test les remplacent, dans une COPIE
         temporaire du script, par une erreur volontaire (tests de rollback).
@@ -207,14 +210,6 @@ $TaskflowStartArguments = @()
 $HpcLiteAgentStartArguments = @()
 $HpcLiteSchedulerStartArguments = @()
 
-# Fichiers propres au serveur, conservés d'une version à l'autre.
-# Chemins relatifs au dossier du composant (<d>\taskflow, <d>\api,
-# <d>\HpcLite). Ils sont recopiés depuis la sauvegarde après installation.
-# Exemple : $PreservedRelativePathsSTJ = @("agent\appsettings.Production.json")
-$PreservedRelativePathsSTP = @()
-$PreservedRelativePathsSTX = @()
-$PreservedRelativePathsSTJ = @()
-
 # Délais maximum (secondes) pour constater un arrêt ou un démarrage.
 $ProcessTimeoutSeconds = 30
 $ServiceTimeoutSeconds = 60
@@ -225,15 +220,8 @@ $IisTimeoutSeconds = 60
 # « curl » est un alias d'Invoke-WebRequest.
 $AppCmdPath = Join-Path $env:WINDIR "System32\inetsrv\appcmd.exe"
 $CurlPath = Join-Path $env:WINDIR "System32\curl.exe"
-# <<< FIN CONFIGURATION
 
-# >>> JALON CIBLE
-# Réservé aux tests : numéro du jalon après lequel le script s'arrête
-# volontairement (0 à 14). $null = exécution complète (production).
-# Les copies de ce script placées dans les dossiers de test ne diffèrent
-# de l'original QUE par cette ligne.
-$script:JalonCible = 13
-# <<< JALON CIBLE
+# <<< FIN CONFIGURATION
 
 # ============================================================
 # VARIABLES INTERNES
@@ -245,9 +233,6 @@ $script:LogFile = $null
 # Lignes écrites avant la création du journal : elles y sont recopiées
 # dès sa création, pour que le fichier contienne tout l'historique.
 $script:PendingLogLines = [System.Collections.Generic.List[string]]::new()
-
-# Composants dont le dossier a été déplacé en sauvegarde. Sert au rollback.
-$script:ChangedComponents = [System.Collections.ArrayList]::new()
 
 # Initialisée ici pour que le bloc finally fonctionne même si l'erreur
 # survient très tôt (Set-StrictMode interdit les variables non définies).
@@ -331,40 +316,6 @@ function Set-LogFile {
 
     $script:LogFile = $Path
     $script:PendingLogLines.Clear()
-}
-
-<#
-.SYNOPSIS
-    Arrête volontairement le script si le jalon de test ciblé est atteint.
-.DESCRIPTION
-    Sans effet en production (JalonCible vaut $null).
-    En test, termine le script avec le code 0 après avoir écrit un message
-    explicite. Le bloc finally du programme principal s'exécute quand même
-    (nettoyage du dossier de travail).
-#>
-function Stop-SiJalonAtteint {
-    param(
-        [Parameter(Mandatory = $true)] [int] $Jalon,
-        [Parameter(Mandatory = $true)] [string] $Description
-    )
-
-    if ($null -eq $script:JalonCible -or $script:JalonCible -ne $Jalon) {
-        return
-    }
-
-    Write-Log -Message "JALON $Jalon ATTEINT : $Description." -Level "ATTENTION"
-
-    if ($Jalon -lt 12) {
-        Write-Log -Message "TEST TERMINÉ : aucune application n'a été arrêtée." -Level "ATTENTION"
-    }
-    elseif ($Jalon -eq 12) {
-        Write-Log -Message "TEST TERMINÉ : les applications sélectionnées sont arrêtées et le RESTENT. Le lanceur de test doit restaurer leur état." -Level "ATTENTION"
-    }
-    else {
-        Write-Log -Message "TEST TERMINÉ : les applications ont retrouvé leur état initial." -Level "ATTENTION"
-    }
-
-    exit 0
 }
 
 # ============================================================
@@ -1522,176 +1473,6 @@ function Start-PreviouslyRunningApplications {
 }
 
 # ============================================================
-# SAUVEGARDE, INSTALLATION ET ROLLBACK (J14, J15, J16)
-# ============================================================
-
-<#
-.SYNOPSIS
-    Déplace le dossier actuel d'un composant dans la sauvegarde. (J14)
-.DESCRIPTION
-    Move-Item d'un dossier ne fonctionne qu'au sein d'un même volume :
-    la sauvegarde est donc sur D:, comme la destination.
-    Le déplacement est enregistré immédiatement pour le rollback, puis le
-    nombre de fichiers sauvegardés est contrôlé.
-#>
-function Backup-Component {
-    param(
-        [Parameter(Mandatory = $true)] [string] $Trigram,
-        [Parameter(Mandatory = $true)] [string] $Destination,
-        [Parameter(Mandatory = $true)] [string] $Backup
-    )
-
-    Assert-ExistingDirectory -Path $Destination -Description "Destination du composant $Trigram"
-
-    if (Test-Path -LiteralPath $Backup) {
-        throw "Une sauvegarde existe déjà à cet emplacement, elle ne sera pas écrasée : $Backup"
-    }
-
-    $fileCount = Get-FileCount -Path $Destination
-
-    New-Item -Path (Split-Path -Parent -Path $Backup) -ItemType Directory -Force | Out-Null
-
-    Write-Log -Message "Sauvegarde de $Trigram."
-    Write-Log -Message "Ancien dossier : $Destination"
-    Write-Log -Message "Sauvegarde     : $Backup"
-
-    Move-Item -LiteralPath $Destination -Destination $Backup -ErrorAction Stop
-
-    # Enregistré immédiatement : si la suite échoue, le rollback sait quoi faire.
-    [void] $script:ChangedComponents.Add(
-        [pscustomobject] @{
-            Trigram     = $Trigram
-            Destination = $Destination
-            Backup      = $Backup
-        }
-    )
-
-    $backupCount = Get-FileCount -Path $Backup
-
-    if ($backupCount -ne $fileCount) {
-        throw "Sauvegarde de $Trigram incomplète : $backupCount fichiers sur $fileCount."
-    }
-
-    Write-Log -Message "Sauvegarde de $Trigram vérifiée : $backupCount fichiers." -Level "OK"
-}
-
-<#
-.SYNOPSIS
-    Installe les nouveaux fichiers d'un composant depuis le staging. (J15)
-.DESCRIPTION
-    Le dossier de staging (sur D:) est déplacé vers la destination, puis
-    les fichiers propres au serveur ($PreservedRelativePaths<TRI>) sont
-    recopiés depuis la sauvegarde.
-#>
-function Install-Component {
-    param(
-        [Parameter(Mandatory = $true)] [string] $Trigram,
-        [Parameter(Mandatory = $true)] [string] $Source,
-        [Parameter(Mandatory = $true)] [string] $Destination,
-        [Parameter(Mandatory = $true)] [string] $Backup
-    )
-
-    Assert-ExistingDirectory -Path $Source -Description "Staging du composant $Trigram"
-
-    $stagingCount = Get-FileCount -Path $Source
-
-    Write-Log -Message "Installation des nouveaux fichiers de $Trigram."
-
-    try {
-        Move-Item -LiteralPath $Source -Destination $Destination -ErrorAction Stop
-    }
-    catch {
-        throw @"
-Impossible d'installer les nouveaux fichiers de $Trigram.
-
-Source :
-$Source
-
-Destination :
-$Destination
-
-Détail :
-$($_.Exception.Message)
-"@
-    }
-
-    $preservedPaths = @((Get-Variable -Name "PreservedRelativePaths$Trigram" -ValueOnly))
-
-    foreach ($relativePath in $preservedPaths) {
-        if ([string]::IsNullOrWhiteSpace($relativePath)) { continue }
-
-        $preservedSource = Join-Path $Backup $relativePath
-        $preservedTarget = Join-Path $Destination $relativePath
-
-        if (Test-Path -LiteralPath $preservedSource -PathType Leaf) {
-            New-Item -Path (Split-Path -Parent $preservedTarget) -ItemType Directory -Force | Out-Null
-            Copy-Item -LiteralPath $preservedSource -Destination $preservedTarget -Force -ErrorAction Stop
-            Write-Log -Message "Fichier conservé depuis l'ancienne version : $relativePath"
-        }
-        else {
-            Write-Log -Message "Fichier à conserver absent de l'ancienne version : $relativePath" -Level "ATTENTION"
-        }
-    }
-
-    $installedCount = Get-FileCount -Path $Destination
-
-    if ($installedCount -lt $stagingCount) {
-        throw "Installation de $Trigram incomplète : $installedCount fichiers pour $stagingCount attendus."
-    }
-
-    Write-Log -Message "$Trigram a été installé correctement : $installedCount fichiers." -Level "OK"
-}
-
-<#
-.SYNOPSIS
-    Restaure les dossiers sauvegardés, dans l'ordre inverse. (J16)
-.OUTPUTS
-    $true si tout a été restauré (ou s'il n'y avait rien à restaurer),
-    $false si au moins une restauration a échoué.
-.DESCRIPTION
-    Chaque composant restauré est retiré de la liste : un second appel ne
-    refait rien. Une erreur sur un composant n'empêche pas les suivants.
-#>
-function Invoke-Rollback {
-    if ($script:ChangedComponents.Count -eq 0) {
-        Write-Log -Message "Aucun dossier n'a été remplacé. Aucun rollback nécessaire." -Level "ATTENTION"
-        return $true
-    }
-
-    Write-Step "ROLLBACK : restauration des anciens fichiers"
-
-    $allRestored = $true
-
-    for ($index = $script:ChangedComponents.Count - 1; $index -ge 0; $index--) {
-        $component = $script:ChangedComponents[$index]
-
-        try {
-            Write-Log -Message "Restauration de $($component.Trigram)."
-
-            if (-not (Test-Path -LiteralPath $component.Backup -PathType Container)) {
-                throw "Le dossier de sauvegarde est introuvable : $($component.Backup)"
-            }
-
-            if (Test-Path -LiteralPath $component.Destination) {
-                Remove-Item -LiteralPath $component.Destination -Recurse -Force -ErrorAction Stop
-            }
-
-            Move-Item -LiteralPath $component.Backup -Destination $component.Destination -ErrorAction Stop
-
-            $script:ChangedComponents.RemoveAt($index)
-
-            Write-Log -Message "$($component.Trigram) a été restauré." -Level "OK"
-        }
-        catch {
-            $allRestored = $false
-            Write-Log -Message "Échec du rollback de $($component.Trigram) : $($_.Exception.Message)" -Level "ERREUR"
-        }
-    }
-
-    return $allRestored
-}
-
-# ============================================================
 # PROGRAMME PRINCIPAL
 # ============================================================
 
@@ -1709,8 +1490,6 @@ try {
 
     Assert-Administrator
     Assert-ServerCompatibility
-
-    Stop-SiJalonAtteint -Jalon 0 -Description "compatibilité du serveur vérifiée"
 
     # --------------------------------------------------------
     # J1 - Paramètres reçus
@@ -1737,13 +1516,9 @@ try {
     Write-Log -Message "Sans confirmation (-Force) : $Force"
     Write-Log -Message "Conserver les fichiers temporaires : $KeepTemporaryFiles"
 
-    Stop-SiJalonAtteint -Jalon 1 -Description "paramètres reçus et affichés"
-
     # --------------------------------------------------------
-    # J3 (validation) puis J2 (journal)
+    # [J3] Au moins une application demandée
     # --------------------------------------------------------
-    # Le journal est créé dans <d>\deployment-logs : -d doit donc être
-    # validé avant. Le jalon 2 exécute ainsi déjà la validation de -d.
 
     if (-not ($STP -or $STX -or $STJ)) {
         throw @"
@@ -1758,6 +1533,12 @@ Exemple :
 .\download_deploy.ps1 -d "D:\Applications" -STX
 "@
     }
+
+    # --------------------------------------------------------
+    # [J2] Journal
+    # --------------------------------------------------------
+    # Le journal est créé dans <d>\deployment-logs : -d est donc validé
+    # dès ce jalon (lecteur, chemin complet, existence).
 
     $DestinationRoot = Get-ValidatedDestinationRoot -Path $DestinationRoot
 
@@ -1789,8 +1570,6 @@ $($_.Exception.Message)
 
     # [POINT-DE-TEST:apres-journal]
 
-    Stop-SiJalonAtteint -Jalon 2 -Description "journal créé"
-
     # --------------------------------------------------------
     # J3 - Synthèse de la demande validée
     # --------------------------------------------------------
@@ -1800,8 +1579,6 @@ $($_.Exception.Message)
     Write-Log -Message "Identifiant du déploiement : $deploymentId"
     Write-Log -Message "Dossier racine valide : $DestinationRoot" -Level "OK"
     Write-Log -Message "Applications demandées : $((@('STP', 'STX', 'STJ') | Where-Object { Get-Variable -Name $_ -ValueOnly }) -join ', ')" -Level "OK"
-
-    Stop-SiJalonAtteint -Jalon 3 -Description "demande validée"
 
     # --------------------------------------------------------
     # J4 - Destinations
@@ -1849,8 +1626,6 @@ $($_.Exception.Message)
 
         Write-Log -Message "Destination STJ valide : $hpcLiteDestination" -Level "OK"
     }
-
-    Stop-SiJalonAtteint -Jalon 4 -Description "destinations vérifiées"
 
     # --------------------------------------------------------
     # J5 - Source du package et variables d'environnement
@@ -1932,8 +1707,6 @@ $PackageUrl
         Write-Log -Message "Adresse du package valide : $PackageUrl" -Level "OK"
     }
 
-    Stop-SiJalonAtteint -Jalon 5 -Description "source du package identifiée"
-
     # --------------------------------------------------------
     # J6 - Téléchargement (ou copie du package local)
     # --------------------------------------------------------
@@ -1965,8 +1738,6 @@ $PackageUrl
 
         $tokenSetting = $null
     }
-
-    Stop-SiJalonAtteint -Jalon 6 -Description "package récupéré"
 
     # --------------------------------------------------------
     # J7 - Extraction et contrôle du contenu
@@ -2023,8 +1794,6 @@ $($component.PackagePath)
         Write-Log -Message "Contenu $($component.Trigram) trouvé : $fileCount fichiers." -Level "OK"
     }
 
-    Stop-SiJalonAtteint -Jalon 7 -Description "package extrait et contrôlé"
-
     # --------------------------------------------------------
     # J8 - Staging
     # --------------------------------------------------------
@@ -2052,8 +1821,6 @@ $($component.PackagePath)
     }
 
     Write-Log -Message "Nouveaux exécutables présents dans le staging." -Level "OK"
-
-    Stop-SiJalonAtteint -Jalon 8 -Description "staging prêt"
 
     # --------------------------------------------------------
     # J9 - Services Windows et processus
@@ -2110,8 +1877,6 @@ $($component.PackagePath)
         Write-Log -Message "HpcLite Runner : $($runnerProcesses.Count) processus."
     }
 
-    Stop-SiJalonAtteint -Jalon 9 -Description "services et processus identifiés"
-
     # --------------------------------------------------------
     # J10 - IIS
     # --------------------------------------------------------
@@ -2134,8 +1899,6 @@ $($component.PackagePath)
     else {
         Write-Log -Message "API non demandée : IIS n'est pas consulté."
     }
-
-    Stop-SiJalonAtteint -Jalon 10 -Description "pool IIS consulté sans être arrêté"
 
     # --------------------------------------------------------
     # J11 - État initial
@@ -2163,10 +1926,8 @@ $($component.PackagePath)
         exit 0
     }
 
-    Stop-SiJalonAtteint -Jalon 11 -Description "état initial enregistré"
-
     # --------------------------------------------------------
-    # Confirmation
+    # J12 - Confirmation
     # --------------------------------------------------------
 
     if (-not $Force) {
@@ -2194,8 +1955,6 @@ $($component.PackagePath)
     # J12 à J15 - Arrêt, sauvegarde, installation, redémarrage
     # --------------------------------------------------------
 
-    $backupRoot = Join-Path $DestinationRoot ".rollback\$deploymentTimestamp-$deploymentId"
-
     try {
         Write-Step "[J12] Arrêt des applications"
 
@@ -2203,46 +1962,14 @@ $($component.PackagePath)
 
         # [POINT-DE-TEST:apres-arret]
 
-        Stop-SiJalonAtteint -Jalon 12 -Description "applications arrêtées"
-
-        # Le jalon 13 teste le redémarrage seul : ni sauvegarde ni installation.
-        if ($script:JalonCible -ne 13) {
-            Write-Step "[J14-J15] Sauvegarde et installation"
-
-            New-Item -Path $backupRoot -ItemType Directory -Force | Out-Null
-
-            foreach ($component in $deploymentPlan) {
-                $backupPath = Join-Path $backupRoot $component.Trigram
-
-                Backup-Component -Trigram $component.Trigram -Destination $component.Destination -Backup $backupPath
-
-                # [POINT-DE-TEST:apres-sauvegarde]
-
-                # Le jalon 14 teste la sauvegarde seule : pas d'installation.
-                if ($script:JalonCible -eq 14) {
-                    continue
-                }
-
-                Install-Component -Trigram $component.Trigram -Source $component.StagingPath -Destination $component.Destination -Backup $backupPath
-
-                # [POINT-DE-TEST:apres-installation-composant]
-            }
-
-            if ($script:JalonCible -eq 14) {
-                Write-Step "[J14] Restauration des dossiers sauvegardés (test de sauvegarde)"
-
-                if (-not (Invoke-Rollback)) {
-                    throw "La restauration des dossiers sauvegardés est incomplète."
-                }
-            }
-        }
-
         Write-Step "[J13] Redémarrage des applications"
 
         Start-PreviouslyRunningApplications -Paths $paths -PreviousState $previousState
 
-        Stop-SiJalonAtteint -Jalon 13 -Description "applications arrêtées puis redémarrées sans changement de fichiers"
-        Stop-SiJalonAtteint -Jalon 14 -Description "sauvegarde vérifiée puis anciens dossiers restaurés"
+        # ---- Fin de la version du jalon 13 (générée par Build-JalonVersions.ps1) ----
+        Write-Log -Message "JALON 13 ATTEINT : applications arrêtées puis redémarrées sans changement de fichiers." -Level "ATTENTION"
+        Write-Log -Message "TEST TERMINÉ : les applications ont retrouvé leur état initial." -Level "ATTENTION"
+        exit 0
     }
     catch {
         $deploymentError = $_
@@ -2250,53 +1977,18 @@ $($component.PackagePath)
         Write-Log -Message "Le déploiement a échoué après l'arrêt des applications." -Level "ERREUR"
         Write-Log -Message $deploymentError.Exception.Message -Level "ERREUR"
 
-        # On arrête les éventuels nouveaux processus avant de remettre les
-        # anciens fichiers.
-        try {
-            Write-Log -Message "Arrêt des applications avant le rollback." -Level "ATTENTION"
-            Stop-SelectedApplications -Paths $paths
-        }
-        catch {
-            Write-Log -Message "Certaines applications n'ont pas pu être arrêtées avant le rollback : $($_.Exception.Message)" -Level "ERREUR"
-        }
-
-        $rollbackComplete = Invoke-Rollback
-
-        if (-not $rollbackComplete) {
-            Write-Log -Message "ROLLBACK INCOMPLET : intervention manuelle nécessaire. Sauvegardes : $backupRoot" -Level "ERREUR"
-        }
-
         # On tente de remettre les applications dans leur état initial.
         try {
             Write-Step "Redémarrage après rollback"
             Start-PreviouslyRunningApplications -Paths $paths -PreviousState $previousState
         }
         catch {
-            Write-Log -Message "Les anciens fichiers ont été restaurés, mais le redémarrage a échoué : $($_.Exception.Message)" -Level "ERREUR"
+            Write-Log -Message "Les fichiers sont en place, mais le redémarrage a échoué : $($_.Exception.Message)" -Level "ERREUR"
         }
 
         throw $deploymentError
     }
 
-    # --------------------------------------------------------
-    # Succès
-    # --------------------------------------------------------
-
-    Write-Host ""
-    Write-Host ("=" * 60) -ForegroundColor Green
-    Write-Host "DÉPLOIEMENT TERMINÉ AVEC SUCCÈS" -ForegroundColor Green
-    Write-Host ("=" * 60) -ForegroundColor Green
-
-    Write-Log -Message "Déploiement terminé avec succès." -Level "OK"
-    Write-Log -Message "Sauvegarde disponible dans : $backupRoot"
-    Write-Log -Message "Journal disponible dans : $($script:LogFile)"
-
-    if ($STJ -and $previousState.RunnerCountBefore -gt 0) {
-        Write-Log -Message "$($previousState.RunnerCountBefore) Runner(s) ont été arrêtés brutalement." -Level "ATTENTION"
-        Write-Log -Message "Ils n'ont pas été redémarrés directement par le script." -Level "ATTENTION"
-    }
-
-    exit 0
 }
 catch {
     Write-Host ""
