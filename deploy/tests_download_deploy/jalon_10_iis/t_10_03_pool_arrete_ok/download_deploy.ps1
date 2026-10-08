@@ -122,11 +122,11 @@
     Windows PowerShell 5.1 le lit en ANSI et les accents sont corrompus.
 
     Tests :
-      - Ce fichier est généré à partir de _outils\download_deploy.template.ps1.
+      - Ce fichier est généré à partir de _tools\download_deploy.template.ps1.
         Les dossiers de test contiennent des versions PARTIELLES : la version
         du jalon N ne contient que le code des jalons 0 à N et se termine par
         « TEST TERMINÉ ». Ne pas modifier ce fichier directement : modifier
-        le modèle puis lancer _outils\Build-JalonVersions.ps1.
+        le modèle puis lancer _tools\Build-JalonVersions.ps1.
       - Les commentaires « # [POINT-DE-TEST:nom] » sont de simples
         commentaires. Les lanceurs de test les remplacent, dans une COPIE
         temporaire du script, par une erreur volontaire (tests de rollback).
@@ -178,7 +178,7 @@ $RequiredDrive = "D:\"
 $StxApplicationPoolName = "STYX"
 
 # Exécutable Taskflow, relatif à <d>\taskflow. Une seule instance autorisée.
-$TaskflowExecutableRelativePath = "Taskflow.exe"
+$TaskflowExecutableRelativePath = "Socgen.TaskFlow.Runner.exe"
 
 # Dossiers HpcLite, relatifs à <d>\HpcLite.
 $HpcLiteAgentFolder = "agent"
@@ -186,9 +186,9 @@ $HpcLiteRunnerFolder = "runner"
 $HpcLiteSchedulerFolder = "scheduler"
 
 # Exécutables HpcLite, relatifs à leur dossier.
-$HpcLiteAgentExecutableName = "HpcLite.Agent.exe"
-$HpcLiteRunnerExecutableName = "HpcLite.Runner.exe"
-$HpcLiteSchedulerExecutableName = "HpcLite.Scheduler.exe"
+$HpcLiteAgentExecutableName = "Styx.HpcLite.Agent.exe"
+$HpcLiteRunnerExecutableName = "Styx.HpcLite.Runner.exe"
+$HpcLiteSchedulerExecutableName = "Styx.HpcLite.Scheduler.exe"
 
 # $true  : production. Taskflow, l'Agent et le Scheduler sont pilotés par
 #          le gestionnaire de services (Stop-Service / Start-Service).
@@ -199,11 +199,11 @@ $HpcLiteSchedulerExecutableName = "HpcLite.Scheduler.exe"
 $UseWindowsServices = $true
 
 # Noms des services Windows (colonne « Nom du service » de services.msc).
-# Attention : « TaskFlow Runner » est le service de Taskflow (STP), à ne
+# Attention : « TaskFlow.Runner » est le service de Taskflow (STP), à ne
 # pas confondre avec les Runners HpcLite.
-$TaskflowServiceName = "TaskFlow Runner"
-$HpcLiteAgentServiceName = "HpcLite Agent"
-$HpcLiteSchedulerServiceName = "HpcLite Scheduler"
+$TaskflowServiceName = "TaskFlow.Runner"
+$HpcLiteAgentServiceName = "HpcLite.Agent"
+$HpcLiteSchedulerServiceName = "HpcLite.Scheduler"
 
 # Outils Windows utilisés.
 # curl.exe est appelé explicitement : dans Windows PowerShell 5.1,
@@ -947,15 +947,26 @@ $($_.Exception.Message)
             $entryName = [Uri]::UnescapeDataString($entry.FullName)
 
             # Les entrées terminées par "/" sont des dossiers.
-            if ($entryName.EndsWith("/") -or $entryName.EndsWith("\")) {
+            $isDirectory  = $entryName.EndsWith("/") -or $entryName.EndsWith("\")
+            $relativePath = $entryName.TrimEnd("/", "\").Replace("/", "\")
+
+            if ([string]::IsNullOrWhiteSpace($relativePath)) {
                 continue
             }
 
-            $relativePath = $entryName.Replace("/", "\")
-            $targetPath   = [IO.Path]::GetFullPath((Join-Path $Destination $relativePath))
+            $targetPath = [IO.Path]::GetFullPath((Join-Path $Destination $relativePath))
 
+            # Contrôle appliqué aux fichiers ET aux dossiers.
             if (-not $targetPath.StartsWith($destinationFull, [StringComparison]::OrdinalIgnoreCase)) {
                 throw "Entrée suspecte dans le package (chemin hors du dossier d'extraction) : $entryName"
+            }
+
+            # Un dossier vide du package est recréé tel quel : un contenu
+            # vide est ainsi signalé « vide » (et non « introuvable ») au
+            # contrôle du contenu.
+            if ($isDirectory) {
+                New-Item -Path $targetPath -ItemType Directory -Force | Out-Null
+                continue
             }
 
             New-Item -Path (Split-Path -Parent -Path $targetPath) -ItemType Directory -Force | Out-Null

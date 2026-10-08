@@ -11,9 +11,10 @@
     PRÉCONDITIONS
 
         - Console Windows PowerShell 5.1 ouverte en tant qu'administrateur.
-        - Lecteur D: disponible ; _commun\test-config.psd1 renseigné.
-        - Services Windows « TaskFlow Runner », « HpcLite Agent », « HpcLite
-          Scheduler » installés.
+        - Lecteur D: disponible ; _common\test-config.psd1 renseigné.
+        - Services Windows de test (ServiceTaskflow, ServiceAgent,
+          ServiceScheduler de test-config.psd1) installés et pointant vers
+          D:\Styx-Test.
         - Les trois services Windows existent (ils pointent vers RacineReelle,
           pas vers la racine factice).
 
@@ -48,7 +49,7 @@
     download_deploy.ps1 (ce dossier) = version INCRÉMENTALE du jalon 9 :
     uniquement le code des jalons 0 à 9, terminé par « TEST TERMINÉ ».
     Code ajouté par ce jalon : ..\CHANGEMENTS.md
-    Fichier généré par _outils\Build-JalonVersions.ps1 : ne pas le modifier.
+    Fichier généré par _tools\Build-JalonVersions.ps1 : ne pas le modifier.
     Les adaptations propres à ce test sont faites par le lanceur dans une
     copie temporaire.
 #>
@@ -59,7 +60,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 # Boîte à outils commune (préparation, exécution, vérifications, nettoyage).
-Import-Module (Join-Path $PSScriptRoot "..\..\_commun\TestHelpers.psm1") -Force
+Import-Module (Join-Path $PSScriptRoot "..\..\_common\TestHelpers.psm1") -Force
 
 try {
     # En-tête et prérequis. Un prérequis absent lève « PREREQUIS : ... » :

@@ -122,11 +122,11 @@
     Windows PowerShell 5.1 le lit en ANSI et les accents sont corrompus.
 
     Tests :
-      - Ce fichier est généré à partir de _outils\download_deploy.template.ps1.
+      - Ce fichier est généré à partir de _tools\download_deploy.template.ps1.
         Les dossiers de test contiennent des versions PARTIELLES : la version
         du jalon N ne contient que le code des jalons 0 à N et se termine par
         « TEST TERMINÉ ». Ne pas modifier ce fichier directement : modifier
-        le modèle puis lancer _outils\Build-JalonVersions.ps1.
+        le modèle puis lancer _tools\Build-JalonVersions.ps1.
       - Les commentaires « # [POINT-DE-TEST:nom] » sont de simples
         commentaires. Les lanceurs de test les remplacent, dans une COPIE
         temporaire du script, par une erreur volontaire (tests de rollback).

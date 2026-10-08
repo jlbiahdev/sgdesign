@@ -10,7 +10,7 @@
     PRÉCONDITIONS
 
         - Console Windows PowerShell 5.1 ouverte en tant qu'administrateur.
-        - Lecteur D: disponible ; _commun\test-config.psd1 renseigné.
+        - Lecteur D: disponible ; _common\test-config.psd1 renseigné.
         - IIS installé (appcmd.exe).
 
     ÉTAPES
@@ -41,7 +41,7 @@
     download_deploy.ps1 (ce dossier) = version INCRÉMENTALE du jalon 4 :
     uniquement le code des jalons 0 à 4, terminé par « TEST TERMINÉ ».
     Code ajouté par ce jalon : ..\CHANGEMENTS.md
-    Fichier généré par _outils\Build-JalonVersions.ps1 : ne pas le modifier.
+    Fichier généré par _tools\Build-JalonVersions.ps1 : ne pas le modifier.
     Les adaptations propres à ce test sont faites par le lanceur dans une
     copie temporaire.
 #>
@@ -52,7 +52,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 # Boîte à outils commune (préparation, exécution, vérifications, nettoyage).
-Import-Module (Join-Path $PSScriptRoot "..\..\_commun\TestHelpers.psm1") -Force
+Import-Module (Join-Path $PSScriptRoot "..\..\_common\TestHelpers.psm1") -Force
 
 try {
     # En-tête et prérequis. Un prérequis absent lève « PREREQUIS : ... » :

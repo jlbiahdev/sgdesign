@@ -1,6 +1,6 @@
 ﻿# Jalon 0 - code ajouté
 
-Fichier généré par `_outils\Build-JalonVersions.ps1`. Ne pas modifier.
+Fichier généré par `_tools\Build-JalonVersions.ps1`. Ne pas modifier.
 
 | | |
 |---|---|

@@ -1,11 +1,11 @@
 ﻿# Jalon 9 - code ajouté
 
-Fichier généré par `_outils\Build-JalonVersions.ps1`. Ne pas modifier.
+Fichier généré par `_tools\Build-JalonVersions.ps1`. Ne pas modifier.
 
 | | |
 |---|---|
-| Lignes de la version du jalon 9 | 1386 |
-| Lignes de la version précédente | 1138 |
+| Lignes de la version du jalon 9 | 1397 |
+| Lignes de la version précédente | 1149 |
 | Lignes ajoutées par ce jalon | 234 |
 | Lignes retirées par ce jalon | 0 |
 
@@ -25,11 +25,11 @@ La version se termine par le bloc « JALON 9 ATTEINT / TEST TERMINÉ » (non rep
 $UseWindowsServices = $true
 
 # Noms des services Windows (colonne « Nom du service » de services.msc).
-# Attention : « TaskFlow Runner » est le service de Taskflow (STP), à ne
+# Attention : « TaskFlow.Runner » est le service de Taskflow (STP), à ne
 # pas confondre avec les Runners HpcLite.
-$TaskflowServiceName = "TaskFlow Runner"
-$HpcLiteAgentServiceName = "HpcLite Agent"
-$HpcLiteSchedulerServiceName = "HpcLite Scheduler"
+$TaskflowServiceName = "TaskFlow.Runner"
+$HpcLiteAgentServiceName = "HpcLite.Agent"
+$HpcLiteSchedulerServiceName = "HpcLite.Scheduler"
 ```
 
 ### Fonction Get-ProcessesByExecutablePath

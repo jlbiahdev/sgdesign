@@ -183,7 +183,7 @@ $StxApplicationPoolName = "STYX"
 
 #>>J4
 # Exécutable Taskflow, relatif à <d>\taskflow. Une seule instance autorisée.
-$TaskflowExecutableRelativePath = "Taskflow.exe"
+$TaskflowExecutableRelativePath = "Socgen.TaskFlow.Runner.exe"
 
 # Dossiers HpcLite, relatifs à <d>\HpcLite.
 $HpcLiteAgentFolder = "agent"
@@ -191,9 +191,9 @@ $HpcLiteRunnerFolder = "runner"
 $HpcLiteSchedulerFolder = "scheduler"
 
 # Exécutables HpcLite, relatifs à leur dossier.
-$HpcLiteAgentExecutableName = "HpcLite.Agent.exe"
-$HpcLiteRunnerExecutableName = "HpcLite.Runner.exe"
-$HpcLiteSchedulerExecutableName = "HpcLite.Scheduler.exe"
+$HpcLiteAgentExecutableName = "Styx.HpcLite.Agent.exe"
+$HpcLiteRunnerExecutableName = "Styx.HpcLite.Runner.exe"
+$HpcLiteSchedulerExecutableName = "Styx.HpcLite.Scheduler.exe"
 #<<J4
 
 #>>J9
@@ -206,11 +206,11 @@ $HpcLiteSchedulerExecutableName = "HpcLite.Scheduler.exe"
 $UseWindowsServices = $true
 
 # Noms des services Windows (colonne « Nom du service » de services.msc).
-# Attention : « TaskFlow Runner » est le service de Taskflow (STP), à ne
+# Attention : « TaskFlow.Runner » est le service de Taskflow (STP), à ne
 # pas confondre avec les Runners HpcLite.
-$TaskflowServiceName = "TaskFlow Runner"
-$HpcLiteAgentServiceName = "HpcLite Agent"
-$HpcLiteSchedulerServiceName = "HpcLite Scheduler"
+$TaskflowServiceName = "TaskFlow.Runner"
+$HpcLiteAgentServiceName = "HpcLite.Agent"
+$HpcLiteSchedulerServiceName = "HpcLite.Scheduler"
 #<<J9
 
 #>>J13

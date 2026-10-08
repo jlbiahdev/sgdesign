@@ -1,12 +1,12 @@
 ﻿# Jalon 7 - code ajouté
 
-Fichier généré par `_outils\Build-JalonVersions.ps1`. Ne pas modifier.
+Fichier généré par `_tools\Build-JalonVersions.ps1`. Ne pas modifier.
 
 | | |
 |---|---|
-| Lignes de la version du jalon 7 | 1083 |
+| Lignes de la version du jalon 7 | 1094 |
 | Lignes de la version précédente | 952 |
-| Lignes ajoutées par ce jalon | 129 |
+| Lignes ajoutées par ce jalon | 140 |
 | Lignes retirées par ce jalon | 0 |
 
 La version se termine par le bloc « JALON 7 ATTEINT / TEST TERMINÉ » (non repris ci-dessous).
@@ -72,15 +72,26 @@ $($_.Exception.Message)
             $entryName = [Uri]::UnescapeDataString($entry.FullName)
 
             # Les entrées terminées par "/" sont des dossiers.
-            if ($entryName.EndsWith("/") -or $entryName.EndsWith("\")) {
+            $isDirectory  = $entryName.EndsWith("/") -or $entryName.EndsWith("\")
+            $relativePath = $entryName.TrimEnd("/", "\").Replace("/", "\")
+
+            if ([string]::IsNullOrWhiteSpace($relativePath)) {
                 continue
             }
 
-            $relativePath = $entryName.Replace("/", "\")
-            $targetPath   = [IO.Path]::GetFullPath((Join-Path $Destination $relativePath))
+            $targetPath = [IO.Path]::GetFullPath((Join-Path $Destination $relativePath))
 
+            # Contrôle appliqué aux fichiers ET aux dossiers.
             if (-not $targetPath.StartsWith($destinationFull, [StringComparison]::OrdinalIgnoreCase)) {
                 throw "Entrée suspecte dans le package (chemin hors du dossier d'extraction) : $entryName"
+            }
+
+            # Un dossier vide du package est recréé tel quel : un contenu
+            # vide est ainsi signalé « vide » (et non « introuvable ») au
+            # contrôle du contenu.
+            if ($isDirectory) {
+                New-Item -Path $targetPath -ItemType Directory -Force | Out-Null
+                continue
             }
 
             New-Item -Path (Split-Path -Parent -Path $targetPath) -ItemType Directory -Force | Out-Null

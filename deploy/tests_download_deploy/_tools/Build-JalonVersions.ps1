@@ -6,7 +6,7 @@
     incrémentale de download_deploy.ps1 propre à chaque jalon.
 
 .DESCRIPTION
-    Source unique : _outils\download_deploy.template.ps1
+    Source unique : _tools\download_deploy.template.ps1
 
     Le modèle est le script complet, découpé par balises (lignes commençant
     en colonne 0 par le caractère dièse, retirées de toutes les versions
@@ -38,10 +38,10 @@
       - les versions 15 à 19 sont identiques au script de production.
 
 .PARAMETER Racine
-    Dossier tests_download_deploy. Par défaut : le dossier parent de _outils.
+    Dossier tests_download_deploy. Par défaut : le dossier parent de _tools.
 
 .EXAMPLE
-    .\_outils\Build-JalonVersions.ps1
+    .\_tools\Build-JalonVersions.ps1
 
 .NOTES
     À relancer après TOUTE modification du modèle. Ne jamais modifier à la
@@ -275,7 +275,7 @@ for ($n = 0; $n -le 19; $n++) {
     $doc = New-Object System.Collections.Generic.List[string]
     $doc.Add("# Jalon $n - code ajouté")
     $doc.Add("")
-    $doc.Add("Fichier généré par ``_outils\Build-JalonVersions.ps1``. Ne pas modifier.")
+    $doc.Add("Fichier généré par ``_tools\Build-JalonVersions.ps1``. Ne pas modifier.")
     $doc.Add("")
     $doc.Add("| | |")
     $doc.Add("|---|---|")

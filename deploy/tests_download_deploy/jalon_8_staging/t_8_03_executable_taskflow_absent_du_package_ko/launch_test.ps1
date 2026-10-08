@@ -5,17 +5,17 @@
 .DESCRIPTION
     OBJECTIF
 
-        Un package sans Taskflow.exe est refusé avant tout arrêt.
+        Un package sans exécutable Taskflow est refusé avant tout arrêt.
 
     PRÉCONDITIONS
 
         - Console Windows PowerShell 5.1 ouverte en tant qu'administrateur.
-        - Lecteur D: disponible ; _commun\test-config.psd1 renseigné.
+        - Lecteur D: disponible ; _common\test-config.psd1 renseigné.
 
     ÉTAPES
 
         1. Créer un environnement factice.
-        2. Créer un package sans content/taskflow/Taskflow.exe.
+        2. Créer un package sans content/taskflow/<ExecutableTaskflow>.
         3. Exécuter : download_deploy.ps1 -d <racine factice> -STP
            -PackageFile <package>
 
@@ -42,7 +42,7 @@
     download_deploy.ps1 (ce dossier) = version INCRÉMENTALE du jalon 8 :
     uniquement le code des jalons 0 à 8, terminé par « TEST TERMINÉ ».
     Code ajouté par ce jalon : ..\CHANGEMENTS.md
-    Fichier généré par _outils\Build-JalonVersions.ps1 : ne pas le modifier.
+    Fichier généré par _tools\Build-JalonVersions.ps1 : ne pas le modifier.
     Les adaptations propres à ce test sont faites par le lanceur dans une
     copie temporaire.
 #>
@@ -53,20 +53,20 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 # Boîte à outils commune (préparation, exécution, vérifications, nettoyage).
-Import-Module (Join-Path $PSScriptRoot "..\..\_commun\TestHelpers.psm1") -Force
+Import-Module (Join-Path $PSScriptRoot "..\..\_common\TestHelpers.psm1") -Force
 
 try {
     # En-tête et prérequis. Un prérequis absent lève « PREREQUIS : ... » :
     # le corps du test n'est pas exécuté et le verdict sera NON EXÉCUTÉ.
     Start-Test -ScenarioRoot $PSScriptRoot `
         -Jalon 8 `
-        -Objectif "Un package sans Taskflow.exe est refusé avant tout arrêt." `
+        -Objectif "Un package sans exécutable Taskflow est refusé avant tout arrêt." `
         -ResultatAttendu "Échec contrôlé" `
         -CodeAttendu 1
 
     # --- Préparation ---
     $fake = New-FakeEnvironment
-    $package = New-TestPackage -EntreesOmises @("content/taskflow/Taskflow.exe")
+    $package = New-TestPackage -EntreesOmises @("content/taskflow/$((Get-TestConfig).ExecutableTaskflow)")
     $scriptUnderTest = New-ScriptUnderTest
 
     # --- Exécution ---

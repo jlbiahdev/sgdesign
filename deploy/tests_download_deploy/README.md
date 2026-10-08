@@ -48,10 +48,11 @@ tests_download_deploy\
 ├── README.md                  ce fichier
 ├── download_deploy.ps1        LE script de déploiement (version de production, générée)
 ├── run_jalon.ps1              lance tous les scénarios d'un jalon + bilan
-├── _outils\
+├── _tools\
 │   ├── download_deploy.template.ps1   SOURCE unique du script, balisée par jalon
-│   └── Build-JalonVersions.ps1        génère la production et les versions par jalon
-├── _commun\
+│   ├── Build-JalonVersions.ps1        génère la production et les versions par jalon
+│   └── New-FakeStyxTest.ps1           binaires factices + services de test (D:\Styx-Test)
+├── _common\
 │   ├── TestHelpers.psm1       boîte à outils commune à tous les tests
 │   └── test-config.psd1       configuration de la machine de test (à adapter)
 ├── jalon_0_compatibilite_serveur\
@@ -102,7 +103,7 @@ ce code ajouté, pour que la relecture porte sur l'incrément. Les versions des 
 à 19 sont identiques au script de production.
 
 Toutes ces versions sont **générées** à partir d'une source unique,
-`_outils\download_deploy.template.ps1`. C'est le script complet, découpé par des
+`_tools\download_deploy.template.ps1`. C'est le script complet, découpé par des
 balises de jalon (voir §9). Le script de production à la racine est lui aussi généré
 depuis cette source : les versions incrémentales et la production ne peuvent donc pas
 diverger.
@@ -163,7 +164,7 @@ s'arrête au statut « non exécuté » : un test ne tourne jamais sur un script
 ### Structure d'un lanceur
 
 ```powershell
-Import-Module ..\..\_commun\TestHelpers.psm1
+Import-Module ..\..\_common\TestHelpers.psm1
 try {
     Start-Test ...                    # en-tête, prérequis, dossier de travail
     # --- Préparation ---             # environnement factice, package, copie adaptée
@@ -198,16 +199,16 @@ Si l'exécution de scripts est bloquée, pour la session courante seulement :
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 ```
 
-### 3.2 Renseigner `_commun\test-config.psd1`
+### 3.2 Renseigner `_common\test-config.psd1`
 
 | Clé | Valeur par défaut | Rôle |
 |---|---|---|
 | `RacineTestsAuto` | `D:\Styx-Tests-Auto` | environnements factices (doit être sous `D:\`, sans donnée utile) |
 | `RacineReelle` | `D:\Styx-Test` | environnement réel de test |
 | `RacineProduction` | `D:\Applications` | garde-fou + jalon 19 |
-| `ServiceTaskflow` / `ServiceAgent` / `ServiceScheduler` | `TaskFlow Runner` / `HpcLite Agent` / `HpcLite Scheduler` | noms des services |
+| `ServiceTaskflow` / `ServiceAgent` / `ServiceScheduler` | `TaskFlow.Runner.Test` / `HpcLite.Agent.Test` / `HpcLite.Scheduler.Test` | services de **test** (différents de ceux de production) |
 | `PoolIis` | `STYX` | pool IIS de l'API sur la machine de test |
-| `Executable*` | `Taskflow.exe`, `HpcLite.*.exe` | noms des exécutables |
+| `Executable*` | `Socgen.TaskFlow.Runner.exe`, `Styx.HpcLite.{Agent,Runner,Scheduler}.exe` | noms des exécutables (identiques au script) |
 | `PackageReel` | `D:\Styx-Test-Packages\Styx.Publish.nupkg` | vrai package (jalons 15 à 18) |
 | `UrlPackageReel` | *(vide)* | URL Artifactory d'un vrai package (jalon 6) |
 
@@ -215,13 +216,24 @@ Aucun secret dans ce fichier.
 
 ### 3.3 Environnement réel de test (jalons 9 à 18)
 
-1. Installer les **vrais binaires** sous `D:\Styx-Test\taskflow`, `\api` et
-   `\HpcLite\{agent, runner, scheduler}`.
-2. Les trois services Windows doivent exécuter **ces** binaires. Pour le vérifier :
+1. Installer les binaires sous `D:\Styx-Test\taskflow`, `\api` et
+   `\HpcLite\{agent, runner, scheduler}`, et créer les trois services de **test**.
+   Le plus simple, en console administrateur :
+
+   ```powershell
+   .\_tools\New-FakeStyxTest.ps1
+   ```
+
+   Ce script compile un binaire **factice** (il attend sans rien faire, et sait se
+   comporter en service Windows), le copie sous les noms `Executable*` et crée les
+   services `Service*` de `test-config.psd1` en démarrage manuel. Il refuse de
+   toucher à un service existant qui pointe hors de `D:\Styx-Test` (production).
+   Les vrais binaires remplaceront les factices quand ils seront nécessaires.
+2. Les trois services de test doivent exécuter les binaires de `D:\Styx-Test`. Pour le vérifier :
 
    ```powershell
    Get-CimInstance Win32_Service |
-       Where-Object Name -in "TaskFlow Runner", "HpcLite Agent", "HpcLite Scheduler" |
+       Where-Object Name -in "TaskFlow.Runner.Test", "HpcLite.Agent.Test", "HpcLite.Scheduler.Test" |
        Select-Object Name, State, PathName
    ```
 
@@ -403,7 +415,7 @@ endroit, peut donc réussir.
    `t_X_YY_description_ok|ko` : pas d'espace, pas d'accent.
 2. Ne **pas** toucher à son `download_deploy.ps1` : il est généré.
 3. Adapter l'en-tête et le corps de `launch_test.ps1`. Les briques disponibles sont
-   documentées dans `_commun\TestHelpers.psm1` (`Get-Help` fonctionne sur chaque
+   documentées dans `_common\TestHelpers.psm1` (`Get-Help` fonctionne sur chaque
    fonction) :
    - préparation : `New-FakeEnvironment`, `New-TestPackage`, `New-PackageFromReal`,
      `New-CorruptPackage`, `New-ScriptUnderTest`, `Start-FakeProcess`,
@@ -419,7 +431,7 @@ endroit, peut donc réussir.
 
 Ne jamais modifier un `download_deploy.ps1` généré : la modification serait écrasée.
 
-1. Modifier `_outils\download_deploy.template.ps1`.
+1. Modifier `_tools\download_deploy.template.ps1`.
 2. Placer le nouveau code dans la région du jalon qui l'introduit. Les balises sont des
    lignes qui commencent en colonne 0 :
 
@@ -432,7 +444,7 @@ Ne jamais modifier un `download_deploy.ps1` généré : la modification serait �
 3. Régénérer :
 
    ```powershell
-   .\_outils\Build-JalonVersions.ps1
+   .\_tools\Build-JalonVersions.ps1
    ```
 
    Le script réécrit `download_deploy.ps1` à la racine et dans chaque scénario, ainsi que

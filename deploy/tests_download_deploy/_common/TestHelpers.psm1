@@ -7,7 +7,7 @@
 .DESCRIPTION
     Chaque launch_test.ps1 suit le même schéma :
 
-        Import-Module ..\..\_commun\TestHelpers.psm1
+        Import-Module ..\..\_common\TestHelpers.psm1
         Start-Test ...                 # en-tête, prérequis, dossier de travail
         try {
             # Préparation : environnement factice, package, script adapté
@@ -65,7 +65,7 @@ function Get-TestState {
 
 <#
 .SYNOPSIS
-    Renvoie la configuration lue dans _commun\test-config.psd1.
+    Renvoie la configuration lue dans _common\test-config.psd1.
 #>
 function Get-TestConfig {
     return (Get-TestState).Config
@@ -1007,11 +1007,11 @@ function Assert-NoSecret {
     Renvoie un petit exécutable « dormeur » compilé localement.
 .DESCRIPTION
     Programme console qui attend indéfiniment. Copié sous les noms
-    Taskflow.exe, HpcLite.Agent.exe... il simule des applications en cours
+    Socgen.TaskFlow.Runner.exe, Styx.HpcLite.Agent.exe... il simule des applications en cours
     d'exécution, sans aucun effet. Compilé une seule fois (Add-Type).
 #>
 function Get-SleeperExecutable {
-    $toolsDir = Join-Path $env:TEMP "styx-tests\_outils"
+    $toolsDir = Join-Path $env:TEMP "styx-tests\_tools"
     $sleeper  = Join-Path $toolsDir "sleeper.exe"
 
     if (-not (Test-Path -LiteralPath $sleeper -PathType Leaf)) {
@@ -1037,12 +1037,12 @@ public static class Sleeper
 
 .DESCRIPTION
     <RacineTestsAuto>\<scénario>\
-        taskflow\Taskflow.exe, version.txt
+        taskflow\<ExecutableTaskflow>, version.txt
         api\web.config, version.txt
         HpcLite\version.txt
-        HpcLite\agent\HpcLite.Agent.exe
-        HpcLite\runner\HpcLite.Runner.exe
-        HpcLite\scheduler\HpcLite.Scheduler.exe
+        HpcLite\agent\<ExecutableAgent>
+        HpcLite\runner\<ExecutableRunner>
+        HpcLite\scheduler\<ExecutableScheduler>
 
     Les .exe sont des copies du « dormeur » : ils peuvent être lancés.
     Chaque version.txt contient « ancienne-version ».
@@ -1330,10 +1330,10 @@ function Write-ZipFile {
 .DESCRIPTION
     Contenu par défaut :
         Styx.Publish.nuspec, [Content_Types].xml
-        content/taskflow/  Taskflow.exe, appsettings.json, version.txt
+        content/taskflow/  <ExecutableTaskflow>, appsettings.json, version.txt
         content/api/       Styx.Api.dll, web.config, version.txt
-        content/hpclite/   version.txt, agent/HpcLite.Agent.exe,
-                           runner/HpcLite.Runner.exe, scheduler/HpcLite.Scheduler.exe
+        content/hpclite/   version.txt, agent/<ExecutableAgent>,
+                           runner/<ExecutableRunner>, scheduler/<ExecutableScheduler>
     Chaque version.txt contient -Version (« nouvelle-version » par défaut).
 
 .PARAMETER Composants
@@ -1343,7 +1343,7 @@ function Write-ZipFile {
     Composants présents uniquement sous forme de dossier vide.
 
 .PARAMETER EntreesOmises
-    Noms d'entrées à retirer (ex. 'content/taskflow/Taskflow.exe').
+    Noms d'entrées à retirer (ex. 'content/taskflow/Socgen.TaskFlow.Runner.exe').
 
 .PARAMETER EntreesSupplementaires
     Entrées à ajouter : nom -> contenu (ex. 'content/api/mon%20fichier.txt').

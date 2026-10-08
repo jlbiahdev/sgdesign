@@ -1,11 +1,11 @@
 ﻿# Jalon 10 - code ajouté
 
-Fichier généré par `_outils\Build-JalonVersions.ps1`. Ne pas modifier.
+Fichier généré par `_tools\Build-JalonVersions.ps1`. Ne pas modifier.
 
 | | |
 |---|---|
-| Lignes de la version du jalon 10 | 1471 |
-| Lignes de la version précédente | 1386 |
+| Lignes de la version du jalon 10 | 1482 |
+| Lignes de la version précédente | 1397 |
 | Lignes ajoutées par ce jalon | 78 |
 | Lignes retirées par ce jalon | 0 |
 

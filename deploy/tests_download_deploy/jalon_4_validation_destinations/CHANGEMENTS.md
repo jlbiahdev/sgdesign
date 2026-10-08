@@ -1,6 +1,6 @@
 ﻿# Jalon 4 - code ajouté
 
-Fichier généré par `_outils\Build-JalonVersions.ps1`. Ne pas modifier.
+Fichier généré par `_tools\Build-JalonVersions.ps1`. Ne pas modifier.
 
 | | |
 |---|---|
@@ -17,7 +17,7 @@ La version se termine par le bloc « JALON 4 ATTEINT / TEST TERMINÉ » (non rep
 
 ```powershell
 # Exécutable Taskflow, relatif à <d>\taskflow. Une seule instance autorisée.
-$TaskflowExecutableRelativePath = "Taskflow.exe"
+$TaskflowExecutableRelativePath = "Socgen.TaskFlow.Runner.exe"
 
 # Dossiers HpcLite, relatifs à <d>\HpcLite.
 $HpcLiteAgentFolder = "agent"
@@ -25,9 +25,9 @@ $HpcLiteRunnerFolder = "runner"
 $HpcLiteSchedulerFolder = "scheduler"
 
 # Exécutables HpcLite, relatifs à leur dossier.
-$HpcLiteAgentExecutableName = "HpcLite.Agent.exe"
-$HpcLiteRunnerExecutableName = "HpcLite.Runner.exe"
-$HpcLiteSchedulerExecutableName = "HpcLite.Scheduler.exe"
+$HpcLiteAgentExecutableName = "Styx.HpcLite.Agent.exe"
+$HpcLiteRunnerExecutableName = "Styx.HpcLite.Runner.exe"
+$HpcLiteSchedulerExecutableName = "Styx.HpcLite.Scheduler.exe"
 ```
 
 ### Fonction Assert-ExistingDirectory

@@ -34,19 +34,23 @@
     #   - au jalon 19 (pré-vol -ValidationOnly et contrôles en lecture seule).
     RacineProduction = "D:\Applications"
 
-    # Noms des services Windows (identiques au script de déploiement).
-    ServiceTaskflow  = "TaskFlow Runner"
-    ServiceAgent     = "HpcLite Agent"
-    ServiceScheduler = "HpcLite Scheduler"
+    # Noms des services Windows de TEST. Ils doivent exécuter les binaires
+    # de RacineReelle et être DIFFÉRENTS des services de production
+    # (TaskFlow.Runner, HpcLite.Agent, HpcLite.Scheduler), qui pointent vers
+    # RacineProduction. Les lanceurs injectent ces noms dans la copie testée
+    # du script. _tools\New-FakeStyxTest.ps1 crée ces services.
+    ServiceTaskflow  = "TaskFlow.Runner.Test"
+    ServiceAgent     = "HpcLite.Agent.Test"
+    ServiceScheduler = "HpcLite.Scheduler.Test"
 
     # Pool IIS de l'API sur la machine de test.
     PoolIis = "STYX"
 
     # Noms des exécutables (identiques au script de déploiement).
-    ExecutableTaskflow  = "Taskflow.exe"
-    ExecutableAgent     = "HpcLite.Agent.exe"
-    ExecutableRunner    = "HpcLite.Runner.exe"
-    ExecutableScheduler = "HpcLite.Scheduler.exe"
+    ExecutableTaskflow  = "Socgen.TaskFlow.Runner.exe"
+    ExecutableAgent     = "Styx.HpcLite.Agent.exe"
+    ExecutableRunner    = "Styx.HpcLite.Runner.exe"
+    ExecutableScheduler = "Styx.HpcLite.Scheduler.exe"
 
     # --------------------------------------------------------
     # Packages
