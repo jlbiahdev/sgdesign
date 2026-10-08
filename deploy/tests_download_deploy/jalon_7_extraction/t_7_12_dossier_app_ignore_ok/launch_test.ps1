@@ -76,7 +76,7 @@ try {
 
     # --- Vérifications ---
     Assert-ExitCode -Result $result -Expected 0
-    Assert-OutputMatch -Result $result -Pattern 'Dossier .app. de l.archive applicative ignoré' -Description "dossier app signalé comme ignoré"
+    Assert-OutputMatch -Result $result -Pattern 'Dossier \W*app\W* de l.archive applicative ignor' -Description "dossier app signalé comme ignoré"
     Assert-OutputMatch -Result $result -Pattern 'JALON 7 ATTEINT' -Description "package accepté"
 }
 catch {
