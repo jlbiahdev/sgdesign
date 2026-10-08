@@ -76,7 +76,7 @@ try {
     Assert-ExitCode -Result $result -Expected 0
     Assert-OutputMatch -Result $result -Pattern 'Package local copié : \d+ octets' -Description "copie contrôlée"
     Assert-OutputMatch -Result $result -Pattern 'Empreinte SHA-256 : [0-9A-F]{64}' -Description "empreinte SHA-256 journalisée"
-    Assert-OutputNotMatch -Result $result -Pattern 'curl' -Description "curl.exe n'est pas utilisé"
+    Assert-OutputNotMatch -Result $result -Pattern 'depuis Artifactory \(curl' -Description "aucun téléchargement par curl.exe"
 }
 catch {
     # Erreur du lanceur lui-même (prérequis, préparation) : test non exécuté.
