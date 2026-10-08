@@ -15,7 +15,8 @@
     ÉTAPES
 
         1. Créer un environnement factice.
-        2. Créer un package sans content/taskflow/<ExecutableTaskflow>.
+        2. Créer un package dont l'archive applicative n'a pas
+           taskflow\<ExecutableTaskflow>.
         3. Exécuter : download_deploy.ps1 -d <racine factice> -STP
            -PackageFile <package>
 
@@ -66,7 +67,7 @@ try {
 
     # --- Préparation ---
     $fake = New-FakeEnvironment
-    $package = New-TestPackage -EntreesOmises @("content/taskflow/$((Get-TestConfig).ExecutableTaskflow)")
+    $package = New-TestPackage -EntreesOmises @("taskflow/$((Get-TestConfig).ExecutableTaskflow)")
     $scriptUnderTest = New-ScriptUnderTest
 
     # --- Exécution ---

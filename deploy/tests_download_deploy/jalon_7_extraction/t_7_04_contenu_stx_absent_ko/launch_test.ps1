@@ -5,7 +5,7 @@
 .DESCRIPTION
     OBJECTIF
 
-        Un package sans content\api est refusé pour -STX.
+        Une archive applicative sans api\ est refusée pour -STX.
 
     PRÉCONDITIONS
 
@@ -16,7 +16,8 @@
     ÉTAPES
 
         1. Créer un environnement factice.
-        2. Créer un package sans content/api.
+        2. Créer un package dont l'archive applicative n'a pas de dossier
+           api\.
         3. Exécuter : download_deploy.ps1 -d <racine factice> -STX
            -PackageFile <package>
 
@@ -61,7 +62,7 @@ try {
     # le corps du test n'est pas exécuté et le verdict sera NON EXÉCUTÉ.
     Start-Test -ScenarioRoot $PSScriptRoot `
         -Jalon 7 `
-        -Objectif "Un package sans content\api est refusé pour -STX." `
+        -Objectif "Une archive applicative sans api\ est refusée pour -STX." `
         -ResultatAttendu "Échec contrôlé" `
         -CodeAttendu 1 `
         -AvecIis

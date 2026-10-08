@@ -15,7 +15,8 @@
     ÉTAPES
 
         1. Créer un environnement factice.
-        2. Créer un package sans content/hpclite/agent/<ExecutableAgent>.
+        2. Créer un package dont l'archive applicative n'a pas
+           hpclite\agent\<ExecutableAgent>.
         3. Exécuter : download_deploy.ps1 -d <racine factice> -STJ
            -PackageFile <package>
 
@@ -67,7 +68,7 @@ try {
 
     # --- Préparation ---
     $fake = New-FakeEnvironment
-    $package = New-TestPackage -EntreesOmises @("content/hpclite/agent/$((Get-TestConfig).ExecutableAgent)")
+    $package = New-TestPackage -EntreesOmises @("hpclite/agent/$((Get-TestConfig).ExecutableAgent)")
     $scriptUnderTest = New-ScriptUnderTest
 
     # --- Exécution ---

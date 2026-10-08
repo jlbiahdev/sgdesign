@@ -1,11 +1,11 @@
 ﻿<#
 .SYNOPSIS
-    Jalon 8 - Préparation du staging - scénario t_8_02_staging_tous_ok
+    Jalon 7 - Extraction du package - scénario t_7_12_dossier_app_ignore_ok
 
 .DESCRIPTION
     OBJECTIF
 
-        Les trois contenus sont copiés dans le staging.
+        Le dossier app\ de l'archive applicative est ignoré, sans erreur.
 
     PRÉCONDITIONS
 
@@ -16,14 +16,14 @@
     ÉTAPES
 
         1. Créer un environnement factice.
-        2. Créer un package de test complet.
+        2. Créer un package de test complet (avec app\).
         3. Exécuter : download_deploy.ps1 -d <racine factice> -STP -STX -STJ
            -PackageFile <package>
 
     RÉSULTAT ATTENDU
 
         Succès : download_deploy.ps1 doit se terminer avec le code 0.
-        Code 0. Trois stagings prêts, nouveaux exécutables présents.
+        Code 0. « Dossier « app » de l'archive applicative ignoré ».
 
     NETTOYAGE (automatique, même en cas d'erreur)
 
@@ -33,15 +33,15 @@
 
 .NOTES
     Lancement : depuis ce dossier, .\launch_test.ps1
-    (ou tout le jalon : ..\..\run_jalon.ps1 -Jalon 8)
+    (ou tout le jalon : ..\..\run_jalon.ps1 -Jalon 7)
 
     Codes de sortie de CE lanceur :
       0  TEST RÉUSSI   le comportement observé est celui attendu
       1  TEST ÉCHOUÉ   au moins une vérification a échoué
       2  NON EXÉCUTÉ   prérequis absent ou erreur de préparation
 
-    download_deploy.ps1 (ce dossier) = version INCRÉMENTALE du jalon 8 :
-    uniquement le code des jalons 0 à 8, terminé par « TEST TERMINÉ ».
+    download_deploy.ps1 (ce dossier) = version INCRÉMENTALE du jalon 7 :
+    uniquement le code des jalons 0 à 7, terminé par « TEST TERMINÉ ».
     Code ajouté par ce jalon : ..\CHANGEMENTS.md
     Fichier généré par _tools\Build-JalonVersions.ps1 : ne pas le modifier.
     Les adaptations propres à ce test sont faites par le lanceur dans une
@@ -60,8 +60,8 @@ try {
     # En-tête et prérequis. Un prérequis absent lève « PREREQUIS : ... » :
     # le corps du test n'est pas exécuté et le verdict sera NON EXÉCUTÉ.
     Start-Test -ScenarioRoot $PSScriptRoot `
-        -Jalon 8 `
-        -Objectif "Les trois contenus sont copiés dans le staging." `
+        -Jalon 7 `
+        -Objectif "Le dossier app\ de l'archive applicative est ignoré, sans erreur." `
         -ResultatAttendu "Succès" `
         -CodeAttendu 0 `
         -AvecIis
@@ -76,10 +76,8 @@ try {
 
     # --- Vérifications ---
     Assert-ExitCode -Result $result -Expected 0
-    Assert-OutputMatch -Result $result -Pattern 'Staging STP prêt : 3 fichiers' -Description "staging STP"
-    Assert-OutputMatch -Result $result -Pattern 'Staging STX prêt : 3 fichiers' -Description "staging STX"
-    Assert-OutputMatch -Result $result -Pattern 'Staging STJ prêt : 4 fichiers' -Description "staging STJ"
-    Assert-OutputMatch -Result $result -Pattern 'Nouveaux exécutables présents' -Description "nouveaux exécutables contrôlés"
+    Assert-OutputMatch -Result $result -Pattern 'Dossier .app. de l.archive applicative ignoré' -Description "dossier app signalé comme ignoré"
+    Assert-OutputMatch -Result $result -Pattern 'JALON 7 ATTEINT' -Description "package accepté"
 }
 catch {
     # Erreur du lanceur lui-même (prérequis, préparation) : test non exécuté.

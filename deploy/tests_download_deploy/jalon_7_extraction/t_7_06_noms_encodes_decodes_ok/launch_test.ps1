@@ -5,7 +5,8 @@
 .DESCRIPTION
     OBJECTIF
 
-        Les noms encodés par NuGet (%20) sont décodés à l'extraction.
+        Les noms encodés par NuGet (%20) sont décodés à l'extraction du
+        .nupkg.
 
     PRÉCONDITIONS
 
@@ -16,7 +17,8 @@
     ÉTAPES
 
         1. Créer un environnement factice.
-        2. Créer un package contenant content/api/mon%20fichier.txt.
+        2. Créer un .nupkg contenant l'entrée content/mon%20fichier.txt (hors
+           archive applicative).
         3. Exécuter : download_deploy.ps1 -d <racine factice> -STX
            -PackageFile <package> -KeepTemporaryFiles
         4. Chercher le fichier extrait.
@@ -62,14 +64,14 @@ try {
     # le corps du test n'est pas exécuté et le verdict sera NON EXÉCUTÉ.
     Start-Test -ScenarioRoot $PSScriptRoot `
         -Jalon 7 `
-        -Objectif "Les noms encodés par NuGet (%20) sont décodés à l'extraction." `
+        -Objectif "Les noms encodés par NuGet (%20) sont décodés à l'extraction du .nupkg." `
         -ResultatAttendu "Succès" `
         -CodeAttendu 0 `
         -AvecIis
 
     # --- Préparation ---
     $fake = New-FakeEnvironment
-    $package = New-TestPackage -EntreesSupplementaires @{ "content/api/mon%20fichier.txt" = "test" }
+    $package = New-TestPackage -EntreesNuGetSupplementaires @{ "content/mon%20fichier.txt" = "test" }
     $scriptUnderTest = New-ScriptUnderTest
 
     # --- Exécution ---

@@ -76,7 +76,8 @@ try {
 
     # --- Vérifications ---
     Assert-ExitCode -Result $result -Expected 0
-    Assert-OutputMatch -Result $result -Pattern 'Package extrait correctement : \d+ fichiers' -Description "extraction réussie"
+    Assert-OutputMatch -Result $result -Pattern 'Package extrait correctement : \d+ fichiers' -Description "extraction du .nupkg réussie"
+    Assert-OutputMatch -Result $result -Pattern 'Archive applicative extraite correctement : \d+ fichiers' -Description "extraction de l'archive applicative réussie"
     Assert-OutputMatch -Result $result -Pattern 'Contenu STX trouvé : 3 fichiers' -Description "contenu api : 3 fichiers"
 }
 catch {

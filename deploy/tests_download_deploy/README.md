@@ -1,6 +1,6 @@
 # Tests de `download_deploy.ps1`
 
-Ce dossier contient le script de déploiement Styx et **162 scénarios de test**
+Ce dossier contient le script de déploiement Styx et **166 scénarios de test**
 répartis en **20 jalons (0 à 19)**. Chaque jalon ajoute un petit groupe de
 fonctionnalités. Les erreurs sont détectées le plus tôt possible, et les opérations
 dangereuses ne sont jamais testées en premier :
@@ -209,10 +209,27 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 | `ServiceTaskflow` / `ServiceAgent` / `ServiceScheduler` | `TaskFlow.Runner.Test` / `HpcLite.Agent.Test` / `HpcLite.Scheduler.Test` | services de **test** (différents de ceux de production) |
 | `PoolIis` | `STYX` | pool IIS de l'API sur la machine de test |
 | `Executable*` | `Socgen.TaskFlow.Runner.exe`, `Styx.HpcLite.{Agent,Runner,Scheduler}.exe` | noms des exécutables (identiques au script) |
+| `ArchiveApplicative` | `content\styx_publish.zip` | archive applicative dans le .nupkg (identique au script) |
 | `PackageReel` | `D:\Styx-Test-Packages\Styx.Publish.nupkg` | vrai package (jalons 15 à 18) |
 | `UrlPackageReel` | *(vide)* | URL Artifactory d'un vrai package (jalon 6) |
 
 Aucun secret dans ce fichier.
+
+### Structure du package Styx.Publish
+
+Le script (jalon 7) et les packages de test suivent la structure du vrai package :
+
+```
+Styx.Publish.nupkg
+└── content/styx_publish.zip          archive applicative (noms en « \ »)
+    ├── api\
+    ├── taskflow\
+    ├── hpclite\{agent, runner, scheduler}\
+    └── app\                            ignoré par le script
+```
+
+Le script extrait le `.nupkg`, puis l'archive applicative (même contrôle anti « zip slip »),
+et prend les composants à sa racine. Tout autre format est refusé.
 
 ### 3.3 Environnement réel de test (jalons 9 à 18)
 
@@ -332,7 +349,7 @@ chaque vérification en `[OK]` ou `[ÉCHEC]`.
 | 4 | `jalon_4_validation_destinations` | Validation des destinations | Aucun | Factice | 14 |
 | 5 | `jalon_5_variables_environnement` | Variables d'environnement et source du package | Aucun | Factice | 12 |
 | 6 | `jalon_6_telechargement` | Téléchargement | Faible | Factice | 10 |
-| 7 | `jalon_7_extraction` | Extraction du package | Faible | Factice | 8 |
+| 7 | `jalon_7_extraction` | Extraction du package | Faible | Factice | 12 |
 | 8 | `jalon_8_staging` | Préparation du staging | Faible | Factice | 6 |
 | 9 | `jalon_9_services_processus` | Services Windows et processus | Faible | Réel + factice | 17 |
 | 10 | `jalon_10_iis` | Lecture de la configuration IIS | Faible | Factice + IIS/services | 5 |
@@ -634,6 +651,10 @@ bilans CSV de `run_jalon.ps1` sont dans `resultats\`.
 | ☑ | ☐ | `t_7_06_noms_encodes_decodes_ok` | Succès | 0 |
 | ☑ | ☐ | `t_7_07_entree_hors_dossier_ko` | Échec contrôlé | 1 |
 | ☑ | ☐ | `t_7_08_seul_contenu_demande_controle_ok` | Succès | 0 |
+| ☑ | ☐ | `t_7_09_archive_applicative_absente_ko` | Échec contrôlé | 1 |
+| ☑ | ☐ | `t_7_10_archive_applicative_corrompue_ko` | Échec contrôlé | 1 |
+| ☑ | ☐ | `t_7_11_entree_hors_dossier_archive_applicative_ko` | Échec contrôlé | 1 |
+| ☑ | ☐ | `t_7_12_dossier_app_ignore_ok` | Succès | 0 |
 
 ### Jalon 8 - Préparation du staging
 

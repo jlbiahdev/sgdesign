@@ -196,6 +196,15 @@ $HpcLiteRunnerExecutableName = "Styx.HpcLite.Runner.exe"
 $HpcLiteSchedulerExecutableName = "Styx.HpcLite.Scheduler.exe"
 #<<J4
 
+#>>J7
+# Archive applicative contenue dans le package NuGet (chemin relatif à la
+# racine du .nupkg). Le .nupkg ne contient que cette archive et ses fichiers
+# techniques NuGet ; les composants sont à la racine de l'archive :
+#   api\  taskflow\  hpclite\{agent, runner, scheduler}\
+# Tout autre dossier (ex. app\) est ignoré.
+$PackageApplicationArchive = "content\styx_publish.zip"
+#<<J7
+
 #>>J9
 # $true  : production. Taskflow, l'Agent et le Scheduler sont pilotés par
 #          le gestionnaire de services (Stop-Service / Start-Service).
@@ -1368,31 +1377,62 @@ function Assert-PackageFile {
 #>>J7
 <#
 .SYNOPSIS
-    Extrait un .nupkg (archive ZIP) dans un dossier. (J7)
+    Extrait une archive ZIP dans un dossier : le .nupkg, puis l'archive
+    applicative qu'il contient. (J7)
 .DESCRIPTION
     Extraction .NET plutôt qu'Expand-Archive :
-    - NuGet encode certains caractères des noms (espace -> %20) : décodés ;
-    - toute entrée qui sortirait du dossier cible est refusée (« zip slip »).
+    - les séparateurs « / » et « \ » sont acceptés (l'archive applicative,
+      créée sous Windows, utilise « \ ») ;
+    - toute entrée qui sortirait du dossier cible est refusée (« zip slip ») ;
+    - les dossiers vides de l'archive sont recréés.
+.PARAMETER NuGet
+    $true  : le .nupkg. Les caractères encodés des noms sont décodés
+             (espace -> %20) et les messages parlent du « package ».
+    $false : l'archive applicative. ZIP ordinaire : aucun décodage (un nom
+             contenant « %20 » y est un vrai nom) ; les messages parlent de
+             l'« archive applicative ».
 #>
-function Expand-NuGetPackage {
+function Expand-ZipArchive {
     param(
-        [Parameter(Mandatory = $true)] [string] $PackageFile,
-        [Parameter(Mandatory = $true)] [string] $Destination
+        [Parameter(Mandatory = $true)] [string] $ArchiveFile,
+        [Parameter(Mandatory = $true)] [string] $Destination,
+        [switch] $NuGet
     )
 
-    Write-Log -Message "Vérification et extraction du package."
+    if ($NuGet) {
+        $text = @{
+            Start   = "Vérification et extraction du package."
+            Invalid = "Le package n'est pas une archive NuGet/ZIP valide."
+            Suspect = "Entrée suspecte dans le package"
+            Done    = "Package extrait correctement"
+        }
+    }
+    else {
+        $text = @{
+            Start   = "Vérification et extraction de l'archive applicative."
+            Invalid = "L'archive applicative n'est pas une archive ZIP valide."
+            Suspect = "Entrée suspecte dans l'archive applicative"
+            Done    = "Archive applicative extraite correctement"
+        }
+    }
+
+    Write-Log -Message $text.Start
 
     Add-Type -AssemblyName System.IO.Compression
     Add-Type -AssemblyName System.IO.Compression.FileSystem
 
+    New-Item -Path $Destination -ItemType Directory -Force | Out-Null
     $destinationFull = [IO.Path]::GetFullPath($Destination).TrimEnd("\") + "\"
 
     try {
-        $zip = [IO.Compression.ZipFile]::OpenRead($PackageFile)
+        $zip = [IO.Compression.ZipFile]::OpenRead($ArchiveFile)
     }
     catch {
         throw @"
-Le package n'est pas une archive NuGet/ZIP valide.
+$($text.Invalid)
+
+Fichier :
+$ArchiveFile
 
 Détail :
 $($_.Exception.Message)
@@ -1403,9 +1443,10 @@ $($_.Exception.Message)
 
     try {
         foreach ($entry in $zip.Entries) {
-            $entryName = [Uri]::UnescapeDataString($entry.FullName)
+            $entryName = $entry.FullName
+            if ($NuGet) { $entryName = [Uri]::UnescapeDataString($entryName) }
 
-            # Les entrées terminées par "/" sont des dossiers.
+            # Les entrées terminées par un séparateur sont des dossiers.
             $isDirectory  = $entryName.EndsWith("/") -or $entryName.EndsWith("\")
             $relativePath = $entryName.TrimEnd("/", "\").Replace("/", "\")
 
@@ -1417,12 +1458,11 @@ $($_.Exception.Message)
 
             # Contrôle appliqué aux fichiers ET aux dossiers.
             if (-not $targetPath.StartsWith($destinationFull, [StringComparison]::OrdinalIgnoreCase)) {
-                throw "Entrée suspecte dans le package (chemin hors du dossier d'extraction) : $entryName"
+                throw "$($text.Suspect) (chemin hors du dossier d'extraction) : $entryName"
             }
 
-            # Un dossier vide du package est recréé tel quel : un contenu
-            # vide est ainsi signalé « vide » (et non « introuvable ») au
-            # contrôle du contenu.
+            # Un dossier vide est recréé tel quel : un contenu vide est ainsi
+            # signalé « vide » (et non « introuvable ») au contrôle du contenu.
             if ($isDirectory) {
                 New-Item -Path $targetPath -ItemType Directory -Force | Out-Null
                 continue
@@ -1438,7 +1478,7 @@ $($_.Exception.Message)
         $zip.Dispose()
     }
 
-    Write-Log -Message "Package extrait correctement : $extractedCount fichiers." -Level "OK"
+    Write-Log -Message "$($text.Done) : $extractedCount fichiers." -Level "OK"
 }
 #<<J7
 
@@ -2056,14 +2096,29 @@ $PackageUrl
 
     Write-Step "[J7] Extraction et contrôle du package"
 
-    Expand-NuGetPackage -PackageFile $workingPackageFile -Destination $extractionDirectory
+    # 1. Le .nupkg : il contient l'archive applicative.
+    Expand-ZipArchive -ArchiveFile $workingPackageFile -Destination $extractionDirectory -NuGet
+
+    $applicationArchive = Join-Path $extractionDirectory $PackageApplicationArchive
+    Assert-ExistingFile -Path $applicationArchive -Description "Archive applicative ($PackageApplicationArchive) dans le package"
+
+    # 2. L'archive applicative : elle contient les composants.
+    $applicationDirectory = Join-Path $workingDirectory "application"
+    Expand-ZipArchive -ArchiveFile $applicationArchive -Destination $applicationDirectory
+
+    # Les dossiers que ce script ne déploie pas (ex. app) sont signalés.
+    foreach ($folder in @(Get-ChildItem -LiteralPath $applicationDirectory -Directory -Force)) {
+        if (@("taskflow", "api", "hpclite") -notcontains $folder.Name.ToLowerInvariant()) {
+            Write-Log -Message "Dossier « $($folder.Name) » de l'archive applicative ignoré (non déployé par ce script)."
+        }
+    }
 
     $deploymentPlan = @()
 
     if ($STP) {
         $deploymentPlan += [pscustomobject] @{
             Trigram     = "STP"
-            PackagePath = Join-Path $extractionDirectory "content\taskflow"
+            PackagePath = Join-Path $applicationDirectory "taskflow"
             StagingPath = Join-Path $stagingDirectory "STP"
             Destination = $taskflowDestination
         }
@@ -2072,7 +2127,7 @@ $PackageUrl
     if ($STX) {
         $deploymentPlan += [pscustomobject] @{
             Trigram     = "STX"
-            PackagePath = Join-Path $extractionDirectory "content\api"
+            PackagePath = Join-Path $applicationDirectory "api"
             StagingPath = Join-Path $stagingDirectory "STX"
             Destination = $apiDestination
         }
@@ -2081,7 +2136,7 @@ $PackageUrl
     if ($STJ) {
         $deploymentPlan += [pscustomobject] @{
             Trigram     = "STJ"
-            PackagePath = Join-Path $extractionDirectory "content\hpclite"
+            PackagePath = Join-Path $applicationDirectory "hpclite"
             StagingPath = Join-Path $stagingDirectory "STJ"
             Destination = $hpcLiteDestination
         }

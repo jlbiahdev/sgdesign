@@ -5,7 +5,7 @@
 .DESCRIPTION
     OBJECTIF
 
-        Une entrée d'archive qui sortirait du dossier d'extraction (« zip slip
+        Une entrée du .nupkg qui sortirait du dossier d'extraction (« zip slip
         ») est refusée.
 
     PRÉCONDITIONS
@@ -17,7 +17,7 @@
     ÉTAPES
 
         1. Créer un environnement factice.
-        2. Créer un package contenant l'entrée content/../../evil.txt.
+        2. Créer un .nupkg contenant l'entrée content/../../evil.txt.
         3. Exécuter : download_deploy.ps1 -d <racine factice> -STX
            -PackageFile <package>
 
@@ -62,14 +62,14 @@ try {
     # le corps du test n'est pas exécuté et le verdict sera NON EXÉCUTÉ.
     Start-Test -ScenarioRoot $PSScriptRoot `
         -Jalon 7 `
-        -Objectif "Une entrée d'archive qui sortirait du dossier d'extraction (« zip slip ») est refusée." `
+        -Objectif "Une entrée du .nupkg qui sortirait du dossier d'extraction (« zip slip ») est refusée." `
         -ResultatAttendu "Échec contrôlé" `
         -CodeAttendu 1 `
         -AvecIis
 
     # --- Préparation ---
     $fake = New-FakeEnvironment
-    $package = New-TestPackage -EntreesSupplementaires @{ "content/../../evil.txt" = "malveillant" }
+    $package = New-TestPackage -EntreesNuGetSupplementaires @{ "content/../../evil.txt" = "malveillant" }
     $scriptUnderTest = New-ScriptUnderTest
 
     # --- Exécution ---

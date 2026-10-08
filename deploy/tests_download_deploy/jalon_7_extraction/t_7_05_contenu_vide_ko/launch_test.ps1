@@ -5,7 +5,7 @@
 .DESCRIPTION
     OBJECTIF
 
-        Un dossier content\api vide est refusé.
+        Un dossier api\ vide dans l'archive applicative est refusé.
 
     PRÉCONDITIONS
 
@@ -16,7 +16,8 @@
     ÉTAPES
 
         1. Créer un environnement factice.
-        2. Créer un package dont content/api/ est un dossier vide.
+        2. Créer un package dont l'archive applicative contient un dossier
+           api\ vide.
         3. Exécuter : download_deploy.ps1 -d <racine factice> -STX
            -PackageFile <package>
 
@@ -61,7 +62,7 @@ try {
     # le corps du test n'est pas exécuté et le verdict sera NON EXÉCUTÉ.
     Start-Test -ScenarioRoot $PSScriptRoot `
         -Jalon 7 `
-        -Objectif "Un dossier content\api vide est refusé." `
+        -Objectif "Un dossier api\ vide dans l'archive applicative est refusé." `
         -ResultatAttendu "Échec contrôlé" `
         -CodeAttendu 1 `
         -AvecIis

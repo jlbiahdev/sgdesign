@@ -28,7 +28,8 @@
            nouvelle-version).
         3. Exécuter : download_deploy.ps1 -d <RacineReelle> -STX -PackageFile
            <package marqué> -Force
-        4. Comparer le nombre de fichiers de api et de content/api.
+        4. Comparer le nombre de fichiers de api et de api\ dans l'archive
+           applicative.
 
     RÉSULTAT ATTENDU
 

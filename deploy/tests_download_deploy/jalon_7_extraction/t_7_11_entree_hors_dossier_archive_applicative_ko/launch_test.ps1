@@ -1,29 +1,31 @@
 ﻿<#
 .SYNOPSIS
-    Jalon 8 - Préparation du staging - scénario t_8_06_aucune_application_arretee_ok
+    Jalon 7 - Extraction du package - scénario t_7_11_entree_hors_dossier_archive_applicative_ko
 
 .DESCRIPTION
     OBJECTIF
 
-        Jusqu'au staging inclus, aucune application en cours n'est arrêtée.
+        Une entrée de l'archive applicative qui sortirait du dossier
+        d'extraction (« zip slip ») est refusée.
 
     PRÉCONDITIONS
 
         - Console Windows PowerShell 5.1 ouverte en tant qu'administrateur.
         - Lecteur D: disponible ; _common\test-config.psd1 renseigné.
+        - IIS installé (appcmd.exe).
 
     ÉTAPES
 
-        1. Créer un environnement factice et démarrer des processus factices
-           (Taskflow, Agent, Scheduler, 2 Runners).
-        2. Exécuter : download_deploy.ps1 -d <racine factice> -STP -STJ
+        1. Créer un environnement factice.
+        2. Créer une archive applicative contenant l'entrée ..\..\evil.txt.
+        3. Exécuter : download_deploy.ps1 -d <racine factice> -STX
            -PackageFile <package>
-        3. Recompter les processus.
 
     RÉSULTAT ATTENDU
 
-        Succès : download_deploy.ps1 doit se terminer avec le code 0.
-        Code 0. Tous les processus factices tournent toujours.
+        Échec contrôlé : download_deploy.ps1 doit se terminer avec le code 1.
+        Code 1. « Entrée suspecte dans l'archive applicative » ; aucun
+        evil.txt créé.
 
     NETTOYAGE (automatique, même en cas d'erreur)
 
@@ -33,15 +35,15 @@
 
 .NOTES
     Lancement : depuis ce dossier, .\launch_test.ps1
-    (ou tout le jalon : ..\..\run_jalon.ps1 -Jalon 8)
+    (ou tout le jalon : ..\..\run_jalon.ps1 -Jalon 7)
 
     Codes de sortie de CE lanceur :
       0  TEST RÉUSSI   le comportement observé est celui attendu
       1  TEST ÉCHOUÉ   au moins une vérification a échoué
       2  NON EXÉCUTÉ   prérequis absent ou erreur de préparation
 
-    download_deploy.ps1 (ce dossier) = version INCRÉMENTALE du jalon 8 :
-    uniquement le code des jalons 0 à 8, terminé par « TEST TERMINÉ ».
+    download_deploy.ps1 (ce dossier) = version INCRÉMENTALE du jalon 7 :
+    uniquement le code des jalons 0 à 7, terminé par « TEST TERMINÉ ».
     Code ajouté par ce jalon : ..\CHANGEMENTS.md
     Fichier généré par _tools\Build-JalonVersions.ps1 : ne pas le modifier.
     Les adaptations propres à ce test sont faites par le lanceur dans une
@@ -60,30 +62,25 @@ try {
     # En-tête et prérequis. Un prérequis absent lève « PREREQUIS : ... » :
     # le corps du test n'est pas exécuté et le verdict sera NON EXÉCUTÉ.
     Start-Test -ScenarioRoot $PSScriptRoot `
-        -Jalon 8 `
-        -Objectif "Jusqu'au staging inclus, aucune application en cours n'est arrêtée." `
-        -ResultatAttendu "Succès" `
-        -CodeAttendu 0
+        -Jalon 7 `
+        -Objectif "Une entrée de l'archive applicative qui sortirait du dossier d'extraction (« zip slip ») est refusée." `
+        -ResultatAttendu "Échec contrôlé" `
+        -CodeAttendu 1 `
+        -AvecIis
 
     # --- Préparation ---
     $fake = New-FakeEnvironment
-    $package = New-TestPackage
-    $scriptUnderTest = New-ScriptUnderTest -ModeExecutable
-
-    Start-FakeProcess -ExecutablePath $fake.TaskflowExe | Out-Null
-    Start-FakeProcess -ExecutablePath $fake.AgentExe | Out-Null
-    Start-FakeProcess -ExecutablePath $fake.SchedulerExe | Out-Null
-    Start-FakeProcess -ExecutablePath $fake.RunnerExe -Count 2 | Out-Null
+    $package = New-TestPackage -EntreesSupplementaires @{ "../../evil.txt" = "malveillant" }
+    $scriptUnderTest = New-ScriptUnderTest
 
     # --- Exécution ---
-    $result = Invoke-ScriptUnderTest -ScriptPath $scriptUnderTest -Arguments @("-d", $fake.Root, "-STP", "-STJ", "-PackageFile", $package)
+    $result = Invoke-ScriptUnderTest -ScriptPath $scriptUnderTest -Arguments @("-d", $fake.Root, "-STX", "-PackageFile", $package)
 
     # --- Vérifications ---
-    Assert-ExitCode -Result $result -Expected 0
-    Assert-Condition -Condition ((Get-ProcessCountByPath -ExecutablePath $fake.TaskflowExe) -eq 1) -Description "Taskflow tourne toujours"
-    Assert-Condition -Condition ((Get-ProcessCountByPath -ExecutablePath $fake.AgentExe) -eq 1) -Description "Agent tourne toujours"
-    Assert-Condition -Condition ((Get-ProcessCountByPath -ExecutablePath $fake.SchedulerExe) -eq 1) -Description "Scheduler tourne toujours"
-    Assert-Condition -Condition ((Get-ProcessCountByPath -ExecutablePath $fake.RunnerExe) -eq 2) -Description "les 2 Runners tournent toujours"
+    Assert-ExitCode -Result $result -Expected 1
+    Assert-OutputMatch -Result $result -Pattern 'Entrée suspecte dans l.archive applicative' -Description "entrée suspecte refusée"
+    $evil = @(Get-ChildItem -LiteralPath $fake.Root -Recurse -Filter "evil.txt" -ErrorAction SilentlyContinue)
+    Assert-Condition -Condition ($evil.Count -eq 0) -Description "aucun fichier evil.txt écrit"
 }
 catch {
     # Erreur du lanceur lui-même (prérequis, préparation) : test non exécuté.

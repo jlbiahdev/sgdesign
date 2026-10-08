@@ -16,7 +16,7 @@
     ÉTAPES
 
         1. Créer un environnement factice.
-        2. Créer un package contenant seulement content/api.
+        2. Créer un package dont l'archive applicative ne contient que api\.
         3. Exécuter : download_deploy.ps1 -d <racine factice> -STX
            -PackageFile <package>
 

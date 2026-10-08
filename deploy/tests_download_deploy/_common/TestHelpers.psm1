@@ -682,6 +682,9 @@ function New-ScriptUnderTest {
         $overrides["TaskflowServiceName"]         = ConvertTo-PsLiteral $config.ServiceTaskflow
         $overrides["HpcLiteAgentServiceName"]     = ConvertTo-PsLiteral $config.ServiceAgent
         $overrides["HpcLiteSchedulerServiceName"] = ConvertTo-PsLiteral $config.ServiceScheduler
+        if ($config.ContainsKey("ArchiveApplicative")) {
+            $overrides["PackageApplicationArchive"] = ConvertTo-PsLiteral $config.ArchiveApplicative
+        }
         foreach ($key in @($overrides.Keys)) { $optional[$key] = $true }
     }
 
@@ -1283,10 +1286,64 @@ function Get-VersionMarker {
 
 <#
 .SYNOPSIS
-    Écrit une archive ZIP (.nupkg) à partir d'une liste d'entrées.
+    Chemin de l'archive applicative DANS le .nupkg, au format des entrées
+    ZIP (séparateur « / »), ex. « content/styx_publish.zip ».
+.DESCRIPTION
+    Lu dans test-config.psd1 (ArchiveApplicative) ; valeur du script par
+    défaut si la clé est absente.
+#>
+function Get-ApplicationArchiveEntryName {
+    $config = Get-TestConfig
+    $value  = "content\styx_publish.zip"
+
+    if ($config.ContainsKey("ArchiveApplicative") -and -not [string]::IsNullOrWhiteSpace($config.ArchiveApplicative)) {
+        $value = $config.ArchiveApplicative
+    }
+
+    return $value.Replace("\", "/").TrimStart("/")
+}
+
+<#
+.SYNOPSIS
+    Écrit une archive ZIP dans un flux à partir d'une liste d'entrées.
 .PARAMETER Entries
     Dictionnaire ordonné : nom d'entrée -> contenu (string ou byte[]).
-    Un nom terminé par « / » crée une entrée de dossier vide.
+    Un nom terminé par « / » ou « \ » crée une entrée de dossier vide.
+#>
+function Write-ZipEntries {
+    param(
+        [Parameter(Mandatory = $true)] [IO.Stream] $Stream,
+        [Parameter(Mandatory = $true)] [System.Collections.IDictionary] $Entries
+    )
+
+    Add-Type -AssemblyName System.IO.Compression
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+
+    # leaveOpen = $true : le flux appartient à l'appelant.
+    $zip = New-Object IO.Compression.ZipArchive($Stream, [IO.Compression.ZipArchiveMode]::Create, $true)
+
+    try {
+        foreach ($name in $Entries.Keys) {
+            $entry = $zip.CreateEntry($name)
+
+            if ($name.EndsWith("/") -or $name.EndsWith("\")) { continue }
+
+            # Affectations dans chaque branche : « $x = if (...) { $octets } »
+            # déroulerait le tableau d'octets dans le pipeline.
+            $content = $Entries[$name]
+            if ($content -is [byte[]]) { $bytes = $content }
+            else { $bytes = [Text.Encoding]::UTF8.GetBytes([string] $content) }
+
+            $entryStream = $entry.Open()
+            try { $entryStream.Write($bytes, 0, $bytes.Length) } finally { $entryStream.Dispose() }
+        }
+    }
+    finally { $zip.Dispose() }
+}
+
+<#
+.SYNOPSIS
+    Écrit une archive ZIP (fichier) à partir d'une liste d'entrées.
 #>
 function Write-ZipFile {
     param(
@@ -1294,59 +1351,76 @@ function Write-ZipFile {
         [Parameter(Mandatory = $true)] [System.Collections.IDictionary] $Entries
     )
 
-    Add-Type -AssemblyName System.IO.Compression
-    Add-Type -AssemblyName System.IO.Compression.FileSystem
-
     $stream = [IO.File]::Open($Path, [IO.FileMode]::Create)
-
-    try {
-        $zip = New-Object IO.Compression.ZipArchive($stream, [IO.Compression.ZipArchiveMode]::Create)
-
-        try {
-            foreach ($name in $Entries.Keys) {
-                $entry = $zip.CreateEntry($name)
-
-                if ($name.EndsWith("/")) { continue }
-
-                # Affectations dans chaque branche : « $x = if (...) { $octets } »
-                # déroulerait le tableau d'octets dans le pipeline.
-                $content = $Entries[$name]
-                if ($content -is [byte[]]) { $bytes = $content }
-                else { $bytes = [Text.Encoding]::UTF8.GetBytes([string] $content) }
-
-                $entryStream = $entry.Open()
-                try { $entryStream.Write($bytes, 0, $bytes.Length) } finally { $entryStream.Dispose() }
-            }
-        }
-        finally { $zip.Dispose() }
-    }
+    try { Write-ZipEntries -Stream $stream -Entries $Entries }
     finally { $stream.Dispose() }
 }
 
 <#
 .SYNOPSIS
-    Construit un package de test (.nupkg) dans le dossier de travail.
+    Construit une archive ZIP en mémoire et renvoie ses octets.
+#>
+function Get-ZipBytes {
+    param([Parameter(Mandatory = $true)] [System.Collections.IDictionary] $Entries)
+
+    $memory = New-Object IO.MemoryStream
+    try {
+        Write-ZipEntries -Stream $memory -Entries $Entries
+        # La virgule empêche PowerShell de dérouler le tableau d'octets.
+        return , $memory.ToArray()
+    }
+    finally { $memory.Dispose() }
+}
+
+<#
+.SYNOPSIS
+    Construit un package de test (.nupkg) dans le dossier de travail, avec
+    la MÊME structure que le vrai package Styx.Publish.
 
 .DESCRIPTION
-    Contenu par défaut :
-        Styx.Publish.nuspec, [Content_Types].xml
-        content/taskflow/  <ExecutableTaskflow>, appsettings.json, version.txt
-        content/api/       Styx.Api.dll, web.config, version.txt
-        content/hpclite/   version.txt, agent/<ExecutableAgent>,
-                           runner/<ExecutableRunner>, scheduler/<ExecutableScheduler>
+    Structure du vrai package (reproduite ici) :
+
+        Styx.Publish.nupkg
+        ├── Styx.Publish.nuspec, [Content_Types].xml
+        └── content/styx_publish.zip          archive applicative
+            ├── taskflow\  <ExecutableTaskflow>, appsettings.json, version.txt
+            ├── api\       Styx.Api.dll, web.config, version.txt
+            ├── hpclite\   version.txt, agent\<ExecutableAgent>,
+            │              runner\<ExecutableRunner>, scheduler\<ExecutableScheduler>
+            └── app\       index.html (dossier ignoré par le script)
+
+    Comme dans le vrai package, les noms de l'archive applicative utilisent
+    le séparateur « \ » (archive créée sous Windows). Les paramètres, eux,
+    s'écrivent avec « / » : ils sont convertis.
+
     Chaque version.txt contient -Version (« nouvelle-version » par défaut).
 
 .PARAMETER Composants
     taskflow, api, hpclite (tous par défaut).
 
+.PARAMETER SansDossierApp
+    N'ajoute pas le dossier app\ à l'archive applicative.
+
 .PARAMETER ComposantsVides
     Composants présents uniquement sous forme de dossier vide.
 
 .PARAMETER EntreesOmises
-    Noms d'entrées à retirer (ex. 'content/taskflow/Socgen.TaskFlow.Runner.exe').
+    Entrées de l'archive applicative à retirer
+    (ex. 'taskflow/Socgen.TaskFlow.Runner.exe').
 
 .PARAMETER EntreesSupplementaires
-    Entrées à ajouter : nom -> contenu (ex. 'content/api/mon%20fichier.txt').
+    Entrées à ajouter DANS l'archive applicative : nom -> contenu
+    (ex. 'api/fichier.txt', '../../evil.txt').
+
+.PARAMETER EntreesNuGetSupplementaires
+    Entrées à ajouter dans le .nupkg lui-même, hors archive applicative
+    (ex. 'content/mon%20fichier.txt', 'content/../../evil.txt').
+
+.PARAMETER SansArchiveApplicative
+    Le .nupkg ne contient pas l'archive applicative.
+
+.PARAMETER ArchiveApplicativeCorrompue
+    L'archive applicative est un fichier texte, pas un ZIP.
 
 .PARAMETER ExecutablesLancables
     Les .exe du package sont des copies du dormeur (lançables). Nécessaire
@@ -1359,9 +1433,13 @@ function New-TestPackage {
     param(
         [string] $Nom = "package-test.nupkg",
         [string[]] $Composants = @("taskflow", "api", "hpclite"),
+        [switch] $SansDossierApp,
         [string[]] $ComposantsVides = @(),
         [string[]] $EntreesOmises = @(),
         [hashtable] $EntreesSupplementaires = @{},
+        [hashtable] $EntreesNuGetSupplementaires = @{},
+        [switch] $SansArchiveApplicative,
+        [switch] $ArchiveApplicativeCorrompue,
         [string] $Version = "nouvelle-version",
         [switch] $ExecutablesLancables
     )
@@ -1373,53 +1451,77 @@ function New-TestPackage {
     if ($ExecutablesLancables) { $exeContent = [IO.File]::ReadAllBytes((Get-SleeperExecutable)) }
     else { $exeContent = "executable factice" }
 
+    # --- Archive applicative (noms logiques avec « / ») ---
+    $app = [ordered] @{}
+
+    if ($Composants -contains "taskflow") {
+        $app["taskflow/$($config.ExecutableTaskflow)"] = $exeContent
+        $app["taskflow/appsettings.json"] = "{}"
+        $app["taskflow/version.txt"] = $Version
+    }
+
+    if ($Composants -contains "api") {
+        $app["api/Styx.Api.dll"] = "bibliotheque factice"
+        $app["api/web.config"] = "<configuration />"
+        $app["api/version.txt"] = $Version
+    }
+
+    if ($Composants -contains "hpclite") {
+        $app["hpclite/version.txt"] = $Version
+        $app["hpclite/agent/$($config.ExecutableAgent)"] = $exeContent
+        $app["hpclite/runner/$($config.ExecutableRunner)"] = $exeContent
+        $app["hpclite/scheduler/$($config.ExecutableScheduler)"] = $exeContent
+    }
+
+    if (-not $SansDossierApp) {
+        $app["app/index.html"] = "<html></html>"
+    }
+
+    foreach ($component in $ComposantsVides) {
+        foreach ($key in @($app.Keys)) {
+            if ($key.StartsWith("$component/")) { $app.Remove($key) }
+        }
+
+        $app["$component/"] = ""
+    }
+
+    foreach ($name in $EntreesOmises) {
+        if (-not $app.Contains($name)) {
+            throw "PREPARATION : entrée à omettre inconnue : $name"
+        }
+
+        $app.Remove($name)
+    }
+
+    foreach ($name in $EntreesSupplementaires.Keys) {
+        $app[$name] = $EntreesSupplementaires[$name]
+    }
+
+    # Séparateur Windows « \ », comme dans le vrai package.
+    $appEntries = [ordered] @{}
+    foreach ($name in $app.Keys) { $appEntries[$name.Replace("/", "\")] = $app[$name] }
+
+    # --- Package NuGet ---
     $entries = [ordered] @{
         "Styx.Publish.nuspec"  = "<package><metadata><id>Styx.Publish</id></metadata></package>"
         "[Content_Types].xml"  = "<Types />"
     }
 
-    if ($Composants -contains "taskflow") {
-        $entries["content/taskflow/$($config.ExecutableTaskflow)"] = $exeContent
-        $entries["content/taskflow/appsettings.json"] = "{}"
-        $entries["content/taskflow/version.txt"] = $Version
+    if ($ArchiveApplicativeCorrompue) {
+        $entries[(Get-ApplicationArchiveEntryName)] = "Ceci n'est pas une archive ZIP."
+    }
+    elseif (-not $SansArchiveApplicative) {
+        $appBytes = Get-ZipBytes -Entries $appEntries
+        $entries[(Get-ApplicationArchiveEntryName)] = $appBytes
     }
 
-    if ($Composants -contains "api") {
-        $entries["content/api/Styx.Api.dll"] = "bibliotheque factice"
-        $entries["content/api/web.config"] = "<configuration />"
-        $entries["content/api/version.txt"] = $Version
-    }
-
-    if ($Composants -contains "hpclite") {
-        $entries["content/hpclite/version.txt"] = $Version
-        $entries["content/hpclite/agent/$($config.ExecutableAgent)"] = $exeContent
-        $entries["content/hpclite/runner/$($config.ExecutableRunner)"] = $exeContent
-        $entries["content/hpclite/scheduler/$($config.ExecutableScheduler)"] = $exeContent
-    }
-
-    foreach ($component in $ComposantsVides) {
-        foreach ($key in @($entries.Keys)) {
-            if ($key.StartsWith("content/$component/")) { $entries.Remove($key) }
-        }
-
-        $entries["content/$component/"] = ""
-    }
-
-    foreach ($name in $EntreesOmises) {
-        if (-not $entries.Contains($name)) {
-            throw "PREPARATION : entrée à omettre inconnue : $name"
-        }
-
-        $entries.Remove($name)
-    }
-
-    foreach ($name in $EntreesSupplementaires.Keys) {
-        $entries[$name] = $EntreesSupplementaires[$name]
+    foreach ($name in $EntreesNuGetSupplementaires.Keys) {
+        $entries[$name] = $EntreesNuGetSupplementaires[$name]
     }
 
     Write-ZipFile -Path $path -Entries $entries
 
-    Write-Host "Package de test créé : $path ($($entries.Count) entrées)" -ForegroundColor DarkGray
+    Write-Host "Package de test créé : $path ($($appEntries.Count) entrées applicatives)" -ForegroundColor DarkGray
 
     return $path
 }
@@ -1439,13 +1541,62 @@ function New-CorruptPackage {
 
 <#
 .SYNOPSIS
+    Copie dans un flux le contenu d'une entrée ZIP.
+#>
+function Copy-ZipEntryContent {
+    param(
+        [Parameter(Mandatory = $true)] $Source,
+        [Parameter(Mandatory = $true)] $Target
+    )
+
+    $in  = $Source.Open()
+    $out = $Target.Open()
+    try { $in.CopyTo($out) } finally { $in.Dispose(); $out.Dispose() }
+}
+
+<#
+.SYNOPSIS
+    Extrait l'archive applicative d'un .nupkg dans un fichier temporaire
+    du dossier de travail et renvoie son chemin.
+#>
+function Export-ApplicationArchive {
+    param([Parameter(Mandatory = $true)] [string] $Package)
+
+    Add-Type -AssemblyName System.IO.Compression
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+
+    $entryName = Get-ApplicationArchiveEntryName
+    $target    = Join-Path (Get-TestState).WorkDirectory ("archive-" + [guid]::NewGuid().ToString("N") + ".zip")
+    $zip       = [IO.Compression.ZipFile]::OpenRead($Package)
+
+    try {
+        $entry = $zip.Entries | Where-Object {
+            [Uri]::UnescapeDataString($_.FullName).Replace("\", "/") -eq $entryName
+        } | Select-Object -First 1
+
+        if ($null -eq $entry) {
+            throw "PREPARATION : archive applicative '$entryName' introuvable dans le package : $Package"
+        }
+
+        [IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $target, $true)
+    }
+    finally { $zip.Dispose() }
+
+    return $target
+}
+
+<#
+.SYNOPSIS
     Copie le VRAI package (PackageReel) en y ajoutant un marqueur de version.
 
 .DESCRIPTION
     Toutes les entrées du vrai package sont recopiées telles quelles (noms
-    encodés compris). Pour chaque composant présent (taskflow, api,
-    hpclite), une entrée content/<composant>/version.txt = -Version est
-    ajoutée (ou remplacée). Le vrai package n'est jamais modifié.
+    encodés compris), sauf l'archive applicative, qui est reconstruite :
+    pour chaque composant présent à sa racine (taskflow, api, hpclite), une
+    entrée <composant>\version.txt = -Version est ajoutée (ou remplacée),
+    avec le même séparateur que les autres entrées. Le vrai package n'est
+    jamais modifié. Les copies passent par des fichiers temporaires du
+    dossier de travail (pas de chargement complet en mémoire).
 
 .OUTPUTS
     Chemin du package marqué, dans le dossier de travail.
@@ -1466,51 +1617,71 @@ function New-PackageFromReal {
     Add-Type -AssemblyName System.IO.Compression
     Add-Type -AssemblyName System.IO.Compression.FileSystem
 
-    $target = Join-Path $state.WorkDirectory $Nom
+    $target       = Join-Path $state.WorkDirectory $Nom
+    $archiveName  = Get-ApplicationArchiveEntryName
 
-    $sourceZip = [IO.Compression.ZipFile]::OpenRead($source)
+    # 1. Archive applicative d'origine -> fichier temporaire.
+    $originalArchive = Export-ApplicationArchive -Package $source
+    $markedArchive   = Join-Path $state.WorkDirectory ("archive-marquee-" + [guid]::NewGuid().ToString("N") + ".zip")
 
     try {
-        $targetStream = [IO.File]::Open($target, [IO.FileMode]::Create)
+        # 2. Archive applicative marquée.
+        $in  = [IO.Compression.ZipFile]::OpenRead($originalArchive)
+        $out = [IO.Compression.ZipFile]::Open($markedArchive, [IO.Compression.ZipArchiveMode]::Create)
 
         try {
-            $targetZip = New-Object IO.Compression.ZipArchive($targetStream, [IO.Compression.ZipArchiveMode]::Create)
+            $components = @()
+            $separator  = "/"
 
-            try {
-                $components = @()
+            foreach ($entry in $in.Entries) {
+                $name = $entry.FullName
+                if ($name.Contains("\")) { $separator = "\" }
 
-                foreach ($entry in $sourceZip.Entries) {
-                    $decoded = [Uri]::UnescapeDataString($entry.FullName)
-
-                    foreach ($component in @("taskflow", "api", "hpclite")) {
-                        if ($decoded.StartsWith("content/$component/", [StringComparison]::OrdinalIgnoreCase) -and $components -notcontains $component) {
-                            $components += $component
-                        }
-                    }
-
-                    if ($decoded -match '^content/(taskflow|api|hpclite)/version\.txt$') { continue }
-
-                    $newEntry = $targetZip.CreateEntry($entry.FullName)
-
-                    if ($entry.FullName.EndsWith("/")) { continue }
-
-                    $in  = $entry.Open()
-                    $out = $newEntry.Open()
-                    try { $in.CopyTo($out) } finally { $in.Dispose(); $out.Dispose() }
+                $first = ($name -split '[\\/]')[0].ToLowerInvariant()
+                if (@("taskflow", "api", "hpclite") -contains $first -and $components -notcontains $first) {
+                    $components += $first
                 }
 
-                foreach ($component in $components) {
-                    $marker = $targetZip.CreateEntry("content/$component/version.txt")
-                    $bytes  = [Text.Encoding]::ASCII.GetBytes($Version)
-                    $out    = $marker.Open()
-                    try { $out.Write($bytes, 0, $bytes.Length) } finally { $out.Dispose() }
-                }
+                if ($name -match '^(taskflow|api|hpclite)[\\/]version\.txt$') { continue }
+
+                $newEntry = $out.CreateEntry($name)
+                if ($name.EndsWith("/") -or $name.EndsWith("\")) { continue }
+                Copy-ZipEntryContent -Source $entry -Target $newEntry
             }
-            finally { $targetZip.Dispose() }
+
+            foreach ($component in $components) {
+                $marker = $out.CreateEntry("$component$($separator)version.txt")
+                $bytes  = [Text.Encoding]::ASCII.GetBytes($Version)
+                $stream = $marker.Open()
+                try { $stream.Write($bytes, 0, $bytes.Length) } finally { $stream.Dispose() }
+            }
         }
-        finally { $targetStream.Dispose() }
+        finally { $out.Dispose(); $in.Dispose() }
+
+        # 3. Package marqué : entrées d'origine + archive marquée.
+        $sourceZip = [IO.Compression.ZipFile]::OpenRead($source)
+        $targetZip = [IO.Compression.ZipFile]::Open($target, [IO.Compression.ZipArchiveMode]::Create)
+
+        try {
+            foreach ($entry in $sourceZip.Entries) {
+                $newEntry = $targetZip.CreateEntry($entry.FullName)
+
+                if ([Uri]::UnescapeDataString($entry.FullName).Replace("\", "/") -eq $archiveName) {
+                    $fileStream = [IO.File]::OpenRead($markedArchive)
+                    $entryStream = $newEntry.Open()
+                    try { $fileStream.CopyTo($entryStream) } finally { $entryStream.Dispose(); $fileStream.Dispose() }
+                    continue
+                }
+
+                if ($entry.FullName.EndsWith("/")) { continue }
+                Copy-ZipEntryContent -Source $entry -Target $newEntry
+            }
+        }
+        finally { $targetZip.Dispose(); $sourceZip.Dispose() }
     }
-    finally { $sourceZip.Dispose() }
+    finally {
+        Remove-Item -LiteralPath $originalArchive, $markedArchive -Force -ErrorAction SilentlyContinue
+    }
 
     Write-Host "Package réel marqué ($Version) : $target" -ForegroundColor DarkGray
 
@@ -1519,7 +1690,8 @@ function New-PackageFromReal {
 
 <#
 .SYNOPSIS
-    Nombre de fichiers d'un composant dans un package (content/<composant>/).
+    Nombre de fichiers d'un composant dans l'archive applicative d'un
+    package (<composant>\...).
 #>
 function Get-PackageFileCount {
     param(
@@ -1527,19 +1699,24 @@ function Get-PackageFileCount {
         [Parameter(Mandatory = $true)] [string] $Component
     )
 
-    Add-Type -AssemblyName System.IO.Compression.FileSystem
-
-    $zip = [IO.Compression.ZipFile]::OpenRead($Package)
+    $archive = Export-ApplicationArchive -Package $Package
 
     try {
-        return @(
-            $zip.Entries | Where-Object {
-                $name = [Uri]::UnescapeDataString($_.FullName)
-                $name.StartsWith("content/$Component/", [StringComparison]::OrdinalIgnoreCase) -and -not $name.EndsWith("/")
-            }
-        ).Count
+        $zip = [IO.Compression.ZipFile]::OpenRead($archive)
+
+        try {
+            return @(
+                $zip.Entries | Where-Object {
+                    $name = $_.FullName.Replace("\", "/")
+                    $name.StartsWith("$Component/", [StringComparison]::OrdinalIgnoreCase) -and -not $name.EndsWith("/")
+                }
+            ).Count
+        }
+        finally { $zip.Dispose() }
     }
-    finally { $zip.Dispose() }
+    finally {
+        Remove-Item -LiteralPath $archive -Force -ErrorAction SilentlyContinue
+    }
 }
 
 # ============================================================
