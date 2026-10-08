@@ -1,0 +1,7 @@
+HpcLite Scheduler
+Orchestrateur HpcLite : reçoit les jobs de calcul depuis PostgreSQL, les distribue aux tâches TaskFlow (jobs Light) ou aux runners via les agents (jobs Grid), suit leur exécution, surveille les heartbeats et expose l'API et le dashboard (port 5100).
+
+HpcLite Agent
+Agent HpcLite des nœuds de calcul : reçoit les requêtes du Scheduler (port 5200) et lance le processus HpcLite.Runner correspondant sur la machine.
+TaskFlow
+Worker TaskFlow : récupère les tâches en attente dans PostgreSQL, les exécute (commandes shell, exécutables .NET ou handlers personnalisés), envoie son heartbeat et publie l'état d'avancement des tâches pour la supervision temps réel.
