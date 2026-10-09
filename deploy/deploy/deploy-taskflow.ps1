@@ -5,49 +5,16 @@
     Déploie Taskflow sur ce serveur.
 
 .DESCRIPTION
-    Raccourci de : .\deploy.ps1 -STP <paramètres>
-    Toute la logique est dans deploy.ps1 (même dossier). Ce script lui
-    indique seulement l'application à déployer, et lui transmet les autres
-    paramètres tels quels.
+    Aucun paramètre. Ce script lance simplement :
+        .\deploy.ps1 -STP
+    Toute la logique est dans deploy.ps1 (même dossier).
 
-    Les nouveaux fichiers doivent être dans D:\.deploy\taskflow.
-
-.PARAMETER DestinationRoot
-    Alias : -d. Racine des applications. Exemple : D:\Applications
-
-.PARAMETER SourceRoot
-    Dossier des nouveaux fichiers déjà extraits. Par défaut : D:\.deploy
-
-.PARAMETER ValidationOnly
-    Pré-vol : tout est vérifié, aucune application n'est arrêtée.
-
-.PARAMETER Force
-    Supprime la confirmation interactive « DEPLOYER ».
-
-.PARAMETER KeepTemporaryFiles
-    Conserve le dossier de travail (<d>\.staging\...) pour diagnostic.
-
-.EXAMPLE
-    .\deploy-taskflow.ps1 -d D:\Applications -ValidationOnly
-
-.EXAMPLE
-    .\deploy-taskflow.ps1 -d D:\Applications
+    Nouveaux fichiers attendus dans : D:\.deploy\taskflow
+    Application installée dans      : D:\Applications\taskflow
 
 .NOTES
     Code de sortie : celui de deploy.ps1 (0 succès, 1 erreur, 2 annulation).
 #>
-
-[CmdletBinding()]
-param(
-    [Parameter(Mandatory = $true)]
-    [Alias("d")]
-    [string] $DestinationRoot,
-
-    [Parameter()] [string] $SourceRoot,
-    [Parameter()] [switch] $ValidationOnly,
-    [Parameter()] [switch] $Force,
-    [Parameter()] [switch] $KeepTemporaryFiles
-)
 
 $deployScript = Join-Path $PSScriptRoot "deploy.ps1"
 
@@ -56,9 +23,5 @@ if (-not (Test-Path -LiteralPath $deployScript -PathType Leaf)) {
     exit 1
 }
 
-# Les paramètres reçus sont transmis tels quels, avec -STP en plus.
-$parameters = @{} + $PSBoundParameters
-$parameters["STP"] = $true
-
-& $deployScript @parameters
+& $deployScript -STP
 exit $LASTEXITCODE

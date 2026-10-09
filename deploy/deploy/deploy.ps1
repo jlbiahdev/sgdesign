@@ -17,7 +17,7 @@
 
     Chaque application est sur son propre serveur, sauf HpcLite dont les
     trois composants (Agent, Runner, Scheduler) sont déployés ensemble.
-    En pratique, ce script est lancé par :
+    En pratique, ce script est lancé, sans aucun paramètre, par :
         deploy-api.ps1       (équivaut à deploy.ps1 -STX)
         deploy-taskflow.ps1  (équivaut à deploy.ps1 -STP)
         deploy-hpclite.ps1   (équivaut à deploy.ps1 -STJ)
@@ -61,7 +61,7 @@
 .PARAMETER DestinationRoot
     Alias : -d. Racine contenant taskflow, api et HpcLite.
     Doit être un chemin complet, sur le lecteur D:, et exister.
-    Exemple : D:\Applications
+    Par défaut : D:\Applications
 
 .PARAMETER SourceRoot
     Dossier contenant les nouveaux fichiers déjà extraits (api, taskflow,
@@ -89,12 +89,12 @@
     Conserve le dossier de travail (<d>\.staging\...) pour diagnostic.
 
 .EXAMPLE
-    # Pré-vol : tout est vérifié, rien n'est arrêté.
-    .\deploy.ps1 -d "D:\Applications" -STX -ValidationOnly
+    # Déploiement de l'API (équivaut à .\deploy-api.ps1).
+    .\deploy.ps1 -STX
 
 .EXAMPLE
-    # Déploiement de l'API (équivaut à .\deploy-api.ps1 -d "D:\Applications").
-    .\deploy.ps1 -d "D:\Applications" -STX
+    # Pré-vol : tout est vérifié, rien n'est arrêté.
+    .\deploy.ps1 -STX -ValidationOnly
 
 .EXAMPLE
     # Nouveaux fichiers placés ailleurs que dans D:\.deploy.
@@ -119,9 +119,9 @@
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)]
+    [Parameter()]
     [Alias("d")]
-    [string] $DestinationRoot,
+    [string] $DestinationRoot = "D:\Applications",
 
     [Parameter()]
     [string] $SourceRoot = "D:\.deploy",

@@ -18,7 +18,7 @@ Chaque application est sur **son propre serveur**. Sur chaque serveur, on lance 
 | `deploy-taskflow.ps1` | Taskflow | `D:\.deploy\taskflow` | `<d>\taskflow` | service `TaskFlow.Runner` |
 | `deploy-hpclite.ps1` | HpcLite | `D:\.deploy\hpclite\{agent, runner, scheduler}` | `<d>\HpcLite\{agent, runner, scheduler}` | services `HpcLite.Agent`, `HpcLite.Scheduler` ; Runners lancés par l'Agent |
 
-`<d>` est la racine passée avec `-d`, par exemple `D:\Applications`.
+`<d>` est la racine des applications : `D:\Applications` par défaut.
 
 Le script fait des **mises à jour** : l'application doit déjà être installée (dossier, exécutable, service ou pool IIS).
 
@@ -39,31 +39,39 @@ Aucune variable d'environnement n'est nécessaire.
 
 ## 2. Utilisation
 
-Exemple sur le serveur API :
+Sur chaque serveur, console **administrateur**, depuis le dossier des scripts. **Aucun paramètre.**
 
 ```powershell
-cd <dossier des scripts>
-
-# 1. Pré-vol : tout est vérifié, rien n'est arrêté
-.\deploy-api.ps1 -d D:\Applications -ValidationOnly
-
-# 2. Déploiement (le script demande de taper DEPLOYER)
-.\deploy-api.ps1 -d D:\Applications
+.\deploy-api.ps1         # serveur API
+.\deploy-taskflow.ps1    # serveur Taskflow
+.\deploy-hpclite.ps1     # serveur HpcLite
 ```
 
-Même chose avec `deploy-taskflow.ps1` et `deploy-hpclite.ps1` sur leurs serveurs.
+Le script affiche ce qu'il a contrôlé, puis demande de taper `DEPLOYER` avant d'arrêter l'application.
 
-### Paramètres
+Valeurs utilisées :
 
-| Paramètre | Obligatoire | Description |
-|---|---|---|
-| `-d` | oui | Racine des applications. Chemin complet, sur `D:`, existant. Ex. `D:\Applications` |
-| `-SourceRoot <dossier>` | non | Dossier des nouveaux fichiers. Par défaut `D:\.deploy` |
-| `-ValidationOnly` | non | **Pré-vol** : contrôles et préparation, puis arrêt **avant** tout arrêt d'application |
-| `-Force` | non | Supprime la confirmation `DEPLOYER` (exécution automatisée) |
-| `-KeepTemporaryFiles` | non | Conserve le dossier de travail `<d>\.staging\...` pour diagnostic |
+| | Valeur |
+|---|---|
+| Nouveaux fichiers | `D:\.deploy\<application>` |
+| Applications installées | `D:\Applications\<application>` |
 
-`deploy.ps1` accepte les mêmes paramètres, plus `-STP`, `-STX` et `-STJ` pour choisir l'application. Les trois autres scripts ajoutent ce choix automatiquement.
+### Utilisation avancée (`deploy.ps1` directement)
+
+Pour un pré-vol, ou un serveur organisé différemment, appeler `deploy.ps1` :
+
+| Paramètre | Description |
+|---|---|
+| `-STP` / `-STX` / `-STJ` | Application à déployer (au moins un) |
+| `-ValidationOnly` | **Pré-vol** : tous les contrôles, puis arrêt **avant** tout arrêt d'application |
+| `-d <racine>` | Racine des applications. Par défaut `D:\Applications` |
+| `-SourceRoot <dossier>` | Dossier des nouveaux fichiers. Par défaut `D:\.deploy` |
+| `-Force` | Supprime la confirmation `DEPLOYER` |
+| `-KeepTemporaryFiles` | Conserve le dossier de travail `<d>\.staging\...` |
+
+```powershell
+.\deploy.ps1 -STX -ValidationOnly     # pré-vol sur le serveur API
+```
 
 ---
 
