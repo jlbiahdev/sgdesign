@@ -1,6 +1,6 @@
 # Tests de `download_deploy.ps1`
 
-Ce dossier contient le script de déploiement Styx et **166 scénarios de test**
+Ce dossier contient le script de déploiement Styx et **167 scénarios de test**
 répartis en **20 jalons (0 à 19)**. Chaque jalon ajoute un petit groupe de
 fonctionnalités. Les erreurs sont détectées le plus tôt possible, et les opérations
 dangereuses ne sont jamais testées en premier :
@@ -210,6 +210,8 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 | `PoolIis` | `STYX` | pool IIS de l'API sur la machine de test |
 | `Executable*` | `Socgen.TaskFlow.Runner.exe`, `Styx.HpcLite.{Agent,Runner,Scheduler}.exe` | noms des exécutables (identiques au script) |
 | `ArchiveApplicative` | `content\styx_publish.zip` | archive applicative dans le .nupkg (identique au script) |
+| `DelaiMaxScriptSecondes` | `900` | délai maximal d'une exécution de download_deploy.ps1 (au-delà : arrêt, test ÉCHOUÉ) |
+| `StabiliteDemarrageSecondes` | `3` | délai de stabilité après démarrage pendant les tests (production : 10 s) |
 | `PackageReel` | `D:\Styx-Test-Packages\Styx.Publish.nupkg` | vrai package (jalons 15 à 18) |
 | `UrlPackageReel` | *(vide)* | URL Artifactory d'un vrai package (jalon 6) |
 
@@ -358,7 +360,7 @@ chaque vérification en `[OK]` ou `[ÉCHEC]`.
 | 13 | `jalon_13_redemarrages` | Redémarrage des applications | Élevé | Réel + factice | 8 |
 | 14 | `jalon_14_sauvegarde` | Sauvegarde des fichiers | Élevé | Réel + factice | 5 |
 | 15 | `jalon_15_installation` | Installation des fichiers | Très élevé | Réel + factice | 6 |
-| 16 | `jalon_16_rollback` | Rollback | Très élevé | Réel + factice | 6 |
+| 16 | `jalon_16_rollback` | Rollback | Très élevé | Réel + factice | 7 |
 | 17 | `jalon_17_composants_complets` | Test complet par composant | Très élevé | Réel | 3 |
 | 18 | `jalon_18_combinaisons` | Test des combinaisons | Très élevé | Réel | 6 |
 | 19 | `jalon_19_production` | Validation en conditions réelles | Réel | Serveur cible | 2 |
@@ -767,6 +769,7 @@ bilans CSV de `run_jalon.ps1` sont dans `resultats\`.
 | ☑ | ☐ | `t_16_04_erreur_apres_plusieurs_composants_ko` | Échec contrôlé | 1 |
 | ☑ | ☐ | `t_16_05_erreur_pendant_redemarrage_ko` | Échec contrôlé | 1 |
 | ☑ | ☐ | `t_16_06_rollback_mode_test_ko` | Échec contrôlé | 1 |
+| ☑ | ☐ | `t_16_07_demarrage_instable_rollback_ko` | Échec contrôlé | 1 |
 
 ### Jalon 17 - Test complet par composant
 

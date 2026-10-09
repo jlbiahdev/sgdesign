@@ -682,6 +682,10 @@ function New-ScriptUnderTest {
         $overrides["TaskflowServiceName"]         = ConvertTo-PsLiteral $config.ServiceTaskflow
         $overrides["HpcLiteAgentServiceName"]     = ConvertTo-PsLiteral $config.ServiceAgent
         $overrides["HpcLiteSchedulerServiceName"] = ConvertTo-PsLiteral $config.ServiceScheduler
+        # Délai de stabilité réduit pour les tests (optionnel).
+        if ($config.ContainsKey("StabiliteDemarrageSecondes")) {
+            $overrides["StartupStabilitySeconds"] = [string] [int] $config.StabiliteDemarrageSecondes
+        }
         if ($config.ContainsKey("ArchiveApplicative")) {
             $overrides["PackageApplicationArchive"] = ConvertTo-PsLiteral $config.ArchiveApplicative
         }
@@ -789,7 +793,8 @@ function Invoke-ScriptUnderTest {
         [string[]] $Arguments = @()
     )
 
-    $state = Get-TestState
+    $state  = Get-TestState
+    $config = $state.Config
 
     $powershell = Join-Path $PSHOME "powershell.exe"
 
@@ -798,38 +803,116 @@ function Invoke-ScriptUnderTest {
         $powershell = Join-Path $env:WINDIR "System32\WindowsPowerShell\v1.0\powershell.exe"
     }
 
+    # Délai maximal d'exécution du script (test-config : DelaiMaxScriptSecondes).
+    $timeoutSeconds = 900
+    if ($config.ContainsKey("DelaiMaxScriptSecondes") -and [int] $config.DelaiMaxScriptSecondes -gt 0) {
+        $timeoutSeconds = [int] $config.DelaiMaxScriptSecondes
+    }
+
     $allArguments = @("-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", $ScriptPath) + $Arguments
+
+    # Start-Process concatène les arguments : chacun est mis entre guillemets.
+    $argumentLine = ($allArguments | ForEach-Object { '"' + ([string] $_).Replace('"', '\"') + '"' }) -join " "
 
     Write-Host ""
     Write-Host "Exécution : download_deploy.ps1 $($Arguments -join ' ')" -ForegroundColor White
+    Write-Host "(sortie affichée en direct ; délai maximal : $timeoutSeconds s)" -ForegroundColor DarkGray
     Write-Host ("-" * 70) -ForegroundColor DarkGray
 
-    $previousPreference = $ErrorActionPreference
+    # La sortie est écrite dans des fichiers et relue au fil de l'eau :
+    # elle s'affiche en direct, et le script peut être arrêté s'il dépasse
+    # le délai maximal.
+    $stdoutFile = Join-Path $state.WorkDirectory ("stdout-" + [guid]::NewGuid().ToString("N") + ".txt")
+    $stderrFile = Join-Path $state.WorkDirectory ("stderr-" + [guid]::NewGuid().ToString("N") + ".txt")
+    $encoding   = [Console]::OutputEncoding
+
+    $process = Start-Process -FilePath $powershell -ArgumentList $argumentLine -NoNewWindow -PassThru `
+        -RedirectStandardOutput $stdoutFile -RedirectStandardError $stderrFile
+
+    # Sans cet accès, ExitCode peut rester vide (comportement connu de Start-Process).
+    $null = $process.Handle
+
+    $lines    = New-Object System.Collections.Generic.List[string]
+    $readers  = @{}
+    $pending  = @{ $stdoutFile = ""; $stderrFile = "" }
+    $deadline = (Get-Date).AddSeconds($timeoutSeconds)
+    $timedOut = $false
+
+    # Lit et affiche les nouvelles lignes complètes d'un fichier de sortie.
+    $readNew = {
+        param([string] $File, [switch] $Final)
+
+        if (-not $readers.ContainsKey($File)) {
+            if (-not (Test-Path -LiteralPath $File)) { return }
+            $stream = [IO.File]::Open($File, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::ReadWrite -bor [IO.FileShare]::Delete)
+            $readers[$File] = New-Object IO.StreamReader($stream, $encoding)
+        }
+
+        $text = $pending[$File] + $readers[$File].ReadToEnd()
+        $parts = $text -split "\r?\n"
+
+        # La dernière partie est une ligne incomplète (ou vide) : elle est
+        # gardée pour la lecture suivante, ou affichée à la fin si non vide.
+        $last = $parts[-1]
+        if ($parts.Count -gt 1) { $complete = @($parts[0..($parts.Count - 2)]) } else { $complete = @() }
+
+        if ($Final) {
+            $pending[$File] = ""
+            if ($last -ne "") { $complete += $last }
+        }
+        else {
+            $pending[$File] = $last
+        }
+
+        foreach ($line in $complete) {
+            $lines.Add($line)
+            Write-Host "  | $line" -ForegroundColor DarkGray
+        }
+    }
 
     try {
-        $ErrorActionPreference = "Continue"
-        $rawOutput = @(& $powershell @allArguments 2>&1)
-        $exitCode  = $LASTEXITCODE
+        while (-not $process.HasExited) {
+            & $readNew $stdoutFile
+            & $readNew $stderrFile
+
+            if ((Get-Date) -gt $deadline) {
+                $timedOut = $true
+                # Arrêt du script et de ses processus enfants.
+                & taskkill.exe /T /F /PID $process.Id 2>&1 | Out-Null
+                break
+            }
+
+            Start-Sleep -Milliseconds 300
+        }
+
+        $process.WaitForExit()
+        & $readNew $stdoutFile -Final
+        & $readNew $stderrFile -Final
     }
     finally {
-        $ErrorActionPreference = $previousPreference
+        foreach ($reader in $readers.Values) { $reader.Dispose() }
+        Remove-Item -LiteralPath $stdoutFile, $stderrFile -Force -ErrorAction SilentlyContinue
     }
 
-    $lines = @($rawOutput | ForEach-Object { $_.ToString() })
-
-    foreach ($line in $lines) {
-        Write-Host "  | $line" -ForegroundColor DarkGray
-    }
+    if ($timedOut) { $exitCode = $null } else { $exitCode = $process.ExitCode }
 
     Write-Host ("-" * 70) -ForegroundColor DarkGray
-    Write-Host "Code de sortie de download_deploy.ps1 : $exitCode" -ForegroundColor White
+
+    if ($timedOut) {
+        Write-Host "download_deploy.ps1 arrêté : délai maximal de $timeoutSeconds s dépassé." -ForegroundColor Red
+        Add-CheckResult -Success $false -Description "download_deploy.ps1 terminé dans le délai maximal ($timeoutSeconds s) - voir le journal du déploiement"
+    }
+    else {
+        Write-Host "Code de sortie de download_deploy.ps1 : $exitCode" -ForegroundColor White
+    }
 
     $state.CodeObtenu = $exitCode
 
     return [pscustomobject] @{
         ExitCode = $exitCode
         Output   = $lines -join [Environment]::NewLine
-        Lines    = $lines
+        Lines    = $lines.ToArray()
+        TimedOut = $timedOut
     }
 }
 
@@ -1013,6 +1096,35 @@ function Assert-NoSecret {
     Socgen.TaskFlow.Runner.exe, Styx.HpcLite.Agent.exe... il simule des applications en cours
     d'exécution, sans aucun effet. Compilé une seule fois (Add-Type).
 #>
+<#
+.SYNOPSIS
+    Exécutable « instable » : démarre, attend 1 seconde, puis s'arrête.
+.DESCRIPTION
+    Simule une application qui démarre puis tombe (configuration invalide,
+    port occupé...). Sert à vérifier le contrôle de stabilité du script.
+    Compilé une seule fois (Add-Type).
+#>
+function Get-ShortLivedExecutable {
+    $toolsDir = Join-Path $env:TEMP "styx-tests\_tools"
+    $exe      = Join-Path $toolsDir "short-lived.exe"
+
+    if (-not (Test-Path -LiteralPath $exe -PathType Leaf)) {
+        New-Item -Path $toolsDir -ItemType Directory -Force | Out-Null
+
+        Add-Type -OutputAssembly $exe -OutputType ConsoleApplication -TypeDefinition @"
+public static class ShortLived
+{
+    public static void Main()
+    {
+        System.Threading.Thread.Sleep(1000);
+    }
+}
+"@
+    }
+
+    return $exe
+}
+
 function Get-SleeperExecutable {
     $toolsDir = Join-Path $env:TEMP "styx-tests\_tools"
     $sleeper  = Join-Path $toolsDir "sleeper.exe"
@@ -1426,6 +1538,11 @@ function Get-ZipBytes {
     Les .exe du package sont des copies du dormeur (lançables). Nécessaire
     pour un déploiement complet en mode test (redémarrage des processus).
 
+.PARAMETER ExecutablesInstables
+    Composants (taskflow, agent, scheduler) dont l'exécutable démarre puis
+    s'arrête après 1 seconde (contrôle de stabilité). Implique
+    -ExecutablesLancables pour les autres.
+
 .OUTPUTS
     Chemin complet du package.
 #>
@@ -1441,21 +1558,31 @@ function New-TestPackage {
         [switch] $SansArchiveApplicative,
         [switch] $ArchiveApplicativeCorrompue,
         [string] $Version = "nouvelle-version",
-        [switch] $ExecutablesLancables
+        [switch] $ExecutablesLancables,
+        [string[]] $ExecutablesInstables = @()
     )
 
     $state  = Get-TestState
     $config = $state.Config
     $path   = Join-Path $state.WorkDirectory $Nom
 
-    if ($ExecutablesLancables) { $exeContent = [IO.File]::ReadAllBytes((Get-SleeperExecutable)) }
+    if ($ExecutablesLancables -or $ExecutablesInstables.Count -gt 0) { $exeContent = [IO.File]::ReadAllBytes((Get-SleeperExecutable)) }
     else { $exeContent = "executable factice" }
+
+    if ($ExecutablesInstables.Count -gt 0) { $unstableContent = [IO.File]::ReadAllBytes((Get-ShortLivedExecutable)) }
+    else { $unstableContent = $null }
+
+    # Contenu de l'exécutable d'un composant (instable ou non).
+    $exeFor = {
+        param([string] $Component)
+        if ($ExecutablesInstables -contains $Component) { , $unstableContent } else { , $exeContent }
+    }
 
     # --- Archive applicative (noms logiques avec « / ») ---
     $app = [ordered] @{}
 
     if ($Composants -contains "taskflow") {
-        $app["taskflow/$($config.ExecutableTaskflow)"] = $exeContent
+        $app["taskflow/$($config.ExecutableTaskflow)"] = (& $exeFor "taskflow")
         $app["taskflow/appsettings.json"] = "{}"
         $app["taskflow/version.txt"] = $Version
     }
@@ -1468,9 +1595,9 @@ function New-TestPackage {
 
     if ($Composants -contains "hpclite") {
         $app["hpclite/version.txt"] = $Version
-        $app["hpclite/agent/$($config.ExecutableAgent)"] = $exeContent
+        $app["hpclite/agent/$($config.ExecutableAgent)"] = (& $exeFor "agent")
         $app["hpclite/runner/$($config.ExecutableRunner)"] = $exeContent
-        $app["hpclite/scheduler/$($config.ExecutableScheduler)"] = $exeContent
+        $app["hpclite/scheduler/$($config.ExecutableScheduler)"] = (& $exeFor "scheduler")
     }
 
     if (-not $SansDossierApp) {
@@ -1774,6 +1901,80 @@ function Test-IisPoolExists {
 
     $output = & $appcmd list apppool "/apppool.name:$Name" 2>&1
     return ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace(($output -join "")))
+}
+
+<#
+.SYNOPSIS
+    Lit la configuration de PRODUCTION dans le download_deploy.ps1 de
+    production (racine des tests) : noms des services, du pool IIS et des
+    exécutables, tels qu'ils seront utilisés sur le serveur cible.
+.DESCRIPTION
+    Sert au jalon 19 : la production est contrôlée avec SES noms
+    (TaskFlow.Runner, HpcLite.Agent...), jamais avec ceux de test-config.psd1
+    (services et pool de TEST). Le script est seulement analysé (AST), pas
+    exécuté.
+.OUTPUTS
+    Hashtable : ServiceTaskflow, ServiceAgent, ServiceScheduler, PoolIis,
+    ExecutableTaskflow, ExecutableAgent, ExecutableScheduler,
+    DossierAgent, DossierScheduler.
+#>
+function Get-ProductionSettings {
+    $script = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot "..\download_deploy.ps1"))
+
+    if (-not (Test-Path -LiteralPath $script -PathType Leaf)) {
+        throw "PREREQUIS : script de production introuvable : $script (lancer _tools\Build-JalonVersions.ps1)."
+    }
+
+    $tokens = $null
+    $errors = $null
+    $ast = [System.Management.Automation.Language.Parser]::ParseFile($script, [ref] $tokens, [ref] $errors)
+
+    $values = @{}
+    foreach ($assignment in $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.AssignmentStatementAst] }, $false)) {
+        if ($assignment.Left -is [System.Management.Automation.Language.VariableExpressionAst] -and
+            $assignment.Right -is [System.Management.Automation.Language.CommandExpressionAst] -and
+            $assignment.Right.Expression -is [System.Management.Automation.Language.StringConstantExpressionAst]) {
+            $name = $assignment.Left.VariablePath.UserPath
+            if (-not $values.ContainsKey($name)) { $values[$name] = $assignment.Right.Expression.Value }
+        }
+    }
+
+    $map = [ordered] @{
+        ServiceTaskflow     = "TaskflowServiceName"
+        ServiceAgent        = "HpcLiteAgentServiceName"
+        ServiceScheduler    = "HpcLiteSchedulerServiceName"
+        PoolIis             = "StxApplicationPoolName"
+        ExecutableTaskflow  = "TaskflowExecutableRelativePath"
+        ExecutableAgent     = "HpcLiteAgentExecutableName"
+        ExecutableScheduler = "HpcLiteSchedulerExecutableName"
+        DossierAgent        = "HpcLiteAgentFolder"
+        DossierScheduler    = "HpcLiteSchedulerFolder"
+    }
+
+    $settings = @{}
+    foreach ($key in $map.Keys) {
+        if (-not $values.ContainsKey($map[$key])) {
+            throw "PREREQUIS : `$$($map[$key]) introuvable dans $script."
+        }
+        $settings[$key] = $values[$map[$key]]
+    }
+
+    return $settings
+}
+
+<#
+.SYNOPSIS
+    État des applications de PRODUCTION (noms lus dans le script de
+    production), sous forme de texte comparable avant / après.
+#>
+function Get-ProductionStateText {
+    $prod = Get-ProductionSettings
+    $parts = foreach ($name in @($prod.ServiceTaskflow, $prod.ServiceAgent, $prod.ServiceScheduler)) {
+        $service = Get-Service -Name $name -ErrorAction SilentlyContinue
+        if ($null -eq $service) { "$name=Absent" } else { "$name=$($service.Status)" }
+    }
+    $parts += "Pool $($prod.PoolIis)=$(Get-PoolState -Name $prod.PoolIis)"
+    return ($parts -join ", ")
 }
 
 <#

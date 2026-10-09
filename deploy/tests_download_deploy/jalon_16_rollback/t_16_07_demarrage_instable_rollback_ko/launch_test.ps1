@@ -1,34 +1,35 @@
 ﻿<#
 .SYNOPSIS
-    Jalon 16 - Rollback - scénario t_16_06_rollback_mode_test_ko
+    Jalon 16 - Rollback - scénario t_16_07_demarrage_instable_rollback_ko
 
 .DESCRIPTION
     OBJECTIF
 
-        En mode test, une erreur après installation déclenche le rollback et
-        relance les processus.
+        Une application qui démarre puis s'arrête quelques secondes plus tard
+        est détectée (contrôle de stabilité) : rollback et relance de
+        l'ancienne version.
 
     PRÉCONDITIONS
 
         - Console Windows PowerShell 5.1 ouverte en tant qu'administrateur.
         - Lecteur D: disponible ; _common\test-config.psd1 renseigné.
-        - Mode test (processus factices). Le package contient des exécutables
-          lançables.
+        - Mode test (processus factices). Le Taskflow du package démarre puis
+          s'arrête après 1 s.
+        - test-config.psd1 : StabiliteDemarrageSecondes (3 s par défaut).
 
     ÉTAPES
 
-        1. Créer un environnement factice ; démarrer Taskflow, Agent et
-           Scheduler factices.
-        2. Préparer une copie du script avec une erreur volontaire après
-           l'installation du premier composant.
-        3. Exécuter : download_deploy.ps1 -d <racine factice> -STP -STJ
+        1. Créer un environnement factice ; démarrer Taskflow factice.
+        2. Créer un package dont l'exécutable Taskflow s'arrête seul après 1
+           s.
+        3. Exécuter : download_deploy.ps1 -d <racine factice> -STP
            -PackageFile <package> -Force
 
     RÉSULTAT ATTENDU
 
         Échec contrôlé : download_deploy.ps1 doit se terminer avec le code 1.
-        Code 1. taskflow et HpcLite = ancienne-version ; Taskflow, Agent,
-        Scheduler relancés.
+        Code 1. « a démarré puis s'est arrêté » ; taskflow = ancienne-version
+        ; Taskflow (ancienne version) relancé.
 
     NETTOYAGE (automatique, même en cas d'erreur)
 
@@ -64,29 +65,25 @@ try {
     # le corps du test n'est pas exécuté et le verdict sera NON EXÉCUTÉ.
     Start-Test -ScenarioRoot $PSScriptRoot `
         -Jalon 16 `
-        -Objectif "En mode test, une erreur après installation déclenche le rollback et relance les processus." `
+        -Objectif "Une application qui démarre puis s'arrête quelques secondes plus tard est détectée (contrôle de stabilité) : rollback et relance de l'ancienne version." `
         -ResultatAttendu "Échec contrôlé" `
         -CodeAttendu 1
 
     # --- Préparation ---
     $fake = New-FakeEnvironment
-    $package = New-TestPackage -ExecutablesLancables
-    $scriptUnderTest = New-ScriptUnderTest -ModeExecutable -InjecterErreur "apres-installation-composant"
+    $package = New-TestPackage -ExecutablesInstables @("taskflow")
+    $scriptUnderTest = New-ScriptUnderTest -ModeExecutable
     Start-FakeProcess -ExecutablePath $fake.TaskflowExe | Out-Null
-    Start-FakeProcess -ExecutablePath $fake.AgentExe | Out-Null
-    Start-FakeProcess -ExecutablePath $fake.SchedulerExe | Out-Null
 
     # --- Exécution ---
-    $result = Invoke-ScriptUnderTest -ScriptPath $scriptUnderTest -Arguments @("-d", $fake.Root, "-STP", "-STJ", "-PackageFile", $package, "-Force")
+    $result = Invoke-ScriptUnderTest -ScriptPath $scriptUnderTest -Arguments @("-d", $fake.Root, "-STP", "-PackageFile", $package, "-Force")
 
     # --- Vérifications ---
     Assert-ExitCode -Result $result -Expected 1
+    Assert-OutputMatch -Result $result -Pattern "a démarré puis s'est arrêté" -Description "arrêt après démarrage détecté"
     Assert-OutputMatch -Result $result -Pattern 'STP a été restauré' -Description "taskflow restauré"
     Assert-Condition -Condition ((Get-VersionMarker -Directory $fake.TaskflowDir) -eq "ancienne-version") -Description "taskflow : ancienne version"
-    Assert-Condition -Condition ((Get-VersionMarker -Directory $fake.HpcLiteDir) -eq "ancienne-version") -Description "HpcLite : ancienne version (jamais remplacé)"
-    Assert-Condition -Condition ((Get-ProcessCountByPath -ExecutablePath $fake.TaskflowExe) -eq 1) -Description "Taskflow relancé"
-    Assert-Condition -Condition ((Get-ProcessCountByPath -ExecutablePath $fake.AgentExe) -eq 1) -Description "Agent relancé"
-    Assert-Condition -Condition ((Get-ProcessCountByPath -ExecutablePath $fake.SchedulerExe) -eq 1) -Description "Scheduler relancé"
+    Assert-Condition -Condition ((Get-ProcessCountByPath -ExecutablePath $fake.TaskflowExe) -eq 1) -Description "Taskflow (ancienne version) relancé et stable"
 }
 catch {
     # Erreur du lanceur lui-même (prérequis, préparation) : test non exécuté.

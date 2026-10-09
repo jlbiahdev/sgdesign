@@ -223,6 +223,13 @@ $HpcLiteSchedulerServiceName = "HpcLite.Scheduler"
 #<<J9
 
 #>>J13
+# Délai de stabilité (secondes) après chaque démarrage. Une application
+# peut démarrer puis s'arrêter quelques secondes plus tard (configuration
+# invalide, port déjà utilisé...). Après ce délai, le service (ou le
+# processus) doit TOUJOURS fonctionner ; sinon c'est une erreur, et le
+# rollback est déclenché. 0 désactive ce contrôle.
+$StartupStabilitySeconds = 10
+
 # Arguments de démarrage, utilisés seulement si $UseWindowsServices = $false.
 $TaskflowStartArguments = @()
 $HpcLiteAgentStartArguments = @()
@@ -813,6 +820,22 @@ $ExecutablePath
         Assert-SingleProcessMaximum -Processes $startedProcesses -ComponentName $ComponentName
     }
 
+    # Contrôle de stabilité (voir $StartupStabilitySeconds).
+    if ($StartupStabilitySeconds -gt 0) {
+        Write-Log -Message "Contrôle de stabilité de $ComponentName ($StartupStabilitySeconds s)."
+        Start-Sleep -Seconds $StartupStabilitySeconds
+
+        if (@(Get-ProcessesByExecutablePath -ExecutablePath $ExecutablePath).Count -eq 0) {
+            throw @"
+$ComponentName a démarré puis s'est arrêté (plus aucun processus après
+$StartupStabilitySeconds s).
+
+Exécutable :
+$ExecutablePath
+"@
+        }
+    }
+
     Write-Log -Message "$ComponentName a démarré correctement." -Level "OK"
 }
 #<<J13
@@ -977,6 +1000,25 @@ function Start-ServiceSafe {
     }
     catch {
         throw "Le service $ComponentName ('$ServiceName') n'a pas démarré dans le délai imparti."
+    }
+
+    # Contrôle de stabilité : le service doit toujours fonctionner après
+    # $StartupStabilitySeconds secondes (voir CONFIGURATION).
+    if ($StartupStabilitySeconds -gt 0) {
+        Write-Log -Message "Contrôle de stabilité du service $ComponentName ($StartupStabilitySeconds s)."
+        Start-Sleep -Seconds $StartupStabilitySeconds
+        $service.Refresh()
+
+        if ($service.Status -ne [ServiceProcess.ServiceControllerStatus]::Running) {
+            throw @"
+Le service $ComponentName ('$ServiceName') a démarré puis s'est arrêté
+(état après $StartupStabilitySeconds s : $($service.Status)).
+
+Causes fréquentes : configuration invalide, port déjà utilisé, base de
+données inaccessible. Consultez le journal de l'application et
+l'Observateur d'événements Windows (journaux Application et Système).
+"@
+        }
     }
 
     Write-Log -Message "Le service $ComponentName fonctionne." -Level "OK"

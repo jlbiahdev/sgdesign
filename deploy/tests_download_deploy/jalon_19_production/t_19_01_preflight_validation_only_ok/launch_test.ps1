@@ -12,10 +12,7 @@
 
         - Console Windows PowerShell 5.1 ouverte en tant qu'administrateur.
         - Lecteur D: disponible ; _common\test-config.psd1 renseigné.
-        - Services Windows de test (ServiceTaskflow, ServiceAgent,
-          ServiceScheduler de test-config.psd1) installés et pointant vers
-          D:\Styx-Test.
-        - Pool IIS de test existant (PoolIis).
+        - IIS installé (appcmd.exe).
         - À lancer sur le serveur CIBLE, juste avant le premier déploiement
           réel.
         - Variables Machine ARTIFACTORY_USERNAME, ARTIFACTORY_TOKEN,
@@ -25,15 +22,17 @@
 
     ÉTAPES
 
-        1. Exécuter : download_deploy.ps1 -d <RacineProduction> -STP -STX -STJ
+        1. Mémoriser l'état des services et du pool de PRODUCTION (noms lus
+           dans le script de production).
+        2. Exécuter : download_deploy.ps1 -d <RacineProduction> -STP -STX -STJ
            -ValidationOnly
-        2. Vérifier qu'aucune application n'a changé d'état.
+        3. Vérifier que l'état de production n'a pas changé.
 
     RÉSULTAT ATTENDU
 
         Succès : download_deploy.ps1 doit se terminer avec le code 0.
-        Code 0. « MODE VALIDATION » ; état des services et du pool inchangé ;
-        aucun token affiché.
+        Code 0. « MODE VALIDATION » ; état des services et du pool de
+        production inchangé ; aucun token affiché.
 
     NETTOYAGE (automatique, même en cas d'erreur)
 
@@ -72,14 +71,15 @@ try {
         -Objectif "Pré-vol sur le serveur cible : le script de production, avec -ValidationOnly, valide tout sans rien arrêter." `
         -ResultatAttendu "Succès" `
         -CodeAttendu 0 `
-        -ServicesReels `
-        -PoolIis
+        -AvecIis
 
     # --- Préparation ---
     $config = Get-TestConfig
     # Script de production tel quel : ni pool ni services de test.
     $scriptUnderTest = New-ScriptUnderTest -SansAdaptation
-    $stateBefore = Format-ApplicationState -State (Get-ApplicationState)
+    # État de PRODUCTION (services TaskFlow.Runner, HpcLite.* et pool de production).
+    $stateBefore = Get-ProductionStateText
+    Write-Host "État de production avant : $stateBefore" -ForegroundColor DarkGray
 
     # --- Exécution ---
     $result = Invoke-ScriptUnderTest -ScriptPath $scriptUnderTest -Arguments @("-d", $config.RacineProduction, "-STP", "-STX", "-STJ", "-ValidationOnly")
@@ -87,7 +87,8 @@ try {
     # --- Vérifications ---
     Assert-ExitCode -Result $result -Expected 0
     Assert-OutputMatch -Result $result -Pattern 'MODE VALIDATION' -Description "pré-vol terminé"
-    Assert-Condition -Condition ((Format-ApplicationState -State (Get-ApplicationState)) -eq $stateBefore) -Description "aucune application n'a changé d'état"
+    $stateAfter = Get-ProductionStateText
+    Assert-Condition -Condition ($stateAfter -eq $stateBefore) -Description "aucune application de production n'a changé d'état ($stateAfter)"
     Assert-NoSecret -Result $result -Root $config.RacineProduction
 }
 catch {
