@@ -37,7 +37,8 @@
       J9   vérifie les services Windows et compte les processus ;
       J10  lit l'état du pool IIS de l'API ;
       J11  mémorise l'état initial (state.json) ;
-           -> -ValidationOnly s'arrête ici ; sinon confirmation « DEPLOYER » ;
+           -> -ValidationOnly s'arrête ici (aucune confirmation n'est
+              demandée : le script est non interactif) ;
       J12  arrête les applications sélectionnées ;
       J14  sauvegarde les dossiers actuels dans <d>\.rollback ;
       J15  installe les nouveaux fichiers ;
@@ -81,10 +82,6 @@
     initial, puis s'arrête avant toute action destructive. Aucune
     application n'est arrêtée.
 
-.PARAMETER Force
-    Supprime la confirmation interactive « DEPLOYER ». À réserver aux
-    exécutions automatisées.
-
 .PARAMETER KeepTemporaryFiles
     Conserve le dossier de travail (<d>\.staging\...) pour diagnostic.
 
@@ -108,7 +105,6 @@
     Codes de sortie :
       0  déploiement ou validation terminé avec succès
       1  erreur détectée par le script (avec rollback si nécessaire)
-      2  annulation volontaire (confirmation refusée ou impossible)
 
     Encodage : enregistrer ce fichier en « UTF-8 avec BOM ». Sans BOM,
     Windows PowerShell 5.1 le lit en ANSI et les accents sont corrompus.
@@ -131,7 +127,6 @@ param(
     [Parameter()] [switch] $STJ,
 
     [Parameter()] [switch] $ValidationOnly,
-    [Parameter()] [switch] $Force,
     [Parameter()] [switch] $KeepTemporaryFiles
 )
 
@@ -1488,7 +1483,6 @@ try {
     Write-Log -Message "Dossier source (-SourceRoot) : $SourceRoot"
 
     Write-Log -Message "Validation seule (-ValidationOnly) : $ValidationOnly"
-    Write-Log -Message "Sans confirmation (-Force) : $Force"
     Write-Log -Message "Conserver les fichiers temporaires : $KeepTemporaryFiles"
 
     # --------------------------------------------------------
@@ -1814,29 +1808,6 @@ $($component.PackagePath)
         Write-Log -Message "MODE VALIDATION : toutes les vérifications sont terminées." -Level "OK"
         Write-Log -Message "Aucune application n'a été arrêtée et aucun fichier n'a été remplacé." -Level "OK"
         exit 0
-    }
-
-    # --------------------------------------------------------
-    # J12 - Confirmation
-    # --------------------------------------------------------
-
-    if (-not $Force) {
-        Write-Host ""
-
-        try {
-            $confirmation = Read-Host "Tapez DEPLOYER pour arrêter les applications et continuer"
-        }
-        catch {
-            # Session non interactive (planificateur, -NonInteractive...).
-            Write-Log -Message "Confirmation impossible : la session n'est pas interactive. Utilisez -Force pour une exécution automatisée." -Level "ATTENTION"
-            Write-Log -Message "Déploiement annulé. Aucune application n'a été arrêtée." -Level "ATTENTION"
-            exit 2
-        }
-
-        if ($confirmation -cne "DEPLOYER") {
-            Write-Log -Message "Déploiement annulé par l'utilisateur. Aucune application n'a été arrêtée." -Level "ATTENTION"
-            exit 2
-        }
     }
 
     Write-Log -Message "Les applications vont maintenant être arrêtées." -Level "ATTENTION"

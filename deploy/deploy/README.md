@@ -47,7 +47,7 @@ Sur chaque serveur, console **administrateur**, depuis le dossier des scripts. *
 .\deploy-hpclite.ps1     # serveur HpcLite
 ```
 
-Le script affiche ce qu'il a contrôlé, puis demande de taper `DEPLOYER` avant d'arrêter l'application.
+Le script est **non interactif** : aucune question n'est posée, il s'exécute jusqu'au bout.
 
 Valeurs utilisées :
 
@@ -66,7 +66,6 @@ Pour un pré-vol, ou un serveur organisé différemment, appeler `deploy.ps1` :
 | `-ValidationOnly` | **Pré-vol** : tous les contrôles, puis arrêt **avant** tout arrêt d'application |
 | `-d <racine>` | Racine des applications. Par défaut `D:\Applications` |
 | `-SourceRoot <dossier>` | Dossier des nouveaux fichiers. Par défaut `D:\.deploy` |
-| `-Force` | Supprime la confirmation `DEPLOYER` |
 | `-KeepTemporaryFiles` | Conserve le dossier de travail `<d>\.staging\...` |
 
 ```powershell
@@ -85,7 +84,7 @@ Pour un pré-vol, ou un serveur organisé différemment, appeler `deploy.ps1` :
 | 4 | Contrôle des nouveaux fichiers dans `D:\.deploy` | aucun |
 | 5 | Copie des nouveaux fichiers dans `<d>\.staging\...` (staging) | aucun |
 | 6 | Contrôle des services, des processus et du pool IIS ; mémorisation de l'état initial | aucun |
-| — | **`-ValidationOnly` s'arrête ici.** Sinon, confirmation `DEPLOYER` (sauf `-Force`) | — |
+| — | **`-ValidationOnly` s'arrête ici.** | — |
 | 7 | Arrêt de l'application (et des Runners en cours pour HpcLite) | **arrêt** |
 | 8 | Sauvegarde du dossier actuel dans `<d>\.rollback\...`, puis installation | fichiers remplacés |
 | 9 | Redémarrage si l'application tournait avant ; contrôle de stabilité (10 s) | redémarrage |
@@ -136,7 +135,6 @@ Section `>>> DEBUT CONFIGURATION` / `<<< FIN CONFIGURATION`, à vérifier **une 
 |---|---|
 | `0` | Déploiement, ou pré-vol, réussi |
 | `1` | Erreur. Si l'application avait été arrêtée, le rollback a été exécuté. Consulter le journal |
-| `2` | Annulation : confirmation refusée, ou impossible (console non interactive sans `-Force`) |
 
 Si le journal contient **« ROLLBACK INCOMPLET : intervention manuelle nécessaire »**, appliquer la section 7.
 

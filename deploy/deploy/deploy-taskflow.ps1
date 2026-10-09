@@ -13,7 +13,7 @@
     Application installée dans      : D:\Applications\taskflow
 
 .NOTES
-    Code de sortie : celui de deploy.ps1 (0 succès, 1 erreur, 2 annulation).
+    Code de sortie : celui de deploy.ps1 (0 succès, 1 erreur).
 #>
 
 $deployScript = Join-Path $PSScriptRoot "deploy.ps1"
