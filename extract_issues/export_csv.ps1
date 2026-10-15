@@ -20,7 +20,14 @@ $issues |
     Select-Object @{n='jalon';       e={$_.milestone.title}},
                   @{n='jalon_url';   e={$_.milestone.web_url}},
                   @{n='issue_iid';   e={$_.iid}},
-                  @{n='issue_title'; e={$_.title}} |
+                  @{n='issue_title'; e={$_.title}}
+                  @{n='statut';      e={
+                      $l = @($_.labels)
+                      if     ($l -contains 'To Do')   { 'To Do' }
+                      elseif ($l -contains 'Doing')   { 'Doing' }
+                      elseif ($l -contains 'To Test') { 'To Test' }
+                      else                            { 'Backlog' }
+                  }} |
     Export-Csv -Path "extracts\issues.csv" -Delimiter ';' -NoTypeInformation -Encoding UTF8
 
 Write-Host "$($issues.Count) tickets exportés dans extracts\issues.csv"
