@@ -130,7 +130,8 @@ function Invoke-StyxNative {
     & $FilePath @Arguments
     $code = $LASTEXITCODE
 
-    if ($code -gt $MaxSuccessExitCode) {
+    # Un code négatif (plantage, échec de démarrage) est aussi un échec.
+    if ($code -lt 0 -or $code -gt $MaxSuccessExitCode) {
         throw "$Description a échoué (code $code)."
     }
 }

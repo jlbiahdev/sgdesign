@@ -81,7 +81,9 @@ try {
     if ([string]::IsNullOrWhiteSpace($PackageVersion))  { $PackageVersion = New-StyxPackageVersion }
     if ([string]::IsNullOrWhiteSpace($OutputDirectory)) { $OutputDirectory = $config.DefaultPackageOutput }
 
-    $OutputDirectory = [IO.Path]::GetFullPath($OutputDirectory)
+    # Résolu par rapport à l'emplacement PowerShell courant (pas celui du
+    # processus), même si le dossier n'existe pas encore.
+    $OutputDirectory = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($OutputDirectory)
 
     if ($SyncShare) {
         foreach ($file in $config.ShareExtraFiles) {
@@ -120,7 +122,8 @@ try {
         $target = Join-Path $publishDir $p.Folder
 
         Invoke-StyxNative -FilePath "dotnet" -Description "dotnet restore ($($p.Name))" -Arguments (
-            @("restore", $p.Project, "-r", $config.Runtime) + $config.RestoreArgs)
+            @("restore", $p.Project, "-r", $config.Runtime,
+              "-p:SelfContained=$($config.SelfContained.ToString().ToLowerInvariant())") + $config.RestoreArgs)
 
         Invoke-StyxNative -FilePath "dotnet" -Description "dotnet publish ($($p.Name))" -Arguments (
             @("publish", $p.Project,
